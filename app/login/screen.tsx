@@ -53,6 +53,8 @@ export default function Login({configured}:{configured:boolean}){
         </>}
         {!configured&&<p className="notice error">Estamos preparando la conexión. El acceso estará disponible cuando termine la configuración.</p>}
         {error&&<p className="notice error" role="alert">{error}</p>}
+        <a className="button soft full" href="/demo">Entrar sin cuenta · Modo de prueba <ArrowUpRight size={18}/></a>
+        <p className="demo-login-note">Prueba la app con datos de ejemplo. Los cambios se guardan solo en este navegador.</p>
         <p className="auth-fine">R.A.W 1.0 · Alimentación y entrenamiento para adultos.<br/>Tus datos de seguimiento requieren iniciar sesión.</p>
       </section>
     </div>

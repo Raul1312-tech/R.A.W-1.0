@@ -17,6 +17,10 @@ Los perfiles iniciales son ejemplos sin confirmar. Los datos reales se introduce
 
 ## Desarrollo
 
+### Modo de prueba sin cuenta
+
+`/demo` abre la app con un perfil ficticio editable y un menú semanal de ejemplo. No consulta ni escribe `/api/journal` y no requiere Supabase. Guarda únicamente en `localStorage` bajo `raw-1-0:demo:v1`, separado de las cuentas. No sincroniza dispositivos ni pestañas: usar una pestaña de prueba a la vez. Exportar para conservar una copia o importarla después, de forma explícita, en la cuenta privada. Borrar los datos del navegador elimina esta copia. El acceso principal y la API conservan la autenticación y RLS.
+
 Node 22.13 o superior (verificado con Node 24.22.1).
 
 ```sh

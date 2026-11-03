@@ -3,7 +3,7 @@ import {NextResponse,type NextRequest} from 'next/server';
 import {configured,credentials} from './lib/supabase/config';
 export async function proxy(request:NextRequest){
   let response=NextResponse.next({request});
-  if(configured()){
+  if(request.nextUrl.pathname!=='/demo'&&configured()){
     const {url,key}=credentials();
     const supabase=createServerClient(url,key,{cookies:{
       getAll:()=>request.cookies.getAll(),

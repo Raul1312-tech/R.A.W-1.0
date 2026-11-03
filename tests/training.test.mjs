@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {boxingSchedule,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,reconcileWorkout,trainingDataSchema,workoutLogSchema} from '../app/training-model.ts';
+import {updateTrainingConfig,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,reconcileWorkout,trainingDataSchema,workoutLogSchema} from '../app/training-model.ts';
 import {exerciseGuide} from '../app/exercise-guides.ts';
 import {initialState} from '../app/model.ts';
 import {stateSchema} from '../app/validation.ts';
@@ -50,6 +50,28 @@ test('physical and running calendars preserve exactly the selected days regardle
   assert.deepEqual(p.config.days,[0,2,3,6]);assert.equal(p.config.conditioningDays,2);
   assert.throws(()=>generateTrainingPlan({...p.config,runningDays:[0,3]}),/días distintos/);
   assert.throws(()=>generateTrainingPlan({...p.config,runningDays:[0,1,2]}),/0 y 2/);
+});
+
+test('explicit 2+2 calendars ignore stale derived fields and permit every disjoint weekday assignment',()=>{
+  let count=0;
+  for(let a=0;a<7;a++)for(let b=a+1;b<7;b++)for(let c=0;c<7;c++)for(let d=c+1;d<7;d++){
+    if([a,b].includes(c)||[a,b].includes(d))continue;
+    const p=generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',physicalDays:[a,b],runningDays:[c,d],days:[],conditioningDays:7,sparringDays:[0,3]});
+    assert.equal(p.sessions.filter(s=>s.kind==='lift').length,2);assert.equal(p.sessions.filter(s=>s.kind==='conditioning').length,2);count++;
+  }
+  assert.equal(count,210);
+});
+
+test('legacy calendar editing materializes both lists and remains valid after temporary over-selection',()=>{
+  const legacy={...defaultTrainingConfig(),sport:'boxing',days:[0,1,4,5]};
+  let c=updateTrainingConfig(legacy,{physicalDays:[2,4]});
+  assert.deepEqual(c.runningDays,[1,5]);
+  c=updateTrainingConfig(c,{runningDays:[1,3,5]});
+  assert.throws(()=>generateTrainingPlan(c),/0 y 2 días de carrera/);
+  c=updateTrainingConfig(c,{runningDays:[1,3]});
+  const plan=generateTrainingPlan(c);assert.deepEqual(plan.config.physicalDays,[2,4]);assert.deepEqual(plan.config.runningDays,[1,3]);
+  assert.throws(()=>generateTrainingPlan({...c,duration:55}),/45, 60 o 75/);
+  assert.throws(()=>generateTrainingPlan({...c,notes:'a'.repeat(801)}),/800 caracteres/);
 });
 
 test('sparring coincidences warn but never block, including Sunday before Monday',()=>{

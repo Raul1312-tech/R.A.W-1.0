@@ -1,18 +1,19 @@
 import {z} from 'zod';
+import {findExerciseRecord} from './exercise-catalog.ts';
 
 export const trainingDays=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const whole=(min:number,max:number)=>z.number().int().min(min).max(max);
 const uniqueDays=z.array(whole(0,6)).max(7).refine(v=>new Set(v).size===v.length);
 export const trainingConfigSchema=z.object({
   sport:z.enum(['hypertrophy','boxing']),level:z.enum(['beginner','intermediate','advanced']),
-  phase:z.enum(['base','build','deload']),days:uniqueDays.refine(v=>v.length>=2&&v.length<=5),
+  phase:z.enum(['base','build','deload']),days:uniqueDays,
   duration:z.union([z.literal(45),z.literal(60),z.literal(75)]),equipment:z.enum(['gym','dumbbells']),
   medicineBall:z.boolean(),conditioningDays:whole(0,2),technicalDays:uniqueDays,sparringDays:uniqueDays,
   physicalDays:uniqueDays.optional(),runningDays:uniqueDays.optional(),
   limitation:z.boolean(),notes:z.string().max(800),
 });
 export type TrainingConfig=z.infer<typeof trainingConfigSchema>;
-const exerciseSchema=z.object({id:z.string().max(100),name:z.string().max(160),block:z.enum(['power','strength','muscle','core','interval']),sets:whole(1,15),dose:z.string().max(100),rest:z.string().max(100),effort:z.string().max(160),cue:z.string().max(400),alternative:z.string().max(200)});
+const exerciseSchema=z.object({id:z.string().max(100),catalogId:z.string().max(100).optional(),name:z.string().max(160),block:z.enum(['power','strength','muscle','core','interval']),sets:whole(1,15),dose:z.string().max(100),rest:z.string().max(100),effort:z.string().max(160),cue:z.string().max(400),alternative:z.string().max(200)});
 export type Exercise=z.infer<typeof exerciseSchema>;
 const sessionSchema=z.object({day:whole(0,6),title:z.string().max(120),focus:z.string().max(400),minutes:whole(0,120),kind:z.enum(['lift','conditioning','rest']),warmup:z.string().max(500),exercises:z.array(exerciseSchema).max(10)});
 export type TrainingSession=z.infer<typeof sessionSchema>;
@@ -29,6 +30,15 @@ export function boxingSchedule(c:TrainingConfig){
   const sorted=[...c.days].sort((a,b)=>a-b);
   const legacyPhysical=sorted.filter((_,i)=>i===0||i===(c.conditioningDays===0?1:2));
   return {physicalDays:[...(c.physicalDays??legacyPhysical)].sort((a,b)=>a-b),runningDays:[...(c.runningDays??sorted.filter(d=>!legacyPhysical.includes(d)))].sort((a,b)=>a-b)};
+}
+/** Materialize both legacy calendars before editing either one. Derived fields never lead the form. */
+export function updateTrainingConfig(current:TrainingConfig,value:Partial<TrainingConfig>):TrainingConfig{
+  const next={...current,...(current.sport==='boxing'?boxingSchedule(current):{}),...value};
+  if(next.sport==='boxing'){
+    const split=boxingSchedule(next);
+    return {...next,...split,days:[...new Set([...split.physicalDays,...split.runningDays])].sort((a,b)=>a-b),conditioningDays:split.runningDays.length};
+  }
+  return next;
 }
 export function sparringWarnings(c:TrainingConfig){
   if(c.sport!=='boxing')return [];
@@ -96,8 +106,15 @@ const splits:Record<number,{name:string;ids:string[]}[]>={
   5:[{name:'Torso',ids:['bench','row','shoulder','pull','curl','triceps']},{name:'Pierna',ids:['squat','hinge','split','legcurl','calf','core']},{name:'Empuje',ids:['bench','shoulder','lateral','triceps','core']},{name:'Tirón',ids:['pull','row','curl','lateral','core']},{name:'Pierna B',ids:['hinge','split','hip','legcurl','calf','core']}],
 };
 export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
-  const parsed=trainingConfigSchema.safeParse(raw);
-  if(!parsed.success)throw new Error('Revisa los ajustes: selecciona entre 2 y 5 días distintos y completa los campos de la rutina.');
+  // Validate source calendars before derived counts: temporarily picking a third day must not
+  // poison conditioningDays, and old days must not invalidate an explicit 2 + 2 selection.
+  const input=raw.sport==='boxing'&&Array.isArray(raw.physicalDays)&&Array.isArray(raw.runningDays)?{...raw,days:[],conditioningDays:0}:raw;
+  const parsed=trainingConfigSchema.safeParse(input);
+  if(!parsed.success){
+    const field=String(parsed.error.issues[0]?.path[0]??'');
+    const messages:Record<string,string>={physicalDays:'Revisa los días de físico: deben ser días distintos de lunes a domingo.',runningDays:'Revisa los días de carrera: deben ser días distintos de lunes a domingo.',days:'Revisa los días de entrenamiento: no puede haber días repetidos.',conditioningDays:'Revisa los días de carrera seleccionados.',level:'Selecciona tu experiencia en preparación física.',phase:'Selecciona la estrategia del bloque.',duration:'Selecciona 45, 60 o 75 minutos.',equipment:'Selecciona el material disponible.',notes:'Las notas pueden tener un máximo de 800 caracteres.',technicalDays:'Revisa los días de técnica.',sparringDays:'Revisa los días de sparring.'};
+    throw new Error(messages[field]??'Revisa los ajustes de la rutina: falta un campo válido.');
+  }
   const c=parsed.data;c.days=[...c.days].sort((a,b)=>a-b);
   if(c.limitation)throw new Error('Adapta primero la rutina con un profesional a la lesión o limitación indicada. El generador no prescribe rehabilitación.');
   const schedule=boxingSchedule(c);
@@ -109,6 +126,7 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
     c.conditioningDays=schedule.runningDays.length;
     c.days=[...schedule.physicalDays,...schedule.runningDays].sort((a,b)=>a-b);
   }
+  if(c.sport==='hypertrophy'&&(c.days.length<2||c.days.length>5))throw new Error('Para musculación, selecciona entre 2 y 5 días de pesas.');
   if(c.sport==='hypertrophy'&&c.level==='beginner'&&c.days.length>3)throw new Error('Para este nivel, empieza con 2 o 3 días de cuerpo completo.');
   const warnings:string[]=[];
   const sorted=c.days;
@@ -139,6 +157,11 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
     }
   });
   if(c.phase==='deload')warnings.push('Semana de descarga: menos series o intervalos, lejos del fallo. Valora la recuperación antes de volver a subir el volumen.');
+  for(const session of sessions)for(const exercise of session.exercises){
+    const record=findExerciseRecord(exercise);
+    if(!record)throw new Error(`Falta la ficha del ejercicio ${exercise.name}. No se ha guardado la rutina.`);
+    exercise.catalogId=record.id;
+  }
   return trainingPlanSchema.parse({id:crypto.randomUUID(),created:new Date().toISOString(),config:c,sessions,warnings});
 }
 

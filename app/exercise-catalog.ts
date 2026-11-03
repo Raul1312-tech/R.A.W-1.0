@@ -12,6 +12,46 @@ const image=(sheet:string,tile:number,rows=2)=>({src:`/training/${sheet}.png`,ti
 const base=(id:string,name:string,key:string,aliases:string[]=[]):ExerciseRecord=>{const g=guides[key];return {id,name,aliases,purpose:g.purpose,steps:g.steps,mistake:g.mistake,learn:g.learn,image:image('boxing-exercises-v2',g.tile,3),version:1};};
 const entry=(id:string,name:string,sheet:string,tile:number,purpose:string,steps:string[],mistake:string,learn:string,aliases:string[]=[]):ExerciseRecord=>({id,name,aliases,purpose,steps,mistake,learn,image:image(sheet,tile),version:1});
 export const exerciseCatalog:ExerciseRecord[]=[
+  entry('dumbbell-bench','Press de banca con mancuernas','combat-strength',0,'Fuerza de empuje horizontal y control de ambos brazos.',[
+    'Apoya pies y espalda en un banco estable. Coloca las mancuernas junto al pecho, muñecas encima de los codos.',
+    'Empuja ambas cargas hacia arriba con intención rápida, sin perder los apoyos ni golpear las mancuernas entre sí.',
+    'Baja controlando hasta un recorrido cómodo. Termina dejando las repeticiones en reserva indicadas.'
+  ],'Rebotar abajo, levantar los glúteos o forzar el hombro con los codos completamente abiertos.','Haz aproximaciones progresivas. Para cargas altas, acuerda ayuda para colocar y retirar las mancuernas.'),
+  entry('pull-up','Dominadas estrictas','combat-strength',1,'Fuerza de tracción vertical para complementar los empujes.',[
+    'Usa una barra fija y agarre cómodo algo más ancho que hombros; inicia con el tronco controlado.',
+    'Lleva los codos hacia las costillas para subir, sin impulso de piernas ni extender el cuello buscando la barra.',
+    'Desciende de forma controlada. Usa asistencia si no puedes completar el rango y las repeticiones en reserva.'
+  ],'Balancearte o añadir lastre antes de dominar las repeticiones estrictas.','Empieza con asistencia o jalón al pecho; el lastre solo si dominas tu peso corporal.'),
+  entry('trap-bar-deadlift','Peso muerto con barra hexagonal','combat-strength',2,'Fuerza de piernas y cadera con carga centrada alrededor del cuerpo.',[
+    'Sitúate dentro de la barra, pies a anchura cómoda. Agarra las asas y ajusta cadera y rodillas con espalda estable.',
+    'Tensa el tronco y empuja el suelo; hombros y cadera suben coordinados, brazos largos.',
+    'Termina erguido sin echarte atrás y baja controlando hasta el suelo. Recoloca y respira antes de repetir.'
+  ],'Arrancar con tirón, redondear la espalda o terminar hiperextendiendo la zona lumbar.','Aprende con una carga ligera y asas altas si hace falta. Los kilos se eligen por técnica y reserva, no por el ejemplo de otra persona.'),
+  entry('box-jump','Salto al cajón bajo','combat-strength',3,'Impulso explosivo con aterrizaje estable.',[
+    'Usa un cajón bajo, sólido y antideslizante que puedas alcanzar sin recoger excesivamente las rodillas.',
+    'Haz una flexión corta de cadera y rodillas y salta con intención rápida; aterriza con ambos pies completos y rodillas alineadas.',
+    'Estabiliza, baja caminando un pie cada vez y recolócate. Descansa entre repeticiones; corta si baja la altura o el control.'
+  ],'Usar un cajón demasiado alto, caer en sentadilla profunda o saltar hacia abajo para encadenar rebotes.','Ensaya primero el aterrizaje a nivel del suelo y usa la altura mínima adecuada.'),
+  entry('kettlebell-swing','Swing con kettlebell','combat-strength',4,'Extensión rápida de cadera y producción de potencia con carga moderada.',[
+    'Coloca la pesa delante, sujétala con ambas manos y llévala entre las piernas mediante una bisagra de cadera.',
+    'Extiende la cadera con rapidez y deja que la pesa flote aproximadamente a la altura del pecho, con brazos largos.',
+    'Espera a que vuelva hacia ti para llevar la cadera atrás. Mantén columna estable y termina depositando la pesa con control.'
+  ],'Levantar la pesa con los hombros, convertirlo en sentadilla o arquear la espalda arriba.','Domina primero la bisagra y el peso muerto con kettlebell. No uses una mancuerna improvisada para sustituir el agarre.'),
+  entry('landmine-punch','Press rotacional en landmine','combat-strength',5,'Coordinar impulso de piernas, rotación de cadera y empuje diagonal.',[
+    'Asegura la barra en un anclaje landmine. Coloca el extremo a la altura del hombro, con pies separados y un pie atrasado.',
+    'Empuja el suelo, permite pivotar el pie posterior y acompaña con la cadera mientras extiendes el brazo en diagonal.',
+    'Regresa controlando a la posición inicial. Practica ambos lados con carga que puedas acelerar; no fuerces el giro lumbar.'
+  ],'Clavar la barra en una esquina sin anclaje seguro o copiar un golpe lastrado con torsión lumbar.','Ensaya con barra sin discos. Es preparación física; la guardia y la técnica de golpeo las ajusta tu entrenador.'),
+  entry('plate-chop','Elevación diagonal con disco','combat-strength',6,'Coordinar transferencia diagonal de fuerza con control del tronco.',[
+    'Sujeta un disco ligero con ambas manos cerca de una cadera y coloca los pies separados a una anchura estable.',
+    'Eleva en diagonal hacia el hombro contrario acompañando con caderas y pivote de pies; acelera solo si controlas la trayectoria.',
+    'Frena y vuelve despacio. Haz ambos lados sin buscar amplitud máxima ni retorcer la zona lumbar.'
+  ],'Elegir demasiado peso, tirar solo de brazos o girar con los pies clavados.','Primero recorrido lento y carga ligera. Aumenta velocidad sin perder la capacidad de frenar.'),
+  entry('russian-twist','Giro ruso con pies apoyados','combat-strength',7,'Resistencia del tronco frente a rotación controlada, como accesorio.',[
+    'Siéntate con rodillas flexionadas y talones apoyados. Inclina ligeramente el tronco sin redondear la espalda.',
+    'Sujeta una carga ligera cerca del pecho y rota suavemente los hombros a un lado manteniendo la pelvis estable.',
+    'Vuelve al centro y cambia de lado con control. Respira durante todo el recorrido y limita el giro a un rango cómodo.'
+  ],'Balancear una carga pesada de lado a lado o forzar la espalda en flexión y rotación.','Empieza sin disco. Si aparece molestia, sustituye por Pallof o plancha lateral.'),
   base('landing','Aterrizaje técnico desde puntillas','landing'),
   base('vertical-jump','Salto vertical con contramovimiento','vertical'),
   base('lateral-bound','Salto lateral corto con estabilización','lateral'),

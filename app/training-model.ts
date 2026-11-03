@@ -9,20 +9,22 @@ export const trainingConfigSchema=z.object({
   phase:z.enum(['base','build','deload']),days:uniqueDays,
   duration:z.union([z.literal(45),z.literal(60),z.literal(75)]),equipment:z.enum(['gym','dumbbells']),
   medicineBall:z.boolean(),conditioningDays:whole(0,2),technicalDays:uniqueDays,sparringDays:uniqueDays,
-  physicalDays:uniqueDays.optional(),runningDays:uniqueDays.optional(),
+  physicalDays:uniqueDays.optional(),runningDays:uniqueDays.optional(),boxingKit:z.array(z.enum(['trapBar','box','kettlebell','landmine'])).max(4).optional(),
   limitation:z.boolean(),notes:z.string().max(800),
 });
 export type TrainingConfig=z.infer<typeof trainingConfigSchema>;
-const exerciseSchema=z.object({id:z.string().max(100),catalogId:z.string().max(100).optional(),name:z.string().max(160),block:z.enum(['power','strength','muscle','core','interval']),sets:whole(1,15),dose:z.string().max(100),rest:z.string().max(100),effort:z.string().max(160),cue:z.string().max(400),alternative:z.string().max(200)});
+const exerciseSchema=z.object({id:z.string().max(100),catalogId:z.string().max(100).optional(),group:z.string().max(160).optional(),name:z.string().max(160),block:z.enum(['power','strength','muscle','core','interval']),sets:whole(1,15),dose:z.string().max(100),rest:z.string().max(100),effort:z.string().max(160),cue:z.string().max(400),alternative:z.string().max(200)});
 export type Exercise=z.infer<typeof exerciseSchema>;
 const sessionSchema=z.object({day:whole(0,6),title:z.string().max(120),focus:z.string().max(400),minutes:whole(0,120),kind:z.enum(['lift','conditioning','rest']),warmup:z.string().max(500),exercises:z.array(exerciseSchema).max(10)});
 export type TrainingSession=z.infer<typeof sessionSchema>;
 export const trainingPlanSchema=z.object({id:z.string().max(100),created:z.string().datetime(),config:trainingConfigSchema,sessions:z.array(sessionSchema).length(7),warnings:z.array(z.string().max(500)).max(15)}).refine(p=>p.sessions.every((s,i)=>s.day===i));
 export type TrainingPlan=z.infer<typeof trainingPlanSchema>;
 const dateSchema=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>!Number.isNaN(Date.parse(v))&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v);
-export const workoutLogSchema=z.object({id:z.string().max(200),planId:z.string().max(100),day:whole(0,6),date:dateSchema,title:z.string().max(120),sport:z.enum(['hypertrophy','boxing']),minutes:whole(1,240),rpe:z.number().min(1).max(10),notes:z.string().max(1000),entries:z.array(z.object({exerciseId:z.string().max(100),name:z.string().max(160),prescribed:z.string().max(300),sets:whole(0,20),actual:z.string().max(100),kg:z.number().min(0).max(500).nullable()})).max(10)});
+export const workoutLogSchema=z.object({id:z.string().max(200),planId:z.string().max(100),day:whole(0,6),date:dateSchema,title:z.string().max(120),sport:z.enum(['hypertrophy','boxing']),minutes:whole(1,240),rpe:z.number().min(1).max(10),notes:z.string().max(1000),entries:z.array(z.object({exerciseId:z.string().max(100),name:z.string().max(160),prescribed:z.string().max(300),sets:whole(0,20),setIndexes:z.array(whole(0,19)).max(20).optional(),actual:z.string().max(100),kg:z.number().min(0).max(500).nullable()})).max(10)});
 export type WorkoutLog=z.infer<typeof workoutLogSchema>;
-export const trainingDataSchema=z.object({plans:z.array(trainingPlanSchema).max(12),logs:z.array(workoutLogSchema).max(200)}).refine(v=>new Set(v.logs.map(l=>l.id)).size===v.logs.length&&new Set(v.plans.map(p=>p.id)).size===v.plans.length);
+export const workoutDraftSchema=z.object({id:z.string().max(200),checked:z.record(z.string().max(100),z.array(whole(0,19)).max(20).refine(a=>new Set(a).size===a.length)),elapsedMs:z.number().min(0).max(86400000),runningSince:z.number().min(0).nullable(),rpe:z.number().min(1).max(10).nullable()});
+export type WorkoutDraft=z.infer<typeof workoutDraftSchema>;
+export const trainingDataSchema=z.object({plans:z.array(trainingPlanSchema).max(12),logs:z.array(workoutLogSchema).max(200),drafts:z.array(workoutDraftSchema).max(30).optional()}).refine(v=>new Set(v.logs.map(l=>l.id)).size===v.logs.length&&new Set(v.plans.map(p=>p.id)).size===v.plans.length&&new Set((v.drafts??[]).map(d=>d.id)).size===(v.drafts??[]).length);
 export type TrainingData=z.infer<typeof trainingDataSchema>;
 export const defaultTrainingConfig=():TrainingConfig=>({sport:'hypertrophy',level:'beginner',phase:'base',days:[0,2,4],duration:60,equipment:'gym',medicineBall:false,conditioningDays:2,technicalDays:[],sparringDays:[],limitation:false,notes:''});
 /** Recover the exact assignment used by v1 without rewriting saved plans or logs. */
@@ -87,6 +89,7 @@ function power(c:TrainingConfig,variant:number):Exercise[]{
   {id:'rotation-'+variant,name:c.medicineBall?'Lanzamiento rotacional de balón medicinal':'Rotación técnica de cadera en sombra',block:'power',sets,dose:'4 por lado',rest:'90–120 s',effort:c.medicineBall?'Balón ligero que puedas acelerar':'Técnica rápida, sin lastre',cue:c.medicineBall?'Solo contra una pared apta y con espacio despejado; gira desde los apoyos, sin forzar la zona lumbar.':'Coordina apoyo, cadera y tronco. Sin mancuernas en las manos. Practica bajo supervisión técnica.',alternative:'Pallof press controlado (no equivale a potencia rotacional)'}];
 }
 function boxingWork(c:TrainingConfig,variant:number):Exercise[]{
+  if(c.level!=='beginner')return experiencedBoxing(c,variant);
   const sets=c.phase==='deload'?2:c.level==='beginner'||c.phase==='base'?2:3;
   const strengthEffort=c.phase==='deload'?'4 repeticiones en reserva':'3 repeticiones en reserva · sin repeticiones lentas forzadas';
   const specific=(id:string,name:string,block:Exercise['block'],dose:string,cue:string,alternative:string):Exercise=>({id,name,block,sets,dose,rest:block==='strength'?'150–180 s':'90–120 s',effort:block==='strength'?strengthEffort:block==='core'?'Posición estable y respiración continua':id==='box-push'?'Empuje rápido; termina antes de perder velocidad':'3 repeticiones en reserva · recorrido controlado',cue,alternative});
@@ -98,6 +101,33 @@ function boxingWork(c:TrainingConfig,variant:number):Exercise[]{
   const core=specific('box-side','Plancha lateral','core','20–30 s por lado','Resiste la inclinación del tronco mientras mantienes hombro, cadera y tobillo alineados. Respira; no aguantes el aire.','Plancha lateral con rodillas apoyadas');
   const work=variant?[...power(c,1),hinge,split,push,core,row]:[...power(c,0),split,press,row,core,push];
   return work.slice(0,c.duration===45?5:c.duration===60?6:7);
+}
+function experiencedBoxing(c:TrainingConfig,variant:number):Exercise[]{
+  const gym=c.equipment==='gym';const kit=gym?(c.boxingKit??[]):[];
+  const sets=c.phase==='deload'?2:c.phase==='base'?2:3;
+  const strength=c.phase==='deload'?'4 repeticiones en reserva':'2–3 repeticiones en reserva · sin fallo';
+  const make=(id:string,name:string,group:string,block:Exercise['block'],dose:string,rest:string,cue:string,alternative:string):Exercise=>({id,name,group,block,sets,dose,rest,effort:block==='strength'||block==='muscle'?strength:block==='power'?'Máxima intención con carga controlable; corta si cae la velocidad':'Control y respiración; sin dolor',cue,alternative});
+  const press=make('combat-press',gym?'Press de banca con mancuernas':'Press de suelo con mancuernas','A · Biserie de fuerza: empuje + tracción','strength','4–6','60–90 s antes de la tracción','Haz aproximaciones. Empuja con intención rápida y baja controlando. La carga debe permitir todas las repeticiones sin ayuda.','Press de suelo con mancuernas');
+  const pull=make('combat-pull',gym?'Dominadas estrictas':'Remo unilateral con apoyo','A · Biserie de fuerza: empuje + tracción','strength',gym?'4–6':'6–8 por lado','120–180 s antes de repetir la vuelta','Alterna con el press; no es una carrera contra el reloj. Usa asistencia si necesitas conservar la reserva.','Jalón al pecho o remo unilateral con apoyo');
+  const hinge=make('combat-hinge',kit.includes('trapBar')?'Peso muerto con barra hexagonal':gym?'Peso muerto rumano':'Peso muerto rumano con mancuernas','B · Fuerza de cadera + salto','strength','3–5','180 s antes del salto','Repite cada inicio desde una posición estable. Si llegas fatigado de técnica, reduce carga o separa la sesión.','Peso muerto rumano con mancuernas');
+  const jump=make('combat-jump',kit.includes('box')?'Salto al cajón bajo':'Salto vertical con contramovimiento','B · Fuerza de cadera + salto','power','3 saltos de calidad','120–180 s antes de la siguiente vuelta','Recolócate entre saltos. Si la fuerza previa resta altura o control, realiza los saltos en un bloque separado al comienzo.','Salto vertical con contramovimiento');
+  const rotation=make('combat-rotation',kit.includes('landmine')?'Press rotacional en landmine':c.medicineBall?'Lanzamiento rotacional de balón medicinal':gym?'Pallof press en polea':'Plancha lateral','C · Rotación y control del tronco',kit.includes('landmine')||c.medicineBall?'power':'core',kit.includes('landmine')?'5 por lado':c.medicineBall?'4 por lado':gym?'8–10 por lado':'25–35 s por lado','90–120 s','La velocidad se gana con coordinación. Sin anclaje seguro ni balón, el trabajo es de estabilidad y no un lanzamiento simulado.','Pallof press o plancha lateral');
+  if(!variant){
+    const work=[press,pull,hinge,jump,rotation];
+    if(c.duration>=60)work.push(make('combat-core',gym?'Giro ruso con pies apoyados':'Plancha lateral','C · Rotación y control del tronco','core',gym?'8 por lado':'25–35 s por lado','60–90 s antes de repetir la vuelta','Accesorio controlado, sin buscar velocidad ni máximo recorrido lumbar.','Plancha lateral'));
+    if(c.duration===75)work.push(make('combat-upper','Elevaciones laterales','D · Accesorio de hombro','muscle','10–15','60–90 s','Mantén recorrido controlado y hombros lejos de las orejas.','Carga más ligera'));
+    return work;
+  }
+  const work=[
+    {...rotation,group:'A · Potencia rotacional'},
+    make('combat-split','Sentadilla dividida con mancuernas','B · Biserie de fuerza unilateral + espalda','strength','5–6 por pierna','60–90 s antes del remo','Base estable, empuja el suelo con la pierna adelantada.','Sentadilla dividida sin carga'),
+    make('combat-row','Remo unilateral con apoyo','B · Biserie de fuerza unilateral + espalda','strength','6–8 por brazo','120–180 s antes de repetir la vuelta','Tronco quieto, lleva el codo atrás sin girar la espalda.','Remo en polea'),
+    kit.includes('kettlebell')?make('combat-swing','Swing con kettlebell','C · Potencia de cadera','power','6–8','90–120 s','Usa una carga que puedas acelerar con cadera; termina antes de perder velocidad.','Salto vertical con contramovimiento'):{...jump,group:'C · Potencia de piernas'},
+    make('combat-push','Flexión inclinada con empuje rápido','D · Control y empuje','power','5–6','90–120 s','Elige una altura que permita un empuje rápido, sin despegar las manos ni fallar.','Press de suelo con mancuernas')
+  ];
+  if(c.duration>=60)work.push(make('combat-side','Plancha lateral','D · Control y empuje','core','25–35 s por lado','60–90 s','Mantén pelvis y hombros alineados, respira.','Plancha lateral con rodillas apoyadas'));
+  if(c.duration===75&&gym)work.push(make('combat-chop','Elevación diagonal con disco','E · Accesorio diagonal','power','5 por lado','90 s','Carga ligera; gira con los apoyos y frena con control.','Pallof press en polea'));
+  return work;
 }
 const splits:Record<number,{name:string;ids:string[]}[]>={
   2:[{name:'Cuerpo completo A',ids:['squat','bench','row','hinge','lateral','core']},{name:'Cuerpo completo B',ids:['split','shoulder','pull','hip','legcurl','curl']}],
@@ -136,7 +166,7 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
     if(sorted.some(d=>c.technicalDays.includes(d)))warnings.push('Hay días con técnica y preparación física: separa sesiones cuando puedas y acuerda la carga con tu entrenador.');
     warnings.push('Preparación física complementaria. La táctica, el sparring y la puesta a punto antes de competir se acuerdan con tu entrenador.');
     if(c.conditioningDays>recommendBoxing(c).conditioningDays)warnings.push('Has elegido más carrera que la propuesta inicial para tu carga declarada. Revisa esta decisión con tu entrenador.');
-    if(!c.medicineBall)warnings.push('Sin balón medicinal, la rotación se practica en sombra; no equivale al estímulo de un lanzamiento lastrado.');
+    if(c.level==='beginner'&&!c.medicineBall)warnings.push('Sin balón medicinal, la rotación se practica en sombra; no equivale al estímulo de un lanzamiento lastrado.');
   }
   if(sorted.some(d=>sorted.includes((d+1)%7)))warnings.push('Hay sesiones de físico o carrera en días consecutivos. Vigila el rendimiento, el sueño y las molestias antes de aumentar la carga.');
   if(c.sport==='hypertrophy'&&sorted.length<=3&&sorted.some(d=>sorted.includes((d+1)%7)))throw new Error('Separa las sesiones de cuerpo completo con al menos un día sin pesas, también entre domingo y lunes.');
@@ -148,7 +178,7 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
       sessions[day]={day,title:template.name,kind:'lift',minutes:c.duration,focus:'Acumula series de calidad y progresa en repeticiones antes de subir el peso.',warmup:'5–8 min de movimiento suave, movilidad específica y 2–3 series de aproximación del primer ejercicio. No cuentan como series de trabajo.',exercises:template.ids.slice(0,count).map(id=>lift(id,c))};
     }else if(schedule.physicalDays.includes(day)){
       const variant=schedule.physicalDays.indexOf(day);
-      sessions[day]={day,title:variant?'Físico B · apoyos y estabilidad':'Físico A · impulso y rotación',kind:'lift',minutes:c.duration,focus:variant?'Frenar, estabilizar y volver a impulsar: potencia lateral, fuerza de cadera, apoyo unilateral y control del tronco.':'Transmitir fuerza desde el suelo: impulso vertical, rotación coordinada, fuerza unilateral y empuje. La técnica de golpeo se entrena aparte.',warmup:'8–10 min: 3 min de desplazamientos suaves; movilidad de tobillo, cadera y columna torácica; 2 ensayos suaves de cada movimiento de potencia. Añade aproximaciones antes de las cargas de fuerza.',exercises:boxingWork(c,variant)};
+      sessions[day]={day,title:c.level==='beginner'?(variant?'Físico B · base unilateral':'Físico A · fundamentos'):(variant?'Físico B · rotación y cadena posterior':'Físico A · fuerza y potencia'),kind:'lift',minutes:c.duration,focus:variant?'Frenar, estabilizar y volver a impulsar: potencia lateral, fuerza de cadera, apoyo unilateral y control del tronco.':'Transmitir fuerza desde el suelo: impulso vertical, rotación coordinada, fuerza unilateral y empuje. La técnica de golpeo se entrena aparte.',warmup:'8–10 min: 3 min de desplazamientos suaves; movilidad de tobillo, cadera y columna torácica; 2 ensayos suaves de cada movimiento de potencia. Añade aproximaciones antes de las cargas de fuerza.',exercises:boxingWork(c,variant)};
     }else{
       const short=schedule.runningDays.indexOf(day)===0;const reduced=c.phase==='deload';
       const bouts=reduced?4:c.level==='beginner'?5:short?8:6;

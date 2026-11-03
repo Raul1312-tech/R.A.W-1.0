@@ -80,7 +80,7 @@ Para verificar el flujo completo, entrar con un correo autorizado, importar el J
 
 ## Estado de validación
 
-Catálogo compartido: 37 fichas ilustradas persistidas en `public.exercise_catalog`, con lectura de contenido publicado y sin permisos de escritura para usuarios. `/api/exercises` obtiene las fichas y mantiene una copia incluida como respaldo. Los archivos de imagen están guardados en `public/training`; cada ficha referencia su imagen y posición, sin regenerarla al crear rutinas. Tanto la demo como las cuentas consultan este contenido no personal; los registros de la demo siguen siendo exclusivamente locales. Detalles y prompts en `docs/exercise-catalog.md`.
+Catálogo compartido: 45 fichas ilustradas persistidas en `public.exercise_catalog`, con lectura de contenido publicado y sin permisos de escritura para usuarios. `/api/exercises` obtiene las fichas y mantiene una copia incluida como respaldo. Los archivos de imagen están guardados en `public/training`; cada ficha referencia su imagen y posición, sin regenerarla al crear rutinas. Tanto la demo como las cuentas consultan este contenido no personal; los registros de la demo siguen siendo exclusivamente locales. Detalles y prompts en `docs/exercise-catalog.md`.
 
 El resumen de boxeo refleja la selección real (por ejemplo, 2 de físico + 2 de carrera). La recomendación conservadora aparece como consejo opcional. Antes de validar se recalculan los campos derivados desde los calendarios explícitos; los mensajes indican el campo concreto. Pruebas: 210 distribuciones distintas de 2+2, edición de calendarios antiguos, todas las variantes de ejercicios y resolución de imágenes por nombre histórico.
 

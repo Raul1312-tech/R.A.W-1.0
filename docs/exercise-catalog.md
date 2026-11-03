@@ -1,6 +1,6 @@
 # Persistent exercise catalog
 
-The Supabase table `public.exercise_catalog` stores 37 versioned exercise records: stable ID, name, aliases, purpose, execution steps, common mistake, starting advice, and illustration reference (asset path and tile coordinates). It contains no athlete data. RLS permits read-only access to published content for anon/authenticated; those roles have no INSERT, UPDATE or DELETE privileges. Existing journals and ownership policies are untouched.
+The Supabase table `public.exercise_catalog` stores 45 versioned exercise records: stable ID, name, aliases, purpose, execution steps, common mistake, starting advice, and illustration reference (asset path and tile coordinates). It contains no athlete data. RLS permits read-only access to published content for anon/authenticated; those roles have no INSERT, UPDATE or DELETE privileges. Existing journals and ownership policies are untouched.
 
 Images are durable, versioned assets on the application CDN, referenced by each database record. They are NOT generated on routine creation or requested from an image service at runtime. All image generation happened once during development with the built-in image tool. Current assets: `public/training/boxing-exercises-v2.png`, `public/training/catalog-a.png`, `public/training/catalog-b.png`, `public/training/catalog-c.png`.
 

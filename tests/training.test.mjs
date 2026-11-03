@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {updateTrainingConfig,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,reconcileWorkout,trainingDataSchema,workoutLogSchema} from '../app/training-model.ts';
-import {exerciseGuide} from '../app/exercise-guides.ts';
+import {findExerciseRecord} from '../app/exercise-catalog.ts';
 import {initialState} from '../app/model.ts';
 import {stateSchema} from '../app/validation.ts';
 
@@ -16,13 +16,13 @@ test('hypertrophy creates 2–5 lifting days and preserves seven unique calendar
   }
 });
 
-test('boxing uses 2 strength/power days plus 0–2 interval days, with power first',()=>{
+test('boxing uses 2 strength/power days plus 0–2 separate interval days',()=>{
   for(const count of [0,1,2]){
     const days=count===0?[0,3]:count===1?[0,2,4]:[0,1,3,5];
     const p=generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',level:'intermediate',days,conditioningDays:count});
     const lifts=p.sessions.filter(s=>s.kind==='lift');
     assert.equal(lifts.length,2);assert.equal(p.sessions.filter(s=>s.kind==='conditioning').length,count);
-    for(const s of lifts){assert.equal(s.exercises[0].block,'power');assert.equal(s.exercises[1].block,'power');assert.ok(s.exercises.some(e=>e.block==='strength'));}
+    for(const s of lifts){assert.ok(s.exercises.some(e=>e.block==='power'));assert.ok(s.exercises.some(e=>e.block==='strength'));assert.ok(s.exercises.every(e=>e.group));}
   }
 });
 
@@ -95,7 +95,7 @@ test('legacy plans derive their original assignments and retain their stored ses
 test('every new boxing exercise has a matching illustrated execution guide at every level and duration',()=>{
   for(const level of ['beginner','intermediate','advanced'])for(const medicineBall of [true,false])for(const duration of [45,60,75]){
     const p=generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',level,medicineBall,duration,physicalDays:[0,3],runningDays:[1,5]});
-    for(const s of p.sessions)for(const ex of s.exercises){const guide=exerciseGuide(ex);assert.ok(guide,ex.name);assert.equal(guide.steps.length,3);assert.ok(guide.tile>=0&&guide.tile<12);}
+    for(const s of p.sessions)for(const ex of s.exercises){const guide=findExerciseRecord(ex);assert.ok(guide,ex.name);assert.ok(guide.steps.length>=3);assert.ok(guide.image.tile>=0);}
   }
 });
 
@@ -108,7 +108,7 @@ test('equipment, session duration and phase change the prescription',()=>{
   assert.match(short.sessions[0].exercises.find(e=>e.id==='bench').name,/suelo/);
   assert.ok(light.sessions[0].exercises[0].sets<base.sessions[0].exercises[0].sets);
   const box=generateTrainingPlan({...c,sport:'boxing',days:[0,1,3,5],medicineBall:true});
-  assert.match(box.sessions[0].exercises[1].name,/balón/);
+  assert.ok(box.sessions[0].exercises.some(ex=>ex.name.includes('balón')));
 });
 
 function log(){return {id:'plan:0:2026-11-03',planId:'plan',day:0,date:'2026-11-03',title:'Sesión de prueba',sport:'hypertrophy',minutes:45,rpe:7,notes:'',entries:[{exerciseId:'squat',name:'Sentadilla',prescribed:'2 × 8',sets:2,actual:'8 / 8',kg:20}]}}

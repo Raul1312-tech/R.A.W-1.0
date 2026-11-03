@@ -25,8 +25,8 @@ export function finishWorkout(plan:TrainingPlan,session:TrainingSession,date:str
   if(elapsedWorkout(draft,now)===0)throw new Error('Indica la duración con el ajuste de minutos o inicia el reloj al entrenar.');
   if(draft.rpe===null)throw new Error('Elige cómo de exigente ha sido la sesión (1–10).');
   const minutes=Math.min(240,Math.max(1,Math.round(elapsedWorkout(draft,now)/60000)));
-  return {id:draft.id,planId:plan.id,day:session.day,date,title:session.title,sport:plan.config.sport,minutes,rpe:draft.rpe,notes:saved?.notes??'',entries:session.exercises.map(ex=>{
+  return {id:draft.id,planId:plan.id,day:session.day,date,session:structuredClone(session),title:session.title,sport:plan.config.sport,minutes,rpe:draft.rpe,notes:saved?.notes??'',entries:session.exercises.map(ex=>{
     const old=saved?.entries.find(e=>e.exerciseId===ex.id);const sets=completedSets(draft,ex);
-    return {exerciseId:ex.id,name:ex.name,prescribed:`${ex.sets} × ${ex.dose} · ${ex.effort}`,sets,setIndexes:(draft.checked[ex.id]??[]).filter(i=>i>=0&&i<ex.sets),actual:old&&old.sets===sets?old.actual:'Series confirmadas · repeticiones no anotadas',kg:old?.kg??null};
+    return {exerciseId:ex.id,name:ex.name,prescribed:`${ex.sets} × ${ex.dose} · ${ex.effort}${ex.plannedKg!=null?` · previstos ${ex.plannedKg} kg`:''}`.slice(0,300),sets,setIndexes:(draft.checked[ex.id]??[]).filter(i=>i>=0&&i<ex.sets),actual:old&&old.sets===sets?old.actual:'Series confirmadas · repeticiones no anotadas',kg:old?.kg??null};
   })};
 }

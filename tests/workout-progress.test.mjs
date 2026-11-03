@@ -4,8 +4,9 @@ import {defaultTrainingConfig,generateTrainingPlan,trainingDataSchema,reconcileW
 import {makeDraft,toggleSet,nextSet,completedSets,elapsedWorkout,finishWorkout} from '../app/workout-progress.ts';
 import {findExerciseRecord} from '../app/exercise-catalog.ts';
 const plan=()=>generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',level:'intermediate',phase:'build',physicalDays:[0,3],runningDays:[1,5],boxingKit:['trapBar','box','kettlebell','landmine']});
+const strengthSession=p=>({...p.sessions[0],exercises:p.sessions[0].exercises.filter(ex=>ex.id.startsWith('combat-'))});
 test('supersets alternate each round; toggling supports undo and invalid indexes cannot count',()=>{
-  const p=plan(),s=p.sessions[0];let d=makeDraft(p.id+':0:2026-11-03',s);
+  const p=plan(),s=strengthSession(p);let d=makeDraft(p.id+':0:2026-11-03',s);
   assert.equal(nextSet(s,d).exerciseId,s.exercises[0].id);
   d=toggleSet(d,s,s.exercises[0].id,0);assert.equal(nextSet(s,d).exerciseId,s.exercises[1].id);
   d=toggleSet(d,s,s.exercises[1].id,0);assert.deepEqual(nextSet(s,d),{exerciseId:s.exercises[0].id,set:1});
@@ -14,7 +15,7 @@ test('supersets alternate each round; toggling supports undo and invalid indexes
   assert.throws(()=>toggleSet(d,s,s.exercises[0].id,3));assert.throws(()=>toggleSet(d,s,'missing',0));
 });
 test('draft survives full schema roundtrip and timers preserve pause/restart',()=>{
-  const p=plan(),s=p.sessions[0];let d=makeDraft(p.id+':0:2026-11-03',s);
+  const p=plan(),s=strengthSession(p);let d=makeDraft(p.id+':0:2026-11-03',s);
   d=toggleSet(d,s,s.exercises[0].id,2);d.runningSince=1000;
   const parsed=trainingDataSchema.parse(JSON.parse(JSON.stringify({plans:[p],logs:[],drafts:[d]}))).drafts[0];
   assert.deepEqual(parsed,d);assert.equal(elapsedWorkout(d,61000),60000);
@@ -22,7 +23,7 @@ test('draft survives full schema roundtrip and timers preserve pause/restart',()
   d.runningSince=100000;assert.equal(elapsedWorkout(d,130000),90000);
 });
 test('partial finish preserves exact set positions without invented reps or kg; edits do not double-count minutes',()=>{
-  const p=plan(),s=p.sessions[0];let d=makeDraft(p.id+':0:2026-11-03',s);
+  const p=plan(),s=strengthSession(p);let d=makeDraft(p.id+':0:2026-11-03',s);
   assert.throws(()=>finishWorkout(p,s,'2026-11-03',d,0),/al menos/);
   d=toggleSet(d,s,s.exercises[0].id,2);
   assert.throws(()=>finishWorkout(p,s,'2026-11-03',d,0),/duración/);
@@ -40,5 +41,5 @@ test('experienced boxing uses specific strength/power, respects equipment, durat
   }
   const p=plan();assert.ok(p.sessions[0].exercises.some(ex=>ex.catalogId==='trap-bar-deadlift'));assert.ok(p.sessions[0].exercises.some(ex=>ex.catalogId==='landmine-punch'));assert.ok(p.sessions[3].exercises.some(ex=>ex.catalogId==='kettlebell-swing'));
   assert.ok(!p.sessions.flatMap(s=>s.exercises).some(ex=>['landing','shadow-rotation'].includes(ex.catalogId)));
-  const light=generateTrainingPlan({...p.config,phase:'deload'});assert.ok(light.sessions[0].exercises[0].sets<p.sessions[0].exercises[0].sets);
+  const light=generateTrainingPlan({...p.config,phase:'deload'});assert.ok(strengthSession(light).exercises[0].sets<strengthSession(p).exercises[0].sets);
 });

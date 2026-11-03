@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {guides} from './exercise-guides.ts';
+import {movementCatalog} from './movement-catalog.ts';
 
 export const exerciseRecordSchema=z.object({
   id:z.string().regex(/^[a-z0-9-]+$/),name:z.string().min(1).max(160),aliases:z.array(z.string().max(160)).max(15),
@@ -12,6 +13,7 @@ const image=(sheet:string,tile:number,rows=2)=>({src:`/training/${sheet}.png`,ti
 const base=(id:string,name:string,key:string,aliases:string[]=[]):ExerciseRecord=>{const g=guides[key];return {id,name,aliases,purpose:g.purpose,steps:g.steps,mistake:g.mistake,learn:g.learn,image:image('boxing-exercises-v2',g.tile,3),version:1};};
 const entry=(id:string,name:string,sheet:string,tile:number,purpose:string,steps:string[],mistake:string,learn:string,aliases:string[]=[]):ExerciseRecord=>({id,name,aliases,purpose,steps,mistake,learn,image:image(sheet,tile),version:1});
 export const exerciseCatalog:ExerciseRecord[]=[
+  ...movementCatalog,
   entry('dumbbell-bench','Press de banca con mancuernas','combat-strength',0,'Fuerza de empuje horizontal y control de ambos brazos.',[
     'Apoya pies y espalda en un banco estable. Coloca las mancuernas junto al pecho, muñecas encima de los codos.',
     'Empuja ambas cargas hacia arriba con intención rápida, sin perder los apoyos ni golpear las mancuernas entre sí.',

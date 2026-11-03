@@ -13,7 +13,7 @@ export default function WorkoutSession({plan,session,date,saved,draft:stored,onD
   const root=useRef<HTMLDivElement>(null);const latest=useRef(draft);latest.current=draft;
   const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
   useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>{clearInterval(id);if(timer.current)clearTimeout(timer.current)}},[]);
-  function update(value:WorkoutDraft){latest.current=value;setDraft(value);onDraft(value);setMessage('');setError('')}
+  function update(value:WorkoutDraft){const snapshot={...value,planId:plan.id,date,session:structuredClone(session)};latest.current=snapshot;setDraft(snapshot);onDraft(snapshot);setMessage('');setError('')}
   const total=session.exercises.reduce((n,e)=>n+e.sets,0);const done=session.exercises.reduce((n,e)=>n+completedSets(draft,e),0);
   const next=nextSet(session,draft);const seconds=Math.floor(elapsedWorkout(draft,now)/1000);const minutes=Math.min(240,Math.max(1,Math.round(seconds/60)));
   function mark(ex:Exercise,index:number){
@@ -28,7 +28,7 @@ export default function WorkoutSession({plan,session,date,saved,draft:stored,onD
   function finish(){try{const current=latest.current;const time=Date.now();const stopped={...current,elapsedMs:elapsedWorkout(current,time),runningSince:null};const log=finishWorkout(plan,session,date,stopped,time,saved);onSave(log);setDraft(stopped);latest.current=stopped;setMessage('Sesión registrada. Puedes corregir las series y actualizarla sin duplicar minutos.');setError('')}catch(e){setError(e instanceof Error?e.message:'No se pudo guardar la sesión.')}}
   function card(ex:Exercise,completed=false){return <article key={ex.id} className={`workout-exercise ${leaving===ex.id?'workout-leaving':''} ${completed?'workout-done':''}`}>
     <div className="workout-card-head"><div><span className="eyebrow">{completed?'COMPLETADO':next?.exerciseId===ex.id?'AHORA TE TOCA':'EN TU SESIÓN'}</span><h3>{ex.name}</h3></div><span className="workout-count">{completedSets(draft,ex)}/{ex.sets}</span></div>
-    <div className="workout-dose"><strong>{ex.dose}</strong><span>{ex.effort}</span></div><p className="workout-rest"><b>Descanso:</b> {ex.rest}</p>
+    <div className="workout-dose"><strong>{ex.dose}</strong><span>{ex.effort}</span>{ex.plannedKg!=null&&<b>{ex.plannedKg} kg previstos</b>}</div><p className="workout-rest"><b>Descanso:</b> {ex.rest}</p>
     <div className="workout-set-buttons" role="group" aria-label={`Series de ${ex.name}`}>{Array.from({length:ex.sets},(_,i)=>{const checked=(draft.checked[ex.id]??[]).includes(i);return <button key={i} type="button" disabled={disabled} aria-pressed={checked} aria-label={`${ex.name} · Serie ${i+1}${checked?' realizada':''}`} data-next-set={next?.exerciseId===ex.id&&next.set===i?'true':undefined} onClick={()=>mark(ex,i)}>{checked?<Check size={22}/>:<span className="workout-empty-check"/>}<span>{ex.block==='interval'?'Intervalo':'Serie'} {i+1}</span>{checked&&<small>Hecha</small>}</button>})}</div>
     <details className="workout-details"><summary>Indicaciones y alternativas</summary><p>{ex.cue}</p><p><b>Alternativa:</b> {ex.alternative}</p></details>{explain(ex)}
   </article>}

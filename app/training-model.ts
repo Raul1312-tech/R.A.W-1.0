@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {findExerciseRecord} from './exercise-catalog.ts';
+import {movementExercise} from './exercise-options.ts';
 
 export const trainingDays=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const whole=(min:number,max:number)=>z.number().int().min(min).max(max);
@@ -13,16 +14,16 @@ export const trainingConfigSchema=z.object({
   limitation:z.boolean(),notes:z.string().max(800),
 });
 export type TrainingConfig=z.infer<typeof trainingConfigSchema>;
-const exerciseSchema=z.object({id:z.string().max(100),catalogId:z.string().max(100).optional(),group:z.string().max(160).optional(),name:z.string().max(160),block:z.enum(['power','strength','muscle','core','interval']),sets:whole(1,15),dose:z.string().max(100),rest:z.string().max(100),effort:z.string().max(160),cue:z.string().max(400),alternative:z.string().max(200)});
+const exerciseSchema=z.object({id:z.string().max(100),catalogId:z.string().max(100).optional(),group:z.string().max(160).optional(),name:z.string().max(160),block:z.enum(['power','strength','muscle','core','interval']),sets:whole(1,15),dose:z.string().max(100),rest:z.string().max(100),effort:z.string().max(160),cue:z.string().max(400),alternative:z.string().max(200),plannedKg:z.number().min(0).max(500).nullable().optional()});
 export type Exercise=z.infer<typeof exerciseSchema>;
 const sessionSchema=z.object({day:whole(0,6),slot:z.enum(['physical','running']).optional(),title:z.string().max(120),focus:z.string().max(400),minutes:whole(0,120),kind:z.enum(['lift','conditioning','rest']),warmup:z.string().max(500),exercises:z.array(exerciseSchema).max(10)});
 export type TrainingSession=z.infer<typeof sessionSchema>;
-export const trainingPlanSchema=z.object({id:z.string().max(100),created:z.string().datetime(),config:trainingConfigSchema,sessions:z.array(sessionSchema).length(7),extraSessions:z.array(sessionSchema).max(7).optional(),warnings:z.array(z.string().max(500)).max(64)}).refine(p=>p.sessions.every((s,i)=>s.day===i)&&(p.extraSessions??[]).every(s=>s.kind==='conditioning'&&s.slot==='running'&&p.sessions[s.day].kind==='lift')&&new Set((p.extraSessions??[]).map(s=>s.day)).size===(p.extraSessions??[]).length);
-export type TrainingPlan=z.infer<typeof trainingPlanSchema>;
 const dateSchema=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>!Number.isNaN(Date.parse(v))&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v);
-export const workoutLogSchema=z.object({id:z.string().max(200),planId:z.string().max(100),day:whole(0,6),date:dateSchema,title:z.string().max(120),sport:z.enum(['hypertrophy','boxing']),minutes:whole(1,240),rpe:z.number().min(1).max(10),notes:z.string().max(1000),entries:z.array(z.object({exerciseId:z.string().max(100),name:z.string().max(160),prescribed:z.string().max(300),sets:whole(0,20),setIndexes:z.array(whole(0,19)).max(20).optional(),actual:z.string().max(100),kg:z.number().min(0).max(500).nullable()})).max(10)});
+export const trainingPlanSchema=z.object({id:z.string().max(100),created:z.string().datetime(),config:trainingConfigSchema,sessions:z.array(sessionSchema).length(7),extraSessions:z.array(sessionSchema).max(7).optional(),warnings:z.array(z.string().max(500)).max(64),month:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),overrides:z.array(z.object({date:dateSchema,sessions:z.array(sessionSchema).max(2)})).max(31).optional()}).refine(p=>p.sessions.every((s,i)=>s.day===i)&&(p.extraSessions??[]).every(s=>s.kind==='conditioning'&&s.slot==='running'&&p.sessions[s.day].kind==='lift')&&new Set((p.extraSessions??[]).map(s=>s.day)).size===(p.extraSessions??[]).length).refine(p=>!(p.overrides?.length)||!!p.month&&new Set(p.overrides.map(o=>o.date)).size===p.overrides.length&&p.overrides.every(o=>o.date.startsWith(p.month!+'-')&&o.sessions.every(s=>s.day===(new Date(o.date+'T12:00:00Z').getUTCDay()+6)%7&&s.kind!=='rest'&&s.exercises.length>0&&new Set(s.exercises.map(e=>e.id)).size===s.exercises.length)&&new Set(o.sessions.map(s=>s.kind)).size===o.sessions.length));
+export type TrainingPlan=z.infer<typeof trainingPlanSchema>;
+export const workoutLogSchema=z.object({id:z.string().max(200),planId:z.string().max(100),day:whole(0,6),date:dateSchema,session:sessionSchema.optional(),title:z.string().max(120),sport:z.enum(['hypertrophy','boxing']),minutes:whole(1,240),rpe:z.number().min(1).max(10),notes:z.string().max(1000),entries:z.array(z.object({exerciseId:z.string().max(100),name:z.string().max(160),prescribed:z.string().max(300),sets:whole(0,20),setIndexes:z.array(whole(0,19)).max(20).optional(),actual:z.string().max(100),kg:z.number().min(0).max(500).nullable()})).max(10)});
 export type WorkoutLog=z.infer<typeof workoutLogSchema>;
-export const workoutDraftSchema=z.object({id:z.string().max(200),checked:z.record(z.string().max(100),z.array(whole(0,19)).max(20).refine(a=>new Set(a).size===a.length)),elapsedMs:z.number().min(0).max(86400000),runningSince:z.number().min(0).nullable(),rpe:z.number().min(1).max(10).nullable()});
+export const workoutDraftSchema=z.object({id:z.string().max(200),planId:z.string().max(100).optional(),date:dateSchema.optional(),session:sessionSchema.optional(),checked:z.record(z.string().max(100),z.array(whole(0,19)).max(20).refine(a=>new Set(a).size===a.length)),elapsedMs:z.number().min(0).max(86400000),runningSince:z.number().min(0).nullable(),rpe:z.number().min(1).max(10).nullable()});
 export type WorkoutDraft=z.infer<typeof workoutDraftSchema>;
 export const trainingDataSchema=z.object({plans:z.array(trainingPlanSchema).max(12),logs:z.array(workoutLogSchema).max(200),drafts:z.array(workoutDraftSchema).max(30).optional()}).refine(v=>new Set(v.logs.map(l=>l.id)).size===v.logs.length&&new Set(v.plans.map(p=>p.id)).size===v.plans.length&&new Set((v.drafts??[]).map(d=>d.id)).size===(v.drafts??[]).length);
 export type TrainingData=z.infer<typeof trainingDataSchema>;
@@ -89,6 +90,22 @@ function power(c:TrainingConfig,variant:number):Exercise[]{
   {id:'rotation-'+variant,name:c.medicineBall?'Lanzamiento rotacional de balón medicinal':'Rotación técnica de cadera en sombra',block:'power',sets,dose:'4 por lado',rest:'90–120 s',effort:c.medicineBall?'Balón ligero que puedas acelerar':'Técnica rápida, sin lastre',cue:c.medicineBall?'Solo contra una pared apta y con espacio despejado; gira desde los apoyos, sin forzar la zona lumbar.':'Coordina apoyo, cadera y tronco. Sin mancuernas en las manos. Practica bajo supervisión técnica.',alternative:'Pallof press controlado (no equivale a potencia rotacional)'}];
 }
 function boxingWork(c:TrainingConfig,variant:number):Exercise[]{
+  const work=boxingBase(c,variant);
+  const coreIndex=work.findLastIndex(ex=>ex.block==='core');
+  if(coreIndex>=0){
+    const core=movementExercise(c.level==='beginner'?['bird-dog','short-crunch','crunch-hold'][variant]:['shoulder-tap','short-crunch','bird-dog'][variant]);
+    work[coreIndex]={...core,sets:work[coreIndex].sets,group:work[coreIndex].group};
+  }
+  if(c.level!=='beginner'&&!c.boxingKit?.includes('box')){
+    const jump=work.findIndex(ex=>ex.id==='combat-jump');
+    if(jump>=0)work[jump]={...movementExercise(variant===1?'line-hop':'broad-jump'),sets:work[jump].sets,group:work[jump].group,rest:work[jump].rest};
+  }
+  // A short coordination block, not another fatiguing conditioning circuit.
+  const footwork=movementExercise(['boxing-in-out','cone-shuffle','boxing-pivot'][variant]);
+  footwork.group='Preparación · apoyos y distancia';
+  return [footwork,...work];
+}
+function boxingBase(c:TrainingConfig,variant:number):Exercise[]{
   if(c.level!=='beginner')return experiencedBoxing(c,variant);
   const sets=c.phase==='deload'?2:c.level==='beginner'||c.phase==='base'?2:3;
   const strengthEffort=c.phase==='deload'?'4 repeticiones en reserva':'3 repeticiones en reserva · sin repeticiones lentas forzadas';

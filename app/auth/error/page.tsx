@@ -1,0 +1,1 @@
+export default function Page(){return <main className="auth-error card"><span className="eyebrow">R.A.W 1.0 · ACCESO</span><h1>Vamos a intentarlo de nuevo.</h1><p>El enlace ha caducado, ya se ha usado o se abrió en otro navegador. Solicita uno nuevo y ábrelo en el navegador desde el que lo pediste.</p><a className="button orange" href="/login">Pedir un enlace nuevo</a></main>}

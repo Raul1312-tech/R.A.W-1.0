@@ -80,6 +80,10 @@ Para verificar el flujo completo, entrar con un correo autorizado, importar el J
 
 ## Estado de validación
 
+Boxeo: los calendarios `physicalDays` (dos sesiones) y `runningDays` (cero a dos) son independientes. El campo `days` conserva su unión para compatibilidad. Los planes anteriores derivan su reparto original sin modificar sesiones ni registros; al crear otra versión se guardan los nuevos campos. Coincidir con sparring o su víspera produce avisos identificando día y tipo de sesión, sin bloquear el guardado. Físico y carrera se programan en días distintos.
+
+Las nuevas sesiones físicas trabajan potencia vertical/lateral, rotación, fuerza unilateral, empuje, cadena posterior y control del tronco. Cada ejercicio generado de boxeo y carrera tiene una guía desplegable con objetivo, tres pasos, error habitual y una ilustración generada. Recursos y prompts: `docs/training-illustrations.md`. Son plantillas revisables de R.A.W, sin atribución a entrenadores de deportistas profesionales.
+
 - Compilación Next.js y TypeScript correctos.
 - Pruebas automatizadas: menús, variedad, macros, restricciones, historial, límites, origen y mensajes de error de acceso.
 - Verificación SQL real: aislamiento de propietarios, revisiones obsoletas y rechazo anónimo.

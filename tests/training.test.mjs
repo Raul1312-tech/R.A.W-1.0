@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaultTrainingConfig,generateTrainingPlan,recommendBoxing,reconcileWorkout,trainingDataSchema,workoutLogSchema} from '../app/training-model.ts';
+import {boxingSchedule,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,reconcileWorkout,trainingDataSchema,workoutLogSchema} from '../app/training-model.ts';
+import {exerciseGuide} from '../app/exercise-guides.ts';
 import {initialState} from '../app/model.ts';
 import {stateSchema} from '../app/validation.ts';
 
@@ -37,8 +38,43 @@ test('conflicting schedules and limitations fail with actionable errors',()=>{
   assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),limitation:true}),/profesional/);
   assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),days:[0,6]}),/Separa/);
   assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),days:[0,1,3,4]}),/2 o 3/);
-  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',days:[0,1,3,5],sparringDays:[6]}),/sparring/);
-  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',days:[0,2]}),/4 días/);
+  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',days:[0,2]}),/2 días de físico/);
+});
+
+test('physical and running calendars preserve exactly the selected days regardless of chronological order',()=>{
+  const p=generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',physicalDays:[3,6],runningDays:[0,2]});
+  assert.deepEqual(p.sessions.filter(s=>s.kind==='lift').map(s=>s.day),[3,6]);
+  assert.deepEqual(p.sessions.filter(s=>s.kind==='conditioning').map(s=>s.day),[0,2]);
+  assert.match(p.sessions[3].title,/Físico A/);assert.match(p.sessions[6].title,/Físico B/);
+  assert.match(p.sessions[0].title,/cortos/);assert.match(p.sessions[2].title,/sostenidos/);
+  assert.deepEqual(p.config.days,[0,2,3,6]);assert.equal(p.config.conditioningDays,2);
+  assert.throws(()=>generateTrainingPlan({...p.config,runningDays:[0,3]}),/días distintos/);
+  assert.throws(()=>generateTrainingPlan({...p.config,runningDays:[0,1,2]}),/0 y 2/);
+});
+
+test('sparring coincidences warn but never block, including Sunday before Monday',()=>{
+  const p=generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',physicalDays:[3,6],runningDays:[1,4],sparringDays:[0,2,3]});
+  assert.ok(p.warnings.some(w=>w.includes('Domingo')&&w.includes('víspera')&&w.includes('Lunes')));
+  assert.ok(p.warnings.some(w=>w.includes('Martes')&&w.includes('Carrera')&&w.includes('víspera')));
+  assert.ok(p.warnings.some(w=>w.includes('Jueves')&&w.includes('mismo día')));
+  assert.equal(p.sessions[6].kind,'lift');assert.equal(p.sessions[1].kind,'conditioning');
+});
+
+test('legacy plans derive their original assignments and retain their stored sessions',()=>{
+  const legacy={...defaultTrainingConfig(),sport:'boxing',days:[0,1,3,5]};
+  assert.deepEqual(boxingSchedule(legacy),{physicalDays:[0,3],runningDays:[1,5]});
+  assert.deepEqual(boxingSchedule({...legacy,days:[0,3],conditioningDays:0}),{physicalDays:[0,3],runningDays:[]});
+  const p=generateTrainingPlan(legacy);delete p.config.physicalDays;delete p.config.runningDays;
+  const original=JSON.stringify(p.sessions);
+  const parsed=trainingDataSchema.parse({plans:[p],logs:[]});
+  assert.equal(JSON.stringify(parsed.plans[0].sessions),original);
+});
+
+test('every new boxing exercise has a matching illustrated execution guide at every level and duration',()=>{
+  for(const level of ['beginner','intermediate','advanced'])for(const medicineBall of [true,false])for(const duration of [45,60,75]){
+    const p=generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',level,medicineBall,duration,physicalDays:[0,3],runningDays:[1,5]});
+    for(const s of p.sessions)for(const ex of s.exercises){const guide=exerciseGuide(ex);assert.ok(guide,ex.name);assert.equal(guide.steps.length,3);assert.ok(guide.tile>=0&&guide.tile<12);}
+  }
 });
 
 test('equipment, session duration and phase change the prescription',()=>{

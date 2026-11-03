@@ -47,12 +47,14 @@ RLS está activado y forzado en `journals`. Las políticas verifican `auth.uid()
 
 El correo predeterminado de Supabase es para pruebas y solo entrega a miembros del equipo del proyecto. Para el acceso de usuarios externos, configurar un proveedor SMTP propio en Authentication → Emails → SMTP Settings. No desactivar la confirmación de correo ni añadir deportistas como administradores de Supabase para evitar esta limitación.
 
-El proyecto `raw-1-0` ya está creado en Vercel dentro de `raul1312-tech's projects`, plan Hobby, conectado a la rama `main` del repositorio privado. Las dos variables de `.env.example` están configuradas en Production y Preview. El despliegue inicial está pendiente de la verificación de identidad que Vercel solicita al propietario.
+El proyecto `raw-1-0` está desplegado en https://raw-1-0.vercel.app dentro de `raul1312-tech's projects`, plan Hobby, conectado a la rama `main` del repositorio privado. Las dos variables de `.env.example` están configuradas en Production y Preview.
+
+El proveedor de correo de pruebas permite 2 envíos por hora para todo el proyecto. El acceso distingue este límite del exceso de intentos y de una dirección no autorizada. Esperar a que se libere el cupo antes de pedir un enlace nuevo; abrirlo en el mismo navegador donde se solicitó (PKCE). SMTP propio queda pendiente por decisión del propietario.
 
 En Supabase → Authentication → URL Configuration:
 
-- Site URL: dominio de producción de Vercel cuando exista.
-- Redirect URL de producción: `https://DOMINIO-REAL/auth/callback`.
+- Site URL: `https://raw-1-0.vercel.app`.
+- Redirect URL de producción: `https://raw-1-0.vercel.app/auth/callback`.
 - Retorno local ya configurado: `http://127.0.0.1:5185/auth/callback`.
 - Usar URLs exactas; evitar comodines amplios para producción.
 
@@ -61,12 +63,12 @@ Para verificar el flujo completo, entrar con un correo autorizado, importar el J
 ## Estado de validación
 
 - Compilación Next.js y TypeScript correctos.
-- 12 pruebas automatizadas: menús, variedad, macros, restricciones, historial, límites y origen.
+- Pruebas automatizadas: menús, variedad, macros, restricciones, historial, límites, origen y mensajes de error de acceso.
 - Verificación SQL real: aislamiento de propietarios, revisiones obsoletas y rechazo anónimo.
 - Asesores de seguridad y rendimiento de Supabase: 0 errores y 0 avisos tras corregir los permisos de la función interna de RLS automático.
 - Comprobación HTTP: `/` redirige al acceso; API sin sesión devuelve 401; escritura de otro origen devuelve 403; acceso directo anónimo a `journals` denegado.
 - Pendiente de comprobación con el usuario: correo de acceso, sesión real y sincronización desde dos dispositivos.
-- Pendiente de despliegue: completar la verificación de Vercel, comprobar el dominio resultante y configurar su retorno de autenticación.
+- Despliegue inicial y retorno de autenticación verificados en el dominio de producción.
 - Pendiente para usuarios externos: configurar SMTP propio.
 
 ## Importar datos previos

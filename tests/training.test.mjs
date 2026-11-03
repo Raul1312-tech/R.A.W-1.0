@@ -34,11 +34,11 @@ test('recommendation responds to experience, technical workload and sparring',()
   assert.equal(recommendBoxing({...c,sparringDays:[2,5]}).conditioningDays,0);
 });
 
-test('conflicting schedules and limitations fail with actionable errors',()=>{
-  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),limitation:true}),/profesional/);
-  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),days:[0,6]}),/Separa/);
-  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),days:[0,1,3,4]}),/2 o 3/);
-  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',days:[0,2]}),/2 días de físico/);
+test('load and limitations warn without blocking valid calendars; invalid weekdays still fail',()=>{
+  assert.ok(generateTrainingPlan({...defaultTrainingConfig(),limitation:true}).warnings.some(w=>w.includes('profesional')));
+  assert.ok(generateTrainingPlan({...defaultTrainingConfig(),days:[0,6]}).warnings.some(w=>w.includes('separar')));
+  assert.equal(generateTrainingPlan({...defaultTrainingConfig(),days:[0,1,3,4]}).sessions.filter(s=>s.kind==='lift').length,4);
+  assert.throws(()=>generateTrainingPlan({...defaultTrainingConfig(),days:[7]}),/Revisa/);
 });
 
 test('physical and running calendars preserve exactly the selected days regardless of chronological order',()=>{
@@ -48,8 +48,8 @@ test('physical and running calendars preserve exactly the selected days regardle
   assert.match(p.sessions[3].title,/Físico A/);assert.match(p.sessions[6].title,/Físico B/);
   assert.match(p.sessions[0].title,/cortos/);assert.match(p.sessions[2].title,/sostenidos/);
   assert.deepEqual(p.config.days,[0,2,3,6]);assert.equal(p.config.conditioningDays,2);
-  assert.throws(()=>generateTrainingPlan({...p.config,runningDays:[0,3]}),/días distintos/);
-  assert.throws(()=>generateTrainingPlan({...p.config,runningDays:[0,1,2]}),/0 y 2/);
+  assert.equal(generateTrainingPlan({...p.config,runningDays:[0,3]}).extraSessions.length,1);
+  assert.equal(generateTrainingPlan({...p.config,runningDays:[0,1,2]}).config.runningDays.length,3);
 });
 
 test('explicit 2+2 calendars ignore stale derived fields and permit every disjoint weekday assignment',()=>{
@@ -67,7 +67,7 @@ test('legacy calendar editing materializes both lists and remains valid after te
   let c=updateTrainingConfig(legacy,{physicalDays:[2,4]});
   assert.deepEqual(c.runningDays,[1,5]);
   c=updateTrainingConfig(c,{runningDays:[1,3,5]});
-  assert.throws(()=>generateTrainingPlan(c),/0 y 2 días de carrera/);
+  assert.equal(generateTrainingPlan(c).config.runningDays.length,3);
   c=updateTrainingConfig(c,{runningDays:[1,3]});
   const plan=generateTrainingPlan(c);assert.deepEqual(plan.config.physicalDays,[2,4]);assert.deepEqual(plan.config.runningDays,[1,3]);
   assert.throws(()=>generateTrainingPlan({...c,duration:55}),/45, 60 o 75/);

@@ -2,10 +2,11 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Check,Play,Pause,Undo2,Flag} from 'lucide-react';
 import type {Exercise,TrainingPlan,TrainingSession,WorkoutDraft,WorkoutLog} from './training-model';
+import {workoutKey} from './training-model';
 import {makeDraft,toggleSet,elapsedWorkout,completedSets,nextSet,finishWorkout} from './workout-progress';
 
 export default function WorkoutSession({plan,session,date,saved,draft:stored,onDraft,onSave,disabled,explain}:{plan:TrainingPlan;session:TrainingSession;date:string;saved?:WorkoutLog;draft?:WorkoutDraft;onDraft:(d:WorkoutDraft)=>void;onSave:(l:WorkoutLog)=>void;disabled:boolean;explain:(ex:Exercise)=>ReactNode}){
-  const [draft,setDraft]=useState(()=>stored??makeDraft(`${plan.id}:${session.day}:${date}`,session,saved));
+  const [draft,setDraft]=useState(()=>stored??makeDraft(workoutKey(plan.id,session,date),session,saved));
   const [now,setNow]=useState(()=>Date.now());
   const [error,setError]=useState('');const [message,setMessage]=useState('');
   const [leaving,setLeaving]=useState<string|null>(null);const [review,setReview]=useState(false);

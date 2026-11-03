@@ -1,3 +1,4 @@
+import type {TrainingData} from './training-model';
 export type Macro={k:number;p:number;c:number;f:number};
 export type Food=Macro & {id:string;name:string;unit:string;allergens:string[]};
 export const foods:Food[]=[
@@ -55,7 +56,7 @@ export const mealNames=['Primera comida','Tentempié','Comida','Merienda','Cena'
 export type MenuDay={day:string;meals:Meal[]};
 export type Plan={id:string;created:string;seed:number;target:Macro;meals:Meal[];week?:MenuDay[]};
 export type Day={items:(Item & {id:string;meal:string})[];water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
-export type Profile={id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;plans:Plan[];days:Record<string,Day>};
+export type Profile={id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
 export type State={profiles:Profile[];active:string};
 export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}
 export function total(items:Item[]):Macro{return items.reduce((a,x)=>({k:a.k+x.food.k*x.grams/100,p:a.p+x.food.p*x.grams/100,c:a.c+x.food.c*x.grams/100,f:a.f+x.food.f*x.grams/100}),{k:0,p:0,c:0,f:0})}

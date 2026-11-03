@@ -7,6 +7,9 @@ Aplicación privada de alimentación y entrenamiento. Next.js en Vercel y Supaba
 - Menús de lunes a domingo, cinco comidas por día y rotación de toda la semana.
 - Alimentación halal, exclusiones, cantidades y lista de compra.
 - Registro de comida, agua, peso, pasos, entrenamiento y sueño.
+- «Mi rutina»: hipertrofia de 2–5 días y preparación física de boxeo con 2 sesiones de fuerza/potencia y 0–2 de carrera por intervalos.
+- Configuración de experiencia, fase, material, tiempo y carga técnica/sparring; revisión de propuesta antes de activar.
+- Versiones de rutina y sesiones reales con series, repeticiones/tiempos, carga, minutos, RPE y notas. Editar una sesión ajusta sus minutos en el registro diario sin duplicarlos.
 - Acceso con correo y contraseña, sin correo en cada inicio de sesión.
 - Alta con confirmación de correo y recuperación para crear/restablecer contraseña.
 - Guardado en Supabase, actualización cada 30 segundos y al volver a la ventana.
@@ -20,6 +23,14 @@ Los perfiles iniciales son ejemplos sin confirmar. Los datos reales se introduce
 ### Modo de prueba sin cuenta
 
 `/demo` abre la app con un perfil ficticio editable y un menú semanal de ejemplo. No consulta ni escribe `/api/journal` y no requiere Supabase. Guarda únicamente en `localStorage` bajo `raw-1-0:demo:v1`, separado de las cuentas. No sincroniza dispositivos ni pestañas: usar una pestaña de prueba a la vez. Exportar para conservar una copia o importarla después, de forma explícita, en la cuenta privada. Borrar los datos del navegador elimina esta copia. El acceso principal y la API conservan la autenticación y RLS.
+
+### Rutinas
+
+`workouts` es opcional en cada perfil: los historiales anteriores siguen siendo válidos. Incluye hasta 12 propuestas guardadas y 200 sesiones realizadas; los registros conservan el nombre y la prescripción de los ejercicios, aunque se cambie la rutina. Se valida en importación, lectura y guardado con el mismo esquema tanto en demo como en la API privada; continúa dentro del payload JSON con RLS existente, sin nuevas tablas ni permisos.
+
+El generador usa plantillas deterministas explicadas en la interfaz. La recomendación de 0–2 días de carrera es una regla conservadora según experiencia, técnica y sparring declarado, no una prescripción clínica validada. Bloquea limitaciones declaradas y conflictos físicos el mismo día o víspera de sparring, incluso domingo/lunes. No interpreta texto libre ni fechas de combate, no programa sparring y no automatiza una puesta a punto competitiva. Los tiempos son aproximados. La carga RPE × minutos es descriptiva y no predice lesiones.
+
+Referencias de entrenamiento: ACSM 2026 y ASCA sobre fuerza/potencia para boxeo, enlazadas dentro de «Mi rutina». La programación concreta es una propuesta inicial revisable con el entrenador.
 
 Node 22.13 o superior (verificado con Node 24.22.1).
 

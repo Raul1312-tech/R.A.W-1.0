@@ -5,7 +5,8 @@ import {foods,total,type Food,type Item} from './model';
 import {MenuMacros} from './weekly-menu';
 const portions:Record<string,[number,string]>={bread:[40,'rebanada'],egg:[50,'huevo'],yogurt:[125,'yogur'],banana:[120,'plátano'],apple:[150,'manzana'],milk:[200,'vaso'],coffee:[150,'taza'],whey:[30,'cacito aprox.'],olive:[10,'porción de aceite'],nuts:[20,'puñado pequeño'],almonds:[20,'puñado pequeño'],avocado:[70,'medio aprox.'],'turkey-slices':[30,'porción'],sugar:[5,'cucharadita']};
 const normalize=(v:string)=>v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const category=(f:Food)=>['coffee','milk','whey'].includes(f.id)?'Bebidas y batidos':f.p>=7&&f.c<30?'Proteínas':f.f>=15?'Grasas':f.c>=14?'Cereales y féculas':'Fruta y verdura';
+const produce=new Set(['banana','apple','dates','orange','pear','kiwi','berries','raisins','veg','tomato','broccoli','carrot','zucchini','pepper','spinach','greenbeans']);
+const category=(f:Food)=>['coffee','milk','whey'].includes(f.id)?'Bebidas y batidos':produce.has(f.id)?'Fruta y verdura':f.f>=15?'Grasas':f.p>=7&&f.c<30?'Proteínas':'Cereales y féculas';
 export default function FoodGrid({initial=[],planned,onSave,onCancel,disabled=false,saveLabel='Guardar lo que he comido'}:{initial?:Item[];planned?:Item[];onSave:(items:Item[])=>void;onCancel:()=>void;disabled?:boolean;saveLabel?:string}){
   const [items,setItems]=useState<Item[]>(()=>structuredClone(initial));const [query,setQuery]=useState('');const [filter,setFilter]=useState('Todos');const [custom,setCustom]=useState(false);const [error,setError]=useState('');
   const recent=initial.map(it=>it.food);const catalog=[...new Map([...foods,...recent].map(f=>[f.id,f])).values()];

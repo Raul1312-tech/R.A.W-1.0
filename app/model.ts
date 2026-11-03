@@ -47,6 +47,12 @@ export const foods:Food[]=[
 ['pepper','Pimiento','crudo, sin semillas',31,1,5,0.3,[]],
 ['spinach','Espinacas','crudas o congeladas sin salsa',23,2.9,1.4,0.4,[]],
 ['greenbeans','Judías verdes','crudas o congeladas sin salsa',31,1.8,4,0.2,[]],
+['coffee','Café solo','por 100 ml, sin leche ni azúcar',1,0.1,0,0,[]],
+['whey','Proteína en polvo','genérica; revisar etiqueta y certificación halal',400,80,8,6,['leche']],
+['turkey-slices','Pavo en lonchas halal','tal como se vende; verificar certificación y etiqueta',110,20,3,2,['soja']],
+['rice-cooked','Arroz cocido','cocido, sin aceite ni salsa',130,2.7,28,0.3,[]],
+['pasta-cooked','Pasta cocida','cocida, sin aceite ni salsa',150,5,29,1,['gluten']],
+['sugar','Azúcar','en gramos',400,0,100,0,[]],
 ].map(([id,name,unit,k,p,c,f,allergens])=>({id,name,unit,k,p,c,f,allergens})) as Food[];
 export const foodById=(id:string)=>foods.find(x=>x.id===id)!;
 export type Item={food:Food;grams:number};
@@ -55,7 +61,9 @@ export const weekdays=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado
 export const mealNames=['Primera comida','Tentempié','Comida','Merienda','Cena'];
 export type MenuDay={day:string;meals:Meal[]};
 export type Plan={id:string;created:string;seed:number;target:Macro;meals:Meal[];week?:MenuDay[]};
-export type Day={items:(Item & {id:string;meal:string})[];water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
+export type MealRecord={slot:number;status:'planned'|'alternative'|'skipped';itemIds:string[]};
+export type DailyFoodPlan={planId:string;meals:Meal[];labels:string[];autoAdjust:boolean;records:MealRecord[]};
+export type Day={items:(Item & {id:string;meal:string})[];foodPlan?:DailyFoodPlan;water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
 export type Profile={id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
 export type State={profiles:Profile[];active:string};
 export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}

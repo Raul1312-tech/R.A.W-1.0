@@ -1,0 +1,1405 @@
+[
+  {
+    "id": "usda-168389",
+    "name": "Espárragos",
+    "group": "Verduras y hortalizas",
+    "unit": "crudos",
+    "k": 20,
+    "p": 2.2,
+    "c": 1.78,
+    "f": 0.12,
+    "allergens": []
+  },
+  {
+    "id": "usda-168409",
+    "name": "Pepino con piel",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 15,
+    "p": 0.65,
+    "c": 3.13,
+    "f": 0.11,
+    "allergens": []
+  },
+  {
+    "id": "usda-168448",
+    "name": "Calabaza",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 26,
+    "p": 1,
+    "c": 6,
+    "f": 0.1,
+    "allergens": []
+  },
+  {
+    "id": "usda-168449",
+    "name": "Calabaza cocida",
+    "group": "Verduras y hortalizas",
+    "unit": "hervida y escurrida",
+    "k": 20,
+    "p": 0.72,
+    "c": 3.8,
+    "f": 0.07,
+    "allergens": []
+  },
+  {
+    "id": "usda-169205",
+    "name": "Alcachofa",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda, parte comestible",
+    "k": 47,
+    "p": 3.27,
+    "c": 5.11,
+    "f": 0.15,
+    "allergens": []
+  },
+  {
+    "id": "usda-169225",
+    "name": "Pepino pelado",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 10,
+    "p": 0.59,
+    "c": 1.46,
+    "f": 0.16,
+    "allergens": []
+  },
+  {
+    "id": "usda-169228",
+    "name": "Berenjena",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 25,
+    "p": 0.98,
+    "c": 2.88,
+    "f": 0.18,
+    "allergens": []
+  },
+  {
+    "id": "usda-169230",
+    "name": "Ajo",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 149,
+    "p": 6.36,
+    "c": 30.96,
+    "f": 0.5,
+    "allergens": []
+  },
+  {
+    "id": "usda-169242",
+    "name": "Setas shiitake",
+    "group": "Verduras y hortalizas",
+    "unit": "crudas",
+    "k": 34,
+    "p": 2.24,
+    "c": 4.29,
+    "f": 0.49,
+    "allergens": []
+  },
+  {
+    "id": "usda-169246",
+    "name": "Puerro",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 61,
+    "p": 1.5,
+    "c": 12.35,
+    "f": 0.3,
+    "allergens": []
+  },
+  {
+    "id": "usda-169247",
+    "name": "Lechuga romana",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 17,
+    "p": 1.23,
+    "c": 1.19,
+    "f": 0.3,
+    "allergens": []
+  },
+  {
+    "id": "usda-169248",
+    "name": "Lechuga iceberg",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 14,
+    "p": 0.9,
+    "c": 1.77,
+    "f": 0.14,
+    "allergens": []
+  },
+  {
+    "id": "usda-169251",
+    "name": "Champiñones",
+    "group": "Verduras y hortalizas",
+    "unit": "crudos",
+    "k": 22,
+    "p": 3.09,
+    "c": 2.26,
+    "f": 0.34,
+    "allergens": []
+  },
+  {
+    "id": "usda-169252",
+    "name": "Champiñones cocidos",
+    "group": "Verduras y hortalizas",
+    "unit": "hervidos y escurridos",
+    "k": 28,
+    "p": 2.17,
+    "c": 3.09,
+    "f": 0.47,
+    "allergens": []
+  },
+  {
+    "id": "usda-169255",
+    "name": "Champiñón portobello",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 22,
+    "p": 2.11,
+    "c": 2.57,
+    "f": 0.35,
+    "allergens": []
+  },
+  {
+    "id": "usda-169276",
+    "name": "Rábano",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 16,
+    "p": 0.68,
+    "c": 1.8,
+    "f": 0.1,
+    "allergens": []
+  },
+  {
+    "id": "usda-169145",
+    "name": "Remolacha",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 43,
+    "p": 1.61,
+    "c": 6.76,
+    "f": 0.17,
+    "allergens": []
+  },
+  {
+    "id": "usda-169146",
+    "name": "Remolacha cocida",
+    "group": "Verduras y hortalizas",
+    "unit": "hervida y escurrida",
+    "k": 44,
+    "p": 1.68,
+    "c": 7.96,
+    "f": 0.18,
+    "allergens": []
+  },
+  {
+    "id": "usda-169975",
+    "name": "Repollo",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 25,
+    "p": 1.28,
+    "c": 3.3,
+    "f": 0.1,
+    "allergens": []
+  },
+  {
+    "id": "usda-169986",
+    "name": "Coliflor",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 25,
+    "p": 1.92,
+    "c": 2.97,
+    "f": 0.28,
+    "allergens": []
+  },
+  {
+    "id": "usda-169988",
+    "name": "Apio",
+    "group": "Verduras y hortalizas",
+    "unit": "crudo",
+    "k": 14,
+    "p": 0.69,
+    "c": 1.37,
+    "f": 0.17,
+    "allergens": [
+      "apio"
+    ]
+  },
+  {
+    "id": "usda-170000",
+    "name": "Cebolla",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 40,
+    "p": 1.1,
+    "c": 7.64,
+    "f": 0.1,
+    "allergens": []
+  },
+  {
+    "id": "usda-170419",
+    "name": "Guisantes",
+    "group": "Legumbres y vegetales proteicos",
+    "unit": "crudos",
+    "k": 81,
+    "p": 5.42,
+    "c": 8.75,
+    "f": 0.4,
+    "allergens": []
+  },
+  {
+    "id": "usda-170420",
+    "name": "Guisantes cocidos",
+    "group": "Legumbres y vegetales proteicos",
+    "unit": "hervidos y escurridos",
+    "k": 84,
+    "p": 5.36,
+    "c": 10.13,
+    "f": 0.22,
+    "allergens": []
+  },
+  {
+    "id": "usda-168580",
+    "name": "Seta de ostra",
+    "group": "Verduras y hortalizas",
+    "unit": "cruda",
+    "k": 33,
+    "p": 3.31,
+    "c": 3.79,
+    "f": 0.41,
+    "allergens": []
+  },
+  {
+    "id": "usda-171697",
+    "name": "Albaricoque",
+    "group": "Frutas",
+    "unit": "crudo, sin hueso",
+    "k": 48,
+    "p": 1.4,
+    "c": 9.12,
+    "f": 0.39,
+    "allergens": []
+  },
+  {
+    "id": "usda-169928",
+    "name": "Melocotón",
+    "group": "Frutas",
+    "unit": "crudo, sin hueso",
+    "k": 39,
+    "p": 0.91,
+    "c": 8.04,
+    "f": 0.25,
+    "allergens": []
+  },
+  {
+    "id": "usda-169124",
+    "name": "Piña",
+    "group": "Frutas",
+    "unit": "cruda, parte comestible",
+    "k": 50,
+    "p": 0.54,
+    "c": 11.72,
+    "f": 0.12,
+    "allergens": []
+  },
+  {
+    "id": "usda-169910",
+    "name": "Mango",
+    "group": "Frutas",
+    "unit": "crudo, sin piel ni hueso",
+    "k": 60,
+    "p": 0.82,
+    "c": 13.38,
+    "f": 0.38,
+    "allergens": []
+  },
+  {
+    "id": "usda-169926",
+    "name": "Papaya",
+    "group": "Frutas",
+    "unit": "cruda, parte comestible",
+    "k": 43,
+    "p": 0.47,
+    "c": 9.12,
+    "f": 0.26,
+    "allergens": []
+  },
+  {
+    "id": "usda-167765",
+    "name": "Sandía",
+    "group": "Frutas",
+    "unit": "cruda, sin corteza",
+    "k": 30,
+    "p": 0.61,
+    "c": 7.15,
+    "f": 0.15,
+    "allergens": []
+  },
+  {
+    "id": "usda-169092",
+    "name": "Melón cantalupo",
+    "group": "Frutas",
+    "unit": "crudo, sin corteza ni semillas",
+    "k": 34,
+    "p": 0.84,
+    "c": 7.26,
+    "f": 0.19,
+    "allergens": []
+  },
+  {
+    "id": "usda-174683",
+    "name": "Uvas",
+    "group": "Frutas",
+    "unit": "crudas, parte comestible",
+    "k": 69,
+    "p": 0.72,
+    "c": 17.2,
+    "f": 0.16,
+    "allergens": []
+  },
+  {
+    "id": "usda-167762",
+    "name": "Fresas",
+    "group": "Frutas",
+    "unit": "crudas",
+    "k": 32,
+    "p": 0.67,
+    "c": 5.68,
+    "f": 0.3,
+    "allergens": []
+  },
+  {
+    "id": "usda-171711",
+    "name": "Arándanos",
+    "group": "Frutas",
+    "unit": "crudos",
+    "k": 57,
+    "p": 0.74,
+    "c": 12.09,
+    "f": 0.33,
+    "allergens": []
+  },
+  {
+    "id": "usda-167755",
+    "name": "Frambuesas",
+    "group": "Frutas",
+    "unit": "crudas",
+    "k": 52,
+    "p": 1.2,
+    "c": 5.44,
+    "f": 0.65,
+    "allergens": []
+  },
+  {
+    "id": "usda-167746",
+    "name": "Limón",
+    "group": "Frutas",
+    "unit": "crudo, sin piel",
+    "k": 29,
+    "p": 1.1,
+    "c": 6.52,
+    "f": 0.3,
+    "allergens": []
+  },
+  {
+    "id": "usda-168155",
+    "name": "Lima",
+    "group": "Frutas",
+    "unit": "cruda, parte comestible",
+    "k": 30,
+    "p": 0.7,
+    "c": 7.74,
+    "f": 0.2,
+    "allergens": []
+  },
+  {
+    "id": "usda-171719",
+    "name": "Cerezas",
+    "group": "Frutas",
+    "unit": "crudas, sin hueso",
+    "k": 63,
+    "p": 1.06,
+    "c": 13.91,
+    "f": 0.2,
+    "allergens": []
+  },
+  {
+    "id": "usda-169949",
+    "name": "Ciruelas",
+    "group": "Frutas",
+    "unit": "crudas, sin hueso",
+    "k": 46,
+    "p": 0.7,
+    "c": 10.02,
+    "f": 0.28,
+    "allergens": []
+  },
+  {
+    "id": "usda-173021",
+    "name": "Higos",
+    "group": "Frutas",
+    "unit": "crudos",
+    "k": 74,
+    "p": 0.75,
+    "c": 16.28,
+    "f": 0.3,
+    "allergens": []
+  },
+  {
+    "id": "usda-168162",
+    "name": "Ciruelas pasas",
+    "group": "Frutas",
+    "unit": "secas, sin hueso",
+    "k": 240,
+    "p": 2.18,
+    "c": 56.78,
+    "f": 0.38,
+    "allergens": []
+  },
+  {
+    "id": "usda-167767",
+    "name": "Piña en su jugo",
+    "group": "Frutas",
+    "unit": "en conserva, escurrida",
+    "k": 60,
+    "p": 0.51,
+    "c": 14.26,
+    "f": 0.11,
+    "allergens": []
+  },
+  {
+    "id": "usda-171955",
+    "name": "Bacalao del Atlántico",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, sin espinas",
+    "k": 82,
+    "p": 17.81,
+    "c": 0,
+    "f": 0.67,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173686",
+    "name": "Salmón atlántico salvaje",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 142,
+    "p": 19.84,
+    "c": 0,
+    "f": 6.34,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-175167",
+    "name": "Salmón atlántico de cultivo",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 208,
+    "p": 20.42,
+    "c": 0,
+    "f": 13.42,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173687",
+    "name": "Salmón chinook ahumado",
+    "group": "Pescados y mariscos",
+    "unit": "tal como se vende",
+    "k": 117,
+    "p": 18.28,
+    "c": 0,
+    "f": 4.32,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173717",
+    "name": "Trucha arcoíris de cultivo",
+    "group": "Pescados y mariscos",
+    "unit": "cruda, parte comestible",
+    "k": 141,
+    "p": 19.94,
+    "c": 0,
+    "f": 6.18,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173706",
+    "name": "Atún rojo",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, sin espinas",
+    "k": 144,
+    "p": 23.33,
+    "c": 0,
+    "f": 4.9,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-175159",
+    "name": "Atún de aleta amarilla",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, sin espinas",
+    "k": 109,
+    "p": 24.4,
+    "c": 0,
+    "f": 0.49,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173709",
+    "name": "Atún al natural",
+    "group": "Pescados y mariscos",
+    "unit": "en conserva, escurrido",
+    "k": 86,
+    "p": 19.44,
+    "c": 0,
+    "f": 0.96,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173708",
+    "name": "Atún en aceite",
+    "group": "Pescados y mariscos",
+    "unit": "en conserva, escurrido",
+    "k": 198,
+    "p": 29.13,
+    "c": 0,
+    "f": 8.21,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-175139",
+    "name": "Sardinas en aceite",
+    "group": "Pescados y mariscos",
+    "unit": "en conserva, escurridas con espina",
+    "k": 208,
+    "p": 24.62,
+    "c": 0,
+    "f": 11.45,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-175119",
+    "name": "Caballa del Atlántico",
+    "group": "Pescados y mariscos",
+    "unit": "cruda, parte comestible",
+    "k": 205,
+    "p": 18.6,
+    "c": 0,
+    "f": 13.89,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-174182",
+    "name": "Boquerón",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 131,
+    "p": 20.35,
+    "c": 0,
+    "f": 4.84,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-175116",
+    "name": "Arenque",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 158,
+    "p": 17.96,
+    "c": 0,
+    "f": 9.04,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-175176",
+    "name": "Tilapia",
+    "group": "Pescados y mariscos",
+    "unit": "cruda, parte comestible",
+    "k": 96,
+    "p": 20.08,
+    "c": 0,
+    "f": 1.7,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-173703",
+    "name": "Pez espada",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 144,
+    "p": 19.66,
+    "c": 0,
+    "f": 6.65,
+    "allergens": [
+      "pescado"
+    ]
+  },
+  {
+    "id": "usda-174218",
+    "name": "Pulpo",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 82,
+    "p": 14.91,
+    "c": 2.2,
+    "f": 1.04,
+    "allergens": [
+      "moluscos"
+    ]
+  },
+  {
+    "id": "usda-174223",
+    "name": "Calamar",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 92,
+    "p": 15.58,
+    "c": 3.08,
+    "f": 1.38,
+    "allergens": [
+      "moluscos"
+    ]
+  },
+  {
+    "id": "usda-174215",
+    "name": "Sepia",
+    "group": "Pescados y mariscos",
+    "unit": "cruda, parte comestible",
+    "k": 79,
+    "p": 16.24,
+    "c": 0.82,
+    "f": 0.7,
+    "allergens": [
+      "moluscos"
+    ]
+  },
+  {
+    "id": "usda-174216",
+    "name": "Mejillones",
+    "group": "Pescados y mariscos",
+    "unit": "crudos, sin concha",
+    "k": 86,
+    "p": 11.9,
+    "c": 3.69,
+    "f": 2.24,
+    "allergens": [
+      "moluscos"
+    ]
+  },
+  {
+    "id": "usda-174214",
+    "name": "Almejas",
+    "group": "Pescados y mariscos",
+    "unit": "crudas, sin concha",
+    "k": 86,
+    "p": 14.67,
+    "c": 3.57,
+    "f": 0.96,
+    "allergens": [
+      "moluscos"
+    ]
+  },
+  {
+    "id": "usda-175179",
+    "name": "Gambas",
+    "group": "Pescados y mariscos",
+    "unit": "crudas, peladas",
+    "k": 85,
+    "p": 20.1,
+    "c": 0,
+    "f": 0.51,
+    "allergens": [
+      "crustáceos"
+    ]
+  },
+  {
+    "id": "usda-174208",
+    "name": "Bogavante",
+    "group": "Pescados y mariscos",
+    "unit": "crudo, parte comestible",
+    "k": 77,
+    "p": 16.52,
+    "c": 0,
+    "f": 0.75,
+    "allergens": [
+      "crustáceos"
+    ]
+  },
+  {
+    "id": "usda-171477",
+    "name": "Pechuga de pollo asada",
+    "group": "Carnes y huevos",
+    "unit": "asada, sin piel ni hueso; verificar halal",
+    "k": 165,
+    "p": 31.02,
+    "c": 0,
+    "f": 3.57,
+    "allergens": []
+  },
+  {
+    "id": "usda-172388",
+    "name": "Muslo de pollo asado",
+    "group": "Carnes y huevos",
+    "unit": "asado, sin piel ni hueso; verificar halal",
+    "k": 179,
+    "p": 24.76,
+    "c": 0,
+    "f": 8.15,
+    "allergens": []
+  },
+  {
+    "id": "usda-174030",
+    "name": "Carne picada de vacuno 10 % grasa",
+    "group": "Carnes y huevos",
+    "unit": "cruda; verificar halal",
+    "k": 176,
+    "p": 20,
+    "c": 0,
+    "f": 10,
+    "allergens": []
+  },
+  {
+    "id": "usda-172521",
+    "name": "Conejo de granja",
+    "group": "Carnes y huevos",
+    "unit": "crudo, parte comestible; verificar halal",
+    "k": 136,
+    "p": 20.05,
+    "c": 0,
+    "f": 5.55,
+    "allergens": []
+  },
+  {
+    "id": "usda-168249",
+    "name": "Solomillo de cerdo",
+    "group": "Carnes y huevos",
+    "unit": "crudo, solo parte magra; no halal",
+    "k": 109,
+    "p": 20.95,
+    "c": 0,
+    "f": 2.17,
+    "allergens": []
+  },
+  {
+    "id": "usda-168250",
+    "name": "Solomillo de cerdo asado",
+    "group": "Carnes y huevos",
+    "unit": "asado, solo parte magra; no halal",
+    "k": 143,
+    "p": 26.17,
+    "c": 0,
+    "f": 3.51,
+    "allergens": []
+  },
+  {
+    "id": "usda-168230",
+    "name": "Lomo de cerdo magro",
+    "group": "Carnes y huevos",
+    "unit": "crudo, sin hueso; no halal",
+    "k": 143,
+    "p": 21.43,
+    "c": 0,
+    "f": 5.66,
+    "allergens": []
+  },
+  {
+    "id": "usda-172935",
+    "name": "Salami cocido de vacuno",
+    "group": "Embutidos y fiambres",
+    "unit": "tal como se vende; verificar ingredientes y halal",
+    "k": 261,
+    "p": 12.6,
+    "c": 1.9,
+    "f": 22.2,
+    "allergens": []
+  },
+  {
+    "id": "usda-172937",
+    "name": "Salami cocido de pavo",
+    "group": "Embutidos y fiambres",
+    "unit": "tal como se vende; verificar ingredientes y halal",
+    "k": 172,
+    "p": 19.2,
+    "c": 1.45,
+    "f": 9.21,
+    "allergens": []
+  },
+  {
+    "id": "usda-172938",
+    "name": "Salami curado de cerdo",
+    "group": "Embutidos y fiambres",
+    "unit": "tal como se vende; no halal",
+    "k": 407,
+    "p": 22.58,
+    "c": 1.6,
+    "f": 33.72,
+    "allergens": []
+  },
+  {
+    "id": "usda-173859",
+    "name": "Chorizo fresco de cerdo",
+    "group": "Embutidos y fiambres",
+    "unit": "crudo; no halal",
+    "k": 296,
+    "p": 13.63,
+    "c": 3.78,
+    "f": 25.1,
+    "allergens": []
+  },
+  {
+    "id": "usda-173864",
+    "name": "Jamón cocido en lonchas",
+    "group": "Embutidos y fiambres",
+    "unit": "aprox. 11 % grasa; no halal",
+    "k": 164,
+    "p": 16.6,
+    "c": 2.33,
+    "f": 8.8,
+    "allergens": []
+  },
+  {
+    "id": "usda-174573",
+    "name": "Mortadela de vacuno y cerdo",
+    "group": "Embutidos y fiambres",
+    "unit": "tal como se vende; no halal",
+    "k": 311,
+    "p": 16.37,
+    "c": 3.05,
+    "f": 25.39,
+    "allergens": []
+  },
+  {
+    "id": "usda-174579",
+    "name": "Salchicha de cerdo y vacuno",
+    "group": "Embutidos y fiambres",
+    "unit": "cocinada; no halal",
+    "k": 396,
+    "p": 13.8,
+    "c": 2.7,
+    "f": 36.25,
+    "allergens": []
+  },
+  {
+    "id": "usda-172941",
+    "name": "Pechuga de pavo en lonchas",
+    "group": "Embutidos y fiambres",
+    "unit": "tal como se vende; verificar ingredientes y halal",
+    "k": 106,
+    "p": 14.81,
+    "c": 2.2,
+    "f": 3.77,
+    "allergens": []
+  },
+  {
+    "id": "usda-172177",
+    "name": "Queso brie",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 334,
+    "p": 20.75,
+    "c": 0.45,
+    "f": 27.68,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-173414",
+    "name": "Queso cheddar",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 403,
+    "p": 22.87,
+    "c": 3.37,
+    "f": 33.31,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-171241",
+    "name": "Queso gouda",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 356,
+    "p": 24.94,
+    "c": 2.22,
+    "f": 27.44,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-173420",
+    "name": "Queso feta",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 265,
+    "p": 14.21,
+    "c": 3.88,
+    "f": 21.49,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-170845",
+    "name": "Queso mozzarella de leche entera",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 299,
+    "p": 22.17,
+    "c": 2.4,
+    "f": 22.14,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-171247",
+    "name": "Queso parmesano rallado",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 420,
+    "p": 28.42,
+    "c": 13.91,
+    "f": 27.84,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-170851",
+    "name": "Queso ricotta de leche entera",
+    "group": "Lácteos",
+    "unit": "verificar cuajo y certificación halal",
+    "k": 150,
+    "p": 7.54,
+    "c": 7.27,
+    "f": 10.18,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-171284",
+    "name": "Yogur natural entero",
+    "group": "Lácteos",
+    "unit": "sin azúcar añadido",
+    "k": 61,
+    "p": 3.47,
+    "c": 4.66,
+    "f": 3.25,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-173432",
+    "name": "Leche desnatada",
+    "group": "Lácteos",
+    "unit": "pesar en gramos; referencia USDA por 100 g",
+    "k": 35,
+    "p": 3.37,
+    "c": 4.86,
+    "f": 0.18,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-170162",
+    "name": "Anacardos",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "crudos, sin cáscara",
+    "k": 553,
+    "p": 18.22,
+    "c": 26.89,
+    "f": 43.85,
+    "allergens": [
+      "frutos secos"
+    ]
+  },
+  {
+    "id": "usda-170169",
+    "name": "Coco fresco",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "pulpa cruda",
+    "k": 354,
+    "p": 3.33,
+    "c": 6.23,
+    "f": 33.49,
+    "allergens": []
+  },
+  {
+    "id": "usda-170178",
+    "name": "Nueces de macadamia",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "crudas, sin cáscara",
+    "k": 718,
+    "p": 7.91,
+    "c": 5.22,
+    "f": 75.77,
+    "allergens": [
+      "frutos secos"
+    ]
+  },
+  {
+    "id": "usda-170184",
+    "name": "Pistachos",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "crudos, sin cáscara",
+    "k": 560,
+    "p": 20.16,
+    "c": 16.57,
+    "f": 45.32,
+    "allergens": [
+      "frutos secos"
+    ]
+  },
+  {
+    "id": "usda-170554",
+    "name": "Semillas de chía",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "secas",
+    "k": 486,
+    "p": 16.54,
+    "c": 7.72,
+    "f": 30.74,
+    "allergens": []
+  },
+  {
+    "id": "usda-170556",
+    "name": "Pipas de calabaza",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "secas, sin cáscara",
+    "k": 559,
+    "p": 30.23,
+    "c": 4.71,
+    "f": 49.05,
+    "allergens": []
+  },
+  {
+    "id": "usda-170562",
+    "name": "Pipas de girasol",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "secas, sin cáscara",
+    "k": 584,
+    "p": 20.78,
+    "c": 11.4,
+    "f": 51.46,
+    "allergens": []
+  },
+  {
+    "id": "usda-170150",
+    "name": "Semillas de sésamo",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "secas",
+    "k": 573,
+    "p": 17.73,
+    "c": 11.65,
+    "f": 49.67,
+    "allergens": [
+      "sésamo"
+    ]
+  },
+  {
+    "id": "usda-168604",
+    "name": "Tahini",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "pasta de sésamo",
+    "k": 592,
+    "p": 17.4,
+    "c": 16.8,
+    "f": 53.01,
+    "allergens": [
+      "sésamo"
+    ]
+  },
+  {
+    "id": "usda-173430",
+    "name": "Mantequilla sin sal",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "en gramos",
+    "k": 717,
+    "p": 0.85,
+    "c": 0.06,
+    "f": 81.11,
+    "allergens": [
+      "leche"
+    ]
+  },
+  {
+    "id": "usda-171025",
+    "name": "Aceite de girasol",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "en gramos",
+    "k": 884,
+    "p": 0,
+    "c": 0,
+    "f": 100,
+    "allergens": []
+  },
+  {
+    "id": "usda-171412",
+    "name": "Aceite de coco",
+    "group": "Frutos secos, semillas y grasas",
+    "unit": "en gramos",
+    "k": 892,
+    "p": 0,
+    "c": 0,
+    "f": 99.06,
+    "allergens": []
+  },
+  {
+    "id": "usda-169703",
+    "name": "Arroz integral",
+    "group": "Cereales y féculas",
+    "unit": "en seco",
+    "k": 367,
+    "p": 7.54,
+    "c": 72.65,
+    "f": 3.2,
+    "allergens": []
+  },
+  {
+    "id": "usda-169704",
+    "name": "Arroz integral cocido",
+    "group": "Cereales y féculas",
+    "unit": "cocido, sin aceite",
+    "k": 123,
+    "p": 2.74,
+    "c": 23.98,
+    "f": 0.97,
+    "allergens": []
+  },
+  {
+    "id": "usda-169700",
+    "name": "Cuscús cocido",
+    "group": "Cereales y féculas",
+    "unit": "cocido, sin aceite",
+    "k": 112,
+    "p": 3.79,
+    "c": 21.82,
+    "f": 0.16,
+    "allergens": [
+      "gluten"
+    ]
+  },
+  {
+    "id": "usda-168917",
+    "name": "Quinoa cocida",
+    "group": "Cereales y féculas",
+    "unit": "cocida, sin aceite",
+    "k": 120,
+    "p": 4.4,
+    "c": 18.5,
+    "f": 1.92,
+    "allergens": []
+  },
+  {
+    "id": "usda-170688",
+    "name": "Bulgur",
+    "group": "Cereales y féculas",
+    "unit": "en seco",
+    "k": 342,
+    "p": 12.29,
+    "c": 63.37,
+    "f": 1.33,
+    "allergens": [
+      "gluten"
+    ]
+  },
+  {
+    "id": "usda-170287",
+    "name": "Bulgur cocido",
+    "group": "Cereales y féculas",
+    "unit": "cocido, sin aceite",
+    "k": 83,
+    "p": 3.08,
+    "c": 14.08,
+    "f": 0.24,
+    "allergens": [
+      "gluten"
+    ]
+  },
+  {
+    "id": "usda-172684",
+    "name": "Pan de centeno",
+    "group": "Cereales y féculas",
+    "unit": "tal como se vende",
+    "k": 259,
+    "p": 8.5,
+    "c": 42.5,
+    "f": 3.3,
+    "allergens": [
+      "gluten"
+    ]
+  },
+  {
+    "id": "usda-174924",
+    "name": "Pan blanco",
+    "group": "Cereales y féculas",
+    "unit": "tal como se vende",
+    "k": 266,
+    "p": 8.85,
+    "c": 46.72,
+    "f": 3.33,
+    "allergens": [
+      "gluten"
+    ]
+  },
+  {
+    "id": "usda-174925",
+    "name": "Pan blanco tostado",
+    "group": "Cereales y féculas",
+    "unit": "tostado",
+    "k": 290,
+    "p": 9,
+    "c": 51.6,
+    "f": 4,
+    "allergens": [
+      "gluten"
+    ]
+  },
+  {
+    "id": "usda-172420",
+    "name": "Lentejas secas",
+    "group": "Legumbres y vegetales proteicos",
+    "unit": "en seco",
+    "k": 352,
+    "p": 24.63,
+    "c": 52.65,
+    "f": 1.06,
+    "allergens": []
+  },
+  {
+    "id": "usda-173756",
+    "name": "Garbanzos secos",
+    "group": "Legumbres y vegetales proteicos",
+    "unit": "en seco",
+    "k": 378,
+    "p": 20.47,
+    "c": 50.75,
+    "f": 6.04,
+    "allergens": []
+  },
+  {
+    "id": "usda-174289",
+    "name": "Hummus",
+    "group": "Legumbres y vegetales proteicos",
+    "unit": "tal como se vende; revisar etiqueta",
+    "k": 237,
+    "p": 7.78,
+    "c": 9.5,
+    "f": 17.82,
+    "allergens": [
+      "sésamo"
+    ]
+  },
+  {
+    "id": "usda-169640",
+    "name": "Miel",
+    "group": "Dulces y salsas",
+    "unit": "en gramos",
+    "k": 304,
+    "p": 0.3,
+    "c": 82.2,
+    "f": 0,
+    "allergens": []
+  },
+  {
+    "id": "usda-170273",
+    "name": "Chocolate negro 70–85 %",
+    "group": "Dulces y salsas",
+    "unit": "tal como se vende; revisar etiqueta",
+    "k": 598,
+    "p": 7.79,
+    "c": 35,
+    "f": 42.63,
+    "allergens": []
+  },
+  {
+    "id": "usda-168556",
+    "name": "Kétchup",
+    "group": "Dulces y salsas",
+    "unit": "tal como se vende; revisar etiqueta",
+    "k": 101,
+    "p": 1.04,
+    "c": 27.1,
+    "f": 0.1,
+    "allergens": []
+  },
+  {
+    "id": "usda-171009",
+    "name": "Mayonesa",
+    "group": "Dulces y salsas",
+    "unit": "tal como se vende; revisar etiqueta",
+    "k": 680,
+    "p": 0.96,
+    "c": 0.57,
+    "f": 74.85,
+    "allergens": [
+      "huevo"
+    ]
+  },
+  {
+    "id": "usda-174832",
+    "name": "Bebida de almendra sin azúcar",
+    "group": "Bebidas y batidos",
+    "unit": "pesar en gramos; referencia USDA por 100 g",
+    "k": 15,
+    "p": 0.4,
+    "c": 1.11,
+    "f": 0.96,
+    "allergens": [
+      "frutos secos"
+    ]
+  },
+  {
+    "id": "usda-171942",
+    "name": "Bebida de arroz sin azúcar",
+    "group": "Bebidas y batidos",
+    "unit": "pesar en gramos; referencia USDA por 100 g",
+    "k": 47,
+    "p": 0.28,
+    "c": 8.87,
+    "f": 0.97,
+    "allergens": []
+  }
+]

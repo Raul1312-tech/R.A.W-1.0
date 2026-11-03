@@ -1,0 +1,120 @@
+id	nombre	grupo	estado	alergenos
+168389	Espárragos	Verduras y hortalizas	crudos	
+168409	Pepino con piel	Verduras y hortalizas	crudo	
+168448	Calabaza	Verduras y hortalizas	cruda	
+168449	Calabaza cocida	Verduras y hortalizas	hervida y escurrida	
+169205	Alcachofa	Verduras y hortalizas	cruda, parte comestible	
+169225	Pepino pelado	Verduras y hortalizas	crudo	
+169228	Berenjena	Verduras y hortalizas	cruda	
+169230	Ajo	Verduras y hortalizas	crudo	
+169242	Setas shiitake	Verduras y hortalizas	crudas	
+169246	Puerro	Verduras y hortalizas	crudo	
+169247	Lechuga romana	Verduras y hortalizas	cruda	
+169248	Lechuga iceberg	Verduras y hortalizas	cruda	
+169251	Champiñones	Verduras y hortalizas	crudos	
+169252	Champiñones cocidos	Verduras y hortalizas	hervidos y escurridos	
+169255	Champiñón portobello	Verduras y hortalizas	crudo	
+169276	Rábano	Verduras y hortalizas	crudo	
+169145	Remolacha	Verduras y hortalizas	cruda	
+169146	Remolacha cocida	Verduras y hortalizas	hervida y escurrida	
+169975	Repollo	Verduras y hortalizas	crudo	
+169986	Coliflor	Verduras y hortalizas	cruda	
+169988	Apio	Verduras y hortalizas	crudo	apio
+170000	Cebolla	Verduras y hortalizas	cruda	
+170419	Guisantes	Legumbres y vegetales proteicos	crudos	
+170420	Guisantes cocidos	Legumbres y vegetales proteicos	hervidos y escurridos	
+168580	Seta de ostra	Verduras y hortalizas	cruda	
+171697	Albaricoque	Frutas	crudo, sin hueso	
+169928	Melocotón	Frutas	crudo, sin hueso	
+169124	Piña	Frutas	cruda, parte comestible	
+169910	Mango	Frutas	crudo, sin piel ni hueso	
+169926	Papaya	Frutas	cruda, parte comestible	
+167765	Sandía	Frutas	cruda, sin corteza	
+169092	Melón cantalupo	Frutas	crudo, sin corteza ni semillas	
+174683	Uvas	Frutas	crudas, parte comestible	
+167762	Fresas	Frutas	crudas	
+171711	Arándanos	Frutas	crudos	
+167755	Frambuesas	Frutas	crudas	
+167746	Limón	Frutas	crudo, sin piel	
+168155	Lima	Frutas	cruda, parte comestible	
+171719	Cerezas	Frutas	crudas, sin hueso	
+169949	Ciruelas	Frutas	crudas, sin hueso	
+173021	Higos	Frutas	crudos	
+168162	Ciruelas pasas	Frutas	secas, sin hueso	
+167767	Piña en su jugo	Frutas	en conserva, escurrida	
+171955	Bacalao del Atlántico	Pescados y mariscos	crudo, sin espinas	pescado
+173686	Salmón atlántico salvaje	Pescados y mariscos	crudo, parte comestible	pescado
+175167	Salmón atlántico de cultivo	Pescados y mariscos	crudo, parte comestible	pescado
+173687	Salmón chinook ahumado	Pescados y mariscos	tal como se vende	pescado
+173717	Trucha arcoíris de cultivo	Pescados y mariscos	cruda, parte comestible	pescado
+173706	Atún rojo	Pescados y mariscos	crudo, sin espinas	pescado
+175159	Atún de aleta amarilla	Pescados y mariscos	crudo, sin espinas	pescado
+173709	Atún al natural	Pescados y mariscos	en conserva, escurrido	pescado
+173708	Atún en aceite	Pescados y mariscos	en conserva, escurrido	pescado
+175139	Sardinas en aceite	Pescados y mariscos	en conserva, escurridas con espina	pescado
+175119	Caballa del Atlántico	Pescados y mariscos	cruda, parte comestible	pescado
+174182	Boquerón	Pescados y mariscos	crudo, parte comestible	pescado
+175116	Arenque	Pescados y mariscos	crudo, parte comestible	pescado
+175176	Tilapia	Pescados y mariscos	cruda, parte comestible	pescado
+173703	Pez espada	Pescados y mariscos	crudo, parte comestible	pescado
+174218	Pulpo	Pescados y mariscos	crudo, parte comestible	moluscos
+174223	Calamar	Pescados y mariscos	crudo, parte comestible	moluscos
+174215	Sepia	Pescados y mariscos	cruda, parte comestible	moluscos
+174216	Mejillones	Pescados y mariscos	crudos, sin concha	moluscos
+174214	Almejas	Pescados y mariscos	crudas, sin concha	moluscos
+175179	Gambas	Pescados y mariscos	crudas, peladas	crustáceos
+174208	Bogavante	Pescados y mariscos	crudo, parte comestible	crustáceos
+171477	Pechuga de pollo asada	Carnes y huevos	asada, sin piel ni hueso; verificar halal	
+172388	Muslo de pollo asado	Carnes y huevos	asado, sin piel ni hueso; verificar halal	
+174030	Carne picada de vacuno 10 % grasa	Carnes y huevos	cruda; verificar halal	
+172521	Conejo de granja	Carnes y huevos	crudo, parte comestible; verificar halal	
+168249	Solomillo de cerdo	Carnes y huevos	crudo, solo parte magra; no halal	
+168250	Solomillo de cerdo asado	Carnes y huevos	asado, solo parte magra; no halal	
+168230	Lomo de cerdo magro	Carnes y huevos	crudo, sin hueso; no halal	
+172935	Salami cocido de vacuno	Embutidos y fiambres	tal como se vende; verificar ingredientes y halal	
+172937	Salami cocido de pavo	Embutidos y fiambres	tal como se vende; verificar ingredientes y halal	
+172938	Salami curado de cerdo	Embutidos y fiambres	tal como se vende; no halal	
+173859	Chorizo fresco de cerdo	Embutidos y fiambres	crudo; no halal	
+173864	Jamón cocido en lonchas	Embutidos y fiambres	aprox. 11 % grasa; no halal	
+174573	Mortadela de vacuno y cerdo	Embutidos y fiambres	tal como se vende; no halal	
+174579	Salchicha de cerdo y vacuno	Embutidos y fiambres	cocinada; no halal	
+172941	Pechuga de pavo en lonchas	Embutidos y fiambres	tal como se vende; verificar ingredientes y halal	
+172177	Queso brie	Lácteos	verificar cuajo y certificación halal	leche
+173414	Queso cheddar	Lácteos	verificar cuajo y certificación halal	leche
+171241	Queso gouda	Lácteos	verificar cuajo y certificación halal	leche
+173420	Queso feta	Lácteos	verificar cuajo y certificación halal	leche
+170845	Queso mozzarella de leche entera	Lácteos	verificar cuajo y certificación halal	leche
+171247	Queso parmesano rallado	Lácteos	verificar cuajo y certificación halal	leche
+170851	Queso ricotta de leche entera	Lácteos	verificar cuajo y certificación halal	leche
+171284	Yogur natural entero	Lácteos	sin azúcar añadido	leche
+173432	Leche desnatada	Lácteos	pesar en gramos; referencia USDA por 100 g	leche
+170162	Anacardos	Frutos secos, semillas y grasas	crudos, sin cáscara	frutos secos
+170169	Coco fresco	Frutos secos, semillas y grasas	pulpa cruda	
+170178	Nueces de macadamia	Frutos secos, semillas y grasas	crudas, sin cáscara	frutos secos
+170184	Pistachos	Frutos secos, semillas y grasas	crudos, sin cáscara	frutos secos
+170554	Semillas de chía	Frutos secos, semillas y grasas	secas	
+170556	Pipas de calabaza	Frutos secos, semillas y grasas	secas, sin cáscara	
+170562	Pipas de girasol	Frutos secos, semillas y grasas	secas, sin cáscara	
+170150	Semillas de sésamo	Frutos secos, semillas y grasas	secas	sésamo
+168604	Tahini	Frutos secos, semillas y grasas	pasta de sésamo	 sésamo
+173430	Mantequilla sin sal	Frutos secos, semillas y grasas	en gramos	leche
+171025	Aceite de girasol	Frutos secos, semillas y grasas	en gramos	
+171412	Aceite de coco	Frutos secos, semillas y grasas	en gramos	
+169703	Arroz integral	Cereales y féculas	en seco	
+169704	Arroz integral cocido	Cereales y féculas	cocido, sin aceite	
+169700	Cuscús cocido	Cereales y féculas	cocido, sin aceite	gluten
+168917	Quinoa cocida	Cereales y féculas	cocida, sin aceite	
+170688	Bulgur	Cereales y féculas	en seco	gluten
+170287	Bulgur cocido	Cereales y féculas	cocido, sin aceite	gluten
+172684	Pan de centeno	Cereales y féculas	tal como se vende	gluten
+174924	Pan blanco	Cereales y féculas	tal como se vende	gluten
+174925	Pan blanco tostado	Cereales y féculas	tostado	gluten
+172420	Lentejas secas	Legumbres y vegetales proteicos	en seco	
+173756	Garbanzos secos	Legumbres y vegetales proteicos	en seco	
+174289	Hummus	Legumbres y vegetales proteicos	tal como se vende; revisar etiqueta	sésamo
+169640	Miel	Dulces y salsas	en gramos	
+170273	Chocolate negro 70–85 %	Dulces y salsas	tal como se vende; revisar etiqueta	
+168556	Kétchup	Dulces y salsas	tal como se vende; revisar etiqueta	
+171009	Mayonesa	Dulces y salsas	tal como se vende; revisar etiqueta	huevo
+174832	Bebida de almendra sin azúcar	Bebidas y batidos	pesar en gramos; referencia USDA por 100 g	frutos secos
+171942	Bebida de arroz sin azúcar	Bebidas y batidos	pesar en gramos; referencia USDA por 100 g	

@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {trainingDataSchema} from './training-model.ts';
 const num=(min:number,max:number)=>z.number().finite().min(min).max(max);
 const macro=z.object({k:num(0,10000),p:num(0,1000),c:num(0,2000),f:num(0,1000)});
-const food=macro.extend({id:z.string().max(100),name:z.string().min(1).max(120),unit:z.string().max(120),allergens:z.array(z.string().max(60)).max(20)});
+const food=macro.extend({id:z.string().max(100),name:z.string().min(1).max(120),unit:z.string().max(120),allergens:z.array(z.string().max(60)).max(20),group:z.string().max(60).optional()});
 const item=z.object({food,grams:num(0.1,3000)});
 const meal=z.object({name:z.string().max(150),items:z.array(item).max(20),prep:z.string().max(1000).optional()});
 const plan=z.object({id:z.string().max(100),created:z.string().datetime(),seed:z.number().int().min(0).max(100000),target:macro,meals:z.array(meal).min(4).max(5),week:z.array(z.object({day:z.string().max(20),meals:z.array(meal).length(5)})).length(7).optional()}).refine(p=>!p.week||(p.meals.length===5&&p.week.map(d=>d.day).join('|')==='Lunes|Martes|Miércoles|Jueves|Viernes|Sábado|Domingo'&&JSON.stringify(p.meals)===JSON.stringify(p.week[0].meals)));

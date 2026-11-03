@@ -1,6 +1,6 @@
 import type {TrainingData} from './training-model';
 export type Macro={k:number;p:number;c:number;f:number};
-export type Food=Macro & {id:string;name:string;unit:string;allergens:string[]};
+export type Food=Macro & {id:string;name:string;unit:string;allergens:string[];group?:string};
 export const foods:Food[]=[
 ['oats','Copos de avena','secos',370,13,60,7,['gluten']],
 ['rice','Arroz','en seco',356,7,79,1,[]],

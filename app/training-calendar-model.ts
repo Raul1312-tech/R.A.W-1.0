@@ -1,4 +1,4 @@
-import {allTrainingSessions,defaultTrainingConfig,trainingPlanSchema,workoutKey,type TrainingData,type TrainingPlan,type TrainingSession,type WorkoutDraft,type WorkoutLog} from './training-model.ts';
+import {allTrainingSessions,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,trainingPlanSchema,updateTrainingConfig,workoutKey,type TrainingConfig,type TrainingData,type TrainingPlan,type TrainingSession,type WorkoutDraft,type WorkoutLog} from './training-model.ts';
 
 export const weekdayOf=(date:string)=>(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
 export function monthDates(month:string){
@@ -15,6 +15,29 @@ export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
   return override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
+}
+export function scheduleSignature(config:TrainingConfig){
+  const split=config.sport==='boxing'?boxingSchedule(config):{physicalDays:config.days,runningDays:[]};
+  return JSON.stringify({...split,technicalDays:config.technicalDays,sparringDays:config.sparringDays});
+}
+/** Move existing blocks without regenerating the athlete's exercise prescription. */
+export function reschedulePlan(plan:TrainingPlan,selection:TrainingConfig,month:string):TrainingPlan{
+  if(plan.config.sport!==selection.sport)throw new Error('Para cambiar de deporte, genera una propuesta nueva.');
+  const config=updateTrainingConfig(plan.config,{days:selection.days,physicalDays:selection.physicalDays,runningDays:selection.runningDays,technicalDays:selection.technicalDays,sparringDays:selection.sparringDays,conditioningDays:selection.conditioningDays});
+  const next={...generateTrainingPlan(config),month};
+  const previous=allTrainingSessions(plan).filter(s=>s.kind!=='rest');
+  const changedKinds=new Set<TrainingSession['kind']>();
+  for(const kind of ['lift','conditioning'] as const){
+    const old=previous.filter(s=>s.kind===kind),fresh=allTrainingSessions(next).filter(s=>s.kind===kind);
+    if(JSON.stringify(old.map(s=>s.day))!==JSON.stringify(fresh.map(s=>s.day)))changedKinds.add(kind);
+    for(const [i,s] of fresh.entries())if(old[i]){
+      const moved={...structuredClone(old[i]),day:s.day,slot:s.slot};
+      if(next.sessions[s.day].kind===kind)next.sessions[s.day]=moved;
+      else next.extraSessions![next.extraSessions!.findIndex(e=>e.day===s.day)]=moved;
+    }
+  }
+  const overrides=plan.month===month?(plan.overrides??[]).map(o=>({date:o.date,sessions:[...o.sessions.filter(s=>!changedKinds.has(s.kind)),...sessionsForDate(next,o.date).filter(s=>changedKinds.has(s.kind))]})):[];
+  return trainingPlanSchema.parse({...next,overrides});
 }
 export function editCalendarDay(plan:TrainingPlan,month:string,date:string,sessions:TrainingSession[],scope:'date'|'weekday'){
   if(!monthDates(month).includes(date))throw new Error('La fecha no pertenece al mes.');

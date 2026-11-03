@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {monthDates,weekdayOf,planForDate,sessionsForDate,editCalendarDay,dailySessions,monthlyLoadWarnings} from '../app/training-calendar-model.ts';
+import {monthDates,weekdayOf,planForDate,sessionsForDate,editCalendarDay,dailySessions,monthlyLoadWarnings,reschedulePlan,scheduleSignature} from '../app/training-calendar-model.ts';
 import {generateTrainingPlan,defaultTrainingConfig,trainingDataSchema,trainingPlanSchema,workoutKey} from '../app/training-model.ts';
 import {makeDraft,toggleSet,finishWorkout} from '../app/workout-progress.ts';
 import {exerciseCatalog} from '../app/exercise-catalog.ts';
@@ -66,4 +66,27 @@ test('manual calendar edits can fill all seven weekdays with both sessions and t
   assert.equal(p.overrides.length,30);assert.equal(monthDates('2026-11').reduce((n,d)=>n+sessionsForDate(p,d).length,0),60);
   assert.ok(trainingPlanSchema.safeParse(p).success);const warnings=monthlyLoadWarnings(p,'2026-11');
   assert.ok(warnings.some(w=>w.includes('sin un día libre')));assert.ok(warnings.some(w=>w.includes('más de dos días de carrera')));
+});
+test('moving runs from Tuesday/Saturday to Monday/Wednesday preserves workouts and leaves Tuesday without a scheduled run',()=>{
+  const old=generateTrainingPlan({...weekly().config,physicalDays:[0,4],runningDays:[1,5]});
+  const original=JSON.stringify(old),selection={...old.config,runningDays:[0,2],phase:'deload'};
+  assert.notEqual(scheduleSignature(old.config),scheduleSignature(selection));
+  const next=reschedulePlan(old,selection,'2026-11');
+  assert.equal(next.config.phase,old.config.phase);assert.deepEqual(next.config.runningDays,[0,2]);
+  assert.deepEqual(next.sessions[0].exercises,old.sessions[0].exercises);
+  assert.deepEqual(next.extraSessions[0].exercises,old.sessions[1].exercises);
+  assert.deepEqual(next.sessions[2].exercises,old.sessions[5].exercises);
+  const data={plans:[old,next],logs:[]};
+  assert.equal(dailySessions(data,'2026-11-03').some(s=>s.session.kind==='conditioning'),false);
+  assert.equal(dailySessions(data,'2026-11-02').filter(s=>s.session.kind==='conditioning').length,1);
+  assert.equal(dailySessions(data,'2026-11-04').filter(s=>s.session.kind==='conditioning').length,1);
+  assert.equal(JSON.stringify(old),original);
+});
+test('moving the weekly runs also removes stale run date overrides, preserving physical customisations and actual logs',()=>{
+  const old={...generateTrainingPlan({...weekly().config,physicalDays:[0,1],runningDays:[1,5]}),month:'2026-11'};
+  const sessions=structuredClone(sessionsForDate(old,'2026-11-03'));sessions[0].exercises[0].plannedKg=25;
+  const customised=editCalendarDay(old,'2026-11','2026-11-03',sessions,'date');
+  const next=reschedulePlan(customised,{...old.config,runningDays:[0,2]},'2026-11');
+  const tuesday=sessionsForDate(next,'2026-11-03');assert.equal(tuesday.length,1);assert.equal(tuesday[0].kind,'lift');assert.equal(tuesday[0].exercises[0].plannedKg,25);
+  assert.ok(trainingDataSchema.safeParse({plans:[old,next],logs:[]}).success);
 });

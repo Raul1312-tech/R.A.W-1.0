@@ -3,7 +3,7 @@ import {useState} from 'react';
 import {ArrowUpRight,Check,Dumbbell,Flame,Footprints,Settings,TrendingUp} from 'lucide-react';
 import {allTrainingSessions,trainingLoadWarnings,updateTrainingConfig,boxingSchedule,sparringWarnings,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,trainingDays,type TrainingConfig,type TrainingPlan,type TrainingData} from './training-model';
 import TrainingCalendar from './training-calendar';
-import {planForDate} from './training-calendar-model';
+import {planForDate,reschedulePlan,scheduleSignature} from './training-calendar-model';
 
 const sportName=(sport:string)=>sport==='boxing'?'Boxeo':'Hipertrofia';
 const phaseName:Record<string,string>={base:'Base y técnica',build:'Desarrollo',deload:'Descarga'};
@@ -25,6 +25,7 @@ export default function Training({data,onChange,today,disabled,onToday}:{data:Tr
   const split=boxingSchedule(config);
   const calendarWarnings=[...trainingLoadWarnings(config),...sparringWarnings(config)];
   const recommendation=recommendBoxing(config);
+  const daysPending=!!plan&&plan.config.sport===config.sport&&scheduleSignature(plan.config)!==scheduleSignature(config);
   function generate(){try{setPreview({...generateTrainingPlan(config),month});setError('');setMessage('')}catch(e){setError(e instanceof Error?e.message:'Revisa los ajustes de la rutina.')}}
   function savePlan(next:TrainingPlan){onChange({...data,plans:[...data.plans.filter(p=>p.id!==next.id),next].slice(-12)});setMessage('Plan mensual guardado. Lo realizado se consulta en Mi día.')}
   function activate(){if(!preview||disabled)return;savePlan(preview);setEditing(false);setPreview(null)}
@@ -51,7 +52,8 @@ export default function Training({data,onChange,today,disabled,onToday}:{data:Tr
         <div className="routine-boxing-config"><div><DayPicker label="Días de boxeo técnico" days={config.technicalDays} onChange={days=>patch({technicalDays:days})}/><DayPicker label="Días de sparring" days={config.sparringDays} onChange={days=>patch({sparringDays:days})}/><p>Puedes seleccionar físico o carrera el día anterior al sparring. El aviso ayuda a revisar la carga; no bloquea tu elección.</p></div><aside><span className="eyebrow">TU SELECCIÓN ACTUAL</span><h3>{split.physicalDays.length} de físico + {split.runningDays.length} de carrera</h3><p>La rutina se genera con estos días. Físico: {split.physicalDays.map(d=>trainingDays[d]).join(", ")||"sin seleccionar"}. Carrera: {split.runningDays.map(d=>trainingDays[d]).join(", ")||"sin carrera"}.</p>{split.runningDays.length>recommendation.conditioningDays&&<details><summary>Consejo opcional de recuperación</summary><p>{recommendation.reason} Tu selección se mantiene y puedes generar la rutina con ella.</p></details>}<label className="checkbox"><input type="checkbox" checked={config.medicineBall} onChange={e=>patch({medicineBall:e.target.checked})}/> Tengo balón medicinal y zona de lanzamiento segura</label></aside></div>
         {calendarWarnings.length>0&&<div className="routine-calendar-warnings" role="status"><b>Tu selección se puede guardar. Avisos de carga y recuperación:</b>{calendarWarnings.map(w=><p key={w}>{w}</p>)}</div>}
       </>:<DayPicker label="Días de pesas · selección libre de 0 a 7" days={config.days} onChange={days=>patch({days})}/>}
-      <p className="muted">{config.sport==='boxing'?'Tus selecciones mandan. De 0 a 7 días por actividad, con coincidencias permitidas. Los bloques de físico A/B/C y las variantes de carrera se alternan de lunes a domingo; cada sesión tiene su registro.':'Con 1–3 días: cuerpo completo; 4: torso/pierna; 5: reparto mixto; 6: empuje/tirón/pierna; 7: se añade un día de accesorios. La carga alta se avisa sin bloquear.'}</p>
+      {daysPending&&<div className="notice" role="status"><b>Estos días todavía no se han aplicado a Mi día.</b><p>Guárdalos aquí para cambiar el calendario manteniendo tus ejercicios. Los cambios de nivel, material o estrategia se aplican al generar una propuesta nueva.</p><button className="button orange" disabled={disabled} onClick={()=>{if(plan){savePlan(reschedulePlan(plan,config,month));setEditing(false);setPreview(null)}}}><Check size={17}/> Aplicar días al calendario</button></div>}
+      <p className="muted">{config.sport==='boxing'?'De 0 a 7 días por actividad, con coincidencias permitidas. Pulsa «Aplicar días al calendario» para guardar un cambio de días. Si quieres cambiar también los ejercicios, prepara y guarda una propuesta nueva.':'Con 1–3 días: cuerpo completo; 4: torso/pierna; 5: reparto mixto; 6: empuje/tirón/pierna; 7: se añade un día de accesorios. La carga alta se avisa sin bloquear.'}</p>
       <label className="field"><span>Contexto para revisar con tu entrenador</span><textarea value={config.notes} maxLength={800} placeholder="Próxima competición, preferencias, carga técnica…" onChange={e=>patch({notes:e.target.value})}/><small>Estas notas se guardan; el generador no interpreta lesiones ni fechas de combate.</small></label>
       <label className="checkbox"><input type="checkbox" checked={config.limitation} onChange={e=>patch({limitation:e.target.checked})}/> Hay dolor, lesión o una limitación que requiere adaptación profesional</label>
       {error&&<p className="notice error" role="alert">{error}</p>}

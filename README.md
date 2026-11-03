@@ -47,7 +47,7 @@ RLS está activado y forzado en `journals`. Las políticas verifican `auth.uid()
 
 El correo predeterminado de Supabase es para pruebas y solo entrega a miembros del equipo del proyecto. Para el acceso de usuarios externos, configurar un proveedor SMTP propio en Authentication → Emails → SMTP Settings. No desactivar la confirmación de correo ni añadir deportistas como administradores de Supabase para evitar esta limitación.
 
-En Vercel crear el proyecto `raw-1-0`, framework Next.js, instalar con `npm ci` y compilar con `npm run build`. Configurar las dos variables de `.env.example` en cada entorno que se vaya a utilizar.
+El proyecto `raw-1-0` ya está creado en Vercel dentro de `raul1312-tech's projects`, plan Hobby, conectado a la rama `main` del repositorio privado. Las dos variables de `.env.example` están configuradas en Production y Preview. El despliegue inicial está pendiente de la verificación de identidad que Vercel solicita al propietario.
 
 En Supabase → Authentication → URL Configuration:
 
@@ -63,9 +63,11 @@ Para verificar el flujo completo, entrar con un correo autorizado, importar el J
 - Compilación Next.js y TypeScript correctos.
 - 12 pruebas automatizadas: menús, variedad, macros, restricciones, historial, límites y origen.
 - Verificación SQL real: aislamiento de propietarios, revisiones obsoletas y rechazo anónimo.
+- Asesores de seguridad y rendimiento de Supabase: 0 errores y 0 avisos tras corregir los permisos de la función interna de RLS automático.
 - Comprobación HTTP: `/` redirige al acceso; API sin sesión devuelve 401; escritura de otro origen devuelve 403; acceso directo anónimo a `journals` denegado.
 - Pendiente de comprobación con el usuario: correo de acceso, sesión real y sincronización desde dos dispositivos.
-- Pendiente de despliegue: conectar Vercel y configurar el servicio de correo para usuarios externos.
+- Pendiente de despliegue: completar la verificación de Vercel, comprobar el dominio resultante y configurar su retorno de autenticación.
+- Pendiente para usuarios externos: configurar SMTP propio.
 
 ## Importar datos previos
 

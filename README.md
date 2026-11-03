@@ -7,7 +7,8 @@ Aplicación privada de alimentación y entrenamiento. Next.js en Vercel y Supaba
 - Menús de lunes a domingo, cinco comidas por día y rotación de toda la semana.
 - Alimentación halal, exclusiones, cantidades y lista de compra.
 - Registro de comida, agua, peso, pasos, entrenamiento y sueño.
-- Acceso por enlace enviado al correo, sin contraseña.
+- Acceso con correo y contraseña, sin correo en cada inicio de sesión.
+- Alta con confirmación de correo y recuperación para crear/restablecer contraseña.
 - Guardado en Supabase, actualización cada 30 segundos y al volver a la ventana.
 - Protección frente a guardados simultáneos: una revisión antigua no sobrescribe una nueva.
 - Exportación e importación JSON con revisión antes de sustituir el historial.
@@ -49,7 +50,9 @@ El correo predeterminado de Supabase es para pruebas y solo entrega a miembros d
 
 El proyecto `raw-1-0` está desplegado en https://raw-1-0.vercel.app dentro de `raul1312-tech's projects`, plan Hobby, conectado a la rama `main` del repositorio privado. Las dos variables de `.env.example` están configuradas en Production y Preview.
 
-El proveedor de correo de pruebas permite 2 envíos por hora para todo el proyecto. El acceso distingue este límite del exceso de intentos y de una dirección no autorizada. Esperar a que se libere el cupo antes de pedir un enlace nuevo; abrirlo en el mismo navegador donde se solicitó (PKCE). SMTP propio queda pendiente por decisión del propietario.
+El proveedor de correo de pruebas permite 2 envíos por hora para todo el proyecto. El inicio de sesión con contraseña no envía correos. La confirmación inicial y la recuperación sí consumen ese cupo: esperar a que se libere antes de pedir un enlace nuevo y abrirlo en el mismo navegador donde se solicitó (PKCE). SMTP propio queda pendiente por decisión del propietario.
+
+Las cuentas anteriores, creadas por enlace, deben usar «No tengo contraseña / La he olvidado» una vez para establecer una contraseña. Una cuenta con sesión válida también puede abrir `/auth/password`. Esta ruta valida `getUser()` en el servidor; la contraseña se envía directamente a Supabase mediante `updateUser`, no se guarda en registros de la app. Los callbacks de correo terminan en esta pantalla protegida; quienes ya eligieron contraseña al registrarse pueden continuar a su plan. No se han desactivado la confirmación de correo ni RLS.
 
 En Supabase → Authentication → URL Configuration:
 

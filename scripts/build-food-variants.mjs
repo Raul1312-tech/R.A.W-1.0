@@ -33,6 +33,9 @@ for(const source of sources){
  if(!food||raw.obsolete===true||(raw.data_quality_errors_tags??[]).length||norm(raw.product_name_es).length<4||!/[a-z]{3}/.test(norm(raw.product_name_es))||/^\d+\s*(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\d*$/i.test(norm(raw.product_name_es))){stats.invalid++;continue;}
  // Avoid ambiguous products where the variant is missing from the name.
  if(/^(tortitas|pan|pasta|fruta|verduras|queso|leche|yogur|proteina)$/.test(norm(raw.product_name_es))){stats.invalid++;continue;}
+ // Reject obvious per-piece values mislabeled as per-100g in dry rice/corn
+ // cakes (e.g. 39 kcal), as well as incompatible/misidentified cake records.
+ if(/tortitas/.test(norm(raw.product_name_es))&&/arroz|maiz/.test(norm(raw.product_name_es))&&(food.k<300||food.k>600)){stats.invalid++;continue;}
  // Some source titles omit their chocolate coating or refer to a different
  // fried cake. Do not present a high-fat, ambiguously named cake as plain.
  if(/tortitas/.test(norm(raw.product_name_es))&&/arroz|maiz/.test(norm(raw.product_name_es))&&food.f>8&&!/choco|cacao|caramelo|yogur|queso|sesamo|semilla|cacahuete|almendra|coco/.test(norm(raw.product_name_es))){stats.invalid++;continue;}

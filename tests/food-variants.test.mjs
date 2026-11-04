@@ -32,6 +32,7 @@ test('user rice/corn/wholegrain/chocolate requests are instantly searchable with
  assert.equal(findFoods([{id:'test-cake',name:'Tortitas de arroz · El Granero Integral',unit:'g',k:380,p:7,c:80,f:2,allergens:[]}],'tostas arroz integral').length,0);
  for(const f of findFoods(variants,'tostas de arroz con chocolate'))assert.match(normalizeFood(f.name),/chocolate/);
  const ids=Object.values(manifest.coverage).flat();assert.equal(new Set(ids).size,ids.length);
+ for(const f of variants.filter(f=>/tortitas/.test(normalizeFood(f.name))&&/arroz|maiz/.test(normalizeFood(f.name))))assert.ok(f.k>=300&&f.k<=600,'Dry cake nutrition must be per 100 g: '+f.id);
  const plain=variants.find(f=>f.id===manifest.coverage.ricePlain[0]),chocolate=variants.find(f=>f.id===manifest.coverage.riceChocolate[0]);assert.notDeepEqual([plain.k,plain.p,plain.c,plain.f],[chocolate.k,chocolate.p,chocolate.c,chocolate.f]);
  const barcode=plain.id.slice(4);assert.deepEqual(findFoods(variants,barcode).map(f=>f.id),[plain.id]);
 });

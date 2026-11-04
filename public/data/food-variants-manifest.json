@@ -1,0 +1,56 @@
+{
+  "version": "2026-11-04",
+  "source": "Open Food Facts contributors",
+  "sourceUrl": "https://world.openfoodfacts.org",
+  "license": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "count": 1000,
+  "eligible": 1277,
+  "stats": {
+    "sourceRows": 3000,
+    "missingSpanish": 1146,
+    "invalid": 426,
+    "duplicateCode": 27,
+    "duplicateName": 124
+  },
+  "groups": {
+    "Bebidas y batidos": 121,
+    "Carnes y huevos": 42,
+    "Cereales y féculas": 200,
+    "Dulces y salsas": 111,
+    "Embutidos y fiambres": 48,
+    "Frutas": 22,
+    "Frutos secos, semillas y grasas": 87,
+    "Legumbres y vegetales proteicos": 48,
+    "Lácteos": 142,
+    "Otros": 12,
+    "Pescados y mariscos": 50,
+    "Platos preparados": 86,
+    "Verduras y hortalizas": 31
+  },
+  "coverage": {
+    "ricePlain": [
+      "off-8410376036046",
+      "off-8412229111573",
+      "off-8421691813281",
+      "off-8480024752420"
+    ],
+    "riceWhole": [
+      "off-8412170013551",
+      "off-8431876332438",
+      "off-8410376057782",
+      "off-8412016356552"
+    ],
+    "cornPlain": [
+      "off-8423207206754",
+      "off-8421691813267",
+      "off-8480024752390",
+      "off-3596710323210"
+    ],
+    "riceChocolate": [
+      "off-8423207209410",
+      "off-3560071469740",
+      "off-3560071469771",
+      "off-8423903039014"
+    ]
+  }
+}

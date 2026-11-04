@@ -3,9 +3,10 @@ import {useState} from 'react';
 import {Check,Utensils,Undo2,ArrowRight} from 'lucide-react';
 import {total,type Day,type Plan,type Profile} from './model';
 import {displayMeal,foodDayView,recordMeal,undoMeal} from './daily-food-model';
-import FoodGrid from './food-grid';
+import dynamic from 'next/dynamic';
 import {previousFoods} from './food-search';
 import {MenuMacros} from './weekly-menu';
+const FoodGrid=dynamic(()=>import('./food-grid'),{loading:()=><p role="status">Abriendo alimentos…</p>});
 
 export default function DailyMeals({day,plan,date,profile,disabled,onChange,onMenu}:{day:Day;plan?:Plan;date:string;profile:Profile;disabled:boolean;onChange:(day:Day)=>void;onMenu:()=>void}){
   const [editor,setEditor]=useState<number|null>(null);const [message,setMessage]=useState('');const [error,setError]=useState('');

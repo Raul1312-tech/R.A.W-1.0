@@ -1,0 +1,23 @@
+R.A.W food variants catalog, version 2026-11-04
+
+Source: Open Food Facts contributors, https://world.openfoodfacts.org
+Database: Open Database License (ODbL) 1.0
+https://opendatacommons.org/licenses/odbl/1-0/
+Individual database contents: Database Contents License (DbCL) 1.0
+https://opendatacommons.org/licenses/dbcl/1-0/
+
+The derived product database is provided under the same ODbL terms.
+Changes: selected 1,000 distinct products with Spanish names and complete
+macronutrients, normalized display fields, grouped products for navigation,
+removed incomplete/duplicate records. No product images are included.
+
+Complete derived database: /data/food-variants.json
+Retained public source fields: /data/food-variants-provenance.json
+Selection metadata: /data/food-variants-manifest.json
+
+Community data may be incomplete or outdated. Check the package label for
+nutrition, ingredients, allergens and halal certification. No suitability or
+certification is implied by inclusion in this food logging catalog.
+
+The USDA reference dataset is separate and not part of this derivative.
+No private user data is included in these downloads.

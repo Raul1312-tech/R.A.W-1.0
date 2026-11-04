@@ -1,12 +1,14 @@
 'use client';
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ShieldCheck,Mail,ArrowLeft,Dumbbell,Check} from 'lucide-react';
 import {createClient} from '../../lib/supabase/client';
 import {loginErrorMessage} from '../../lib/auth-error';
-import {submitPasswordAuth,type LoginMode} from '../../lib/password-auth';
+import {canRequestAuthEmail,publishedLoginUrl,submitPasswordAuth,type LoginMode} from '../../lib/password-auth';
 
-export default function Login({configured}:{configured:boolean}){
-  const [mode,setMode]=useState<LoginMode>('signin');
+export default function Login({configured,initialMode='signin'}:{configured:boolean;initialMode?:LoginMode}){
+  const [mode,setMode]=useState<LoginMode>(initialMode);
+  const [emailOrigin,setEmailOrigin]=useState<boolean|null>(null);
+  useEffect(()=>{setEmailOrigin(canRequestAuthEmail(window.location.origin))},[]);
   const [email,setEmail]=useState('');
   const [password,setPassword]=useState('');
   const [confirmation,setConfirmation]=useState('');
@@ -39,13 +41,15 @@ export default function Login({configured}:{configured:boolean}){
         </>:<>
           <h2>{mode==='signin'?'Vuelve a tu ritmo.':mode==='signup'?'Empieza aquí.':'Crea tu contraseña.'}</h2>
           <p>{mode==='signin'?'Entra con tu correo y contraseña. Tu plan te espera.':mode==='signup'?'Crea tu espacio privado. Confirmarás tu correo una sola vez.':'Si antes entrabas con un enlace o has olvidado tu contraseña, te enviaremos un correo para elegir una nueva.'}</p>
+          {emailOrigin===false&&<div className="notice"><strong>Tu cuenta, en la web publicada.</strong><p>Para crear una cuenta o recuperar tu contraseña, continúa en raw-1-0.vercel.app. Así el correo no te enviará a una versión local que puede estar apagada.</p><a className="button orange full" href={publishedLoginUrl(mode)}>Continuar en la web publicada <ArrowUpRight size={18}/></a></div>}
           {mode==='recover'&&<p className="notice">Este paso necesita un correo una sola vez. Si has agotado el límite de envíos, espera a que se libere el cupo antes de solicitarlo.</p>}
-          <form onSubmit={submit}>
+          {mode!=='signin'&&emailOrigin===true&&<p className="notice">Solicita el correo y abre su enlace en el mismo navegador. Si lees el correo en Chrome, abre también esta página en Chrome antes de continuar.</p>}
+          {(mode==='signin'||emailOrigin===true)&&<form onSubmit={submit}>
             <label className="field"><span>Correo electrónico</span><input type="email" autoComplete="email" placeholder="tu@correo.com" value={email} required maxLength={254} onChange={e=>setEmail(e.target.value)} disabled={busy||!configured}/></label>
             {mode!=='recover'&&<label className="field"><span>Contraseña</span><input type="password" autoComplete={mode==='signup'?'new-password':'current-password'} value={password} required minLength={mode==='signup'?12:undefined} maxLength={128} onChange={e=>setPassword(e.target.value)} disabled={busy||!configured}/>{mode==='signup'&&<small>Al menos 12 caracteres. Usa una contraseña que no utilices en otras webs.</small>}</label>}
             {mode==='signup'&&<label className="field"><span>Repite la contraseña</span><input type="password" autoComplete="new-password" value={confirmation} required maxLength={128} onChange={e=>setConfirmation(e.target.value)} disabled={busy||!configured}/></label>}
             <button className="button orange full" disabled={busy||!configured}>{busy?'Un momento…':mode==='signin'?'Entrar':mode==='signup'?'Crear cuenta':'Enviar correo para crear contraseña'}<ArrowUpRight size={18}/></button>
-          </form>
+          </form>}
           <div className="auth-links">
             {mode==='signin'?<><button className="text-button" disabled={busy} onClick={()=>changeMode('recover')}>No tengo contraseña / La he olvidado</button><button className="text-button" disabled={busy} onClick={()=>changeMode('signup')}>Soy nuevo · Crear cuenta</button></>:<button className="text-button" disabled={busy} onClick={()=>changeMode('signin')}><ArrowLeft size={14}/> Ya tengo cuenta · Entrar</button>}
           </div>

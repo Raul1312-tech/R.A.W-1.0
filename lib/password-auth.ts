@@ -1,6 +1,9 @@
 import type {SupabaseClient} from '@supabase/supabase-js';
 
 export type LoginMode='signin'|'signup'|'recover';
+export const AUTH_ORIGIN='https://raw-1-0.vercel.app';
+export function canRequestAuthEmail(origin:string){return origin===AUTH_ORIGIN}
+export function publishedLoginUrl(mode:LoginMode){return `${AUTH_ORIGIN}/login?mode=${mode}`}
 export function validateNewPassword(password:string,confirmation:string){
   if(password.length<12||password.length>128)throw {code:'password_length'};
   if(password!==confirmation)throw {code:'password_mismatch'};
@@ -12,13 +15,16 @@ export async function submitPasswordAuth(
   input:{mode:LoginMode;email:string;password:string;confirmation:string;origin:string},
 ):Promise<'signed-in'|'check-email'>{
   const email=input.email.trim();
-  const callback=new URL('/auth/callback',input.origin).href;
   if(input.mode==='signin'){
     const {data,error}=await auth.signInWithPassword({email,password:input.password});
     if(error)throw error;
     if(!data.session)throw {code:'session_not_found'};
     return 'signed-in';
   }
+  // Start the flow on the published origin, not just the redirect: PKCE needs
+  // the verifier cookie in the same browser and origin as the callback.
+  if(!canRequestAuthEmail(input.origin))throw {code:'email_origin_required'};
+  const callback=new URL('/auth/callback',AUTH_ORIGIN).href;
   if(input.mode==='recover'){
     const {error}=await auth.resetPasswordForEmail(email,{redirectTo:callback});
     if(error)throw error;

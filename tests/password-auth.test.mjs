@@ -1,11 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {submitPasswordAuth,validateNewPassword} from '../lib/password-auth.ts';
+import {submitPasswordAuth,validateNewPassword,publishedLoginUrl} from '../lib/password-auth.ts';
 import {loginErrorMessage} from '../lib/auth-error.ts';
 
 const input={mode:'signin',email:' person@example.test ',password:'  a long test password  ',confirmation:'  a long test password  ',origin:'https://raw-1-0.vercel.app'};
 const unexpected=async()=>assert.fail('Unexpected auth operation');
 const auth={signInWithPassword:unexpected,signUp:unexpected,resetPasswordForEmail:unexpected};
+
+test('email flows must start on the published origin before sending or storing a verifier',async()=>{
+  for(const origin of ['http://127.0.0.1:5185','http://localhost:3000','https://preview.vercel.app','https://raw-1-0.vercel.app.evil.test','http://raw-1-0.vercel.app']){
+    for(const mode of ['signup','recover']){
+      await assert.rejects(submitPasswordAuth(auth,{...input,origin,mode}),{code:'email_origin_required'});
+    }
+  }
+  assert.equal(publishedLoginUrl('recover'),'https://raw-1-0.vercel.app/login?mode=recover');
+});
+
+test('existing password sign-in remains available locally without sending email',async()=>{
+  assert.equal(await submitPasswordAuth({...auth,signInWithPassword:async()=>({data:{session:{}},error:null})},{...input,origin:'http://127.0.0.1:5185'}),'signed-in');
+});
 
 test('password login obtains a session without sending mail or trimming the password',async()=>{
   let calls=0;

@@ -1,5 +1,21 @@
-import {mealNames,total,type Day,type DailyFoodPlan,type Item,type Macro,type Meal,type MealRecord,type Plan} from './model.ts';
+import {generatePlan,mealNames,total,type Profile,type Day,type DailyFoodPlan,type Item,type Macro,type Meal,type MealRecord,type Plan} from './model.ts';
 export const displayMeal=(label:string)=>label==='Primera comida'?'Desayuno':label==='Tentempié'?'Almuerzo':label;
+/** Replace a pending meal only in this day's snapshot, keeping all logged food intact. */
+export function refreshDailyMeal(day:Day,plan:Plan|undefined,date:string,slot:number,profile:Profile):Day{
+  const snapshot=foodSnapshot(day,plan,date);
+  if(!snapshot||!Number.isInteger(slot)||!snapshot.meals[slot])throw new Error('No hay una comida prevista para actualizar.');
+  if(snapshot.records.some(r=>r.slot===slot))throw new Error('Deshaz el registro antes de cambiar esta comida.');
+  const sourceSlot=snapshot.meals.length===4?[0,2,3,4][slot]:slot;
+  const old=snapshot.meals[slot];
+  const previousMeals=Array.from({length:5},(_,i)=>i===sourceSlot?old:snapshot.meals[Math.min(i,snapshot.meals.length-1)]);
+  const previous:Plan={id:snapshot.planId,created:'',seed:plan?.seed??0,target:day.target,meals:previousMeals,week:Array.from({length:7},()=>({day:'',meals:previousMeals}))};
+  const replacement=generatePlan(profile,Math.floor(Math.random()*1000000),previous)?.meals[sourceSlot];
+  if(!replacement)throw new Error('No hay otra opción compatible con tus restricciones. Puedes registrar una alternativa.');
+  const ratio=total(old.items).k/total(replacement.items).k;
+  const meal={...replacement,items:replacement.items.map(it=>({...it,grams:Math.max(1,Math.round(it.grams*ratio))}))};
+  if(meal.items.some(it=>it.grams>3000))throw new Error('No se han podido ajustar las cantidades de esta opción.');
+  return {...day,foodPlan:{...snapshot,meals:snapshot.meals.map((m,i)=>i===slot?meal:m)}};
+}
 export function foodSnapshot(day:Day,plan:Plan|undefined,date:string):DailyFoodPlan|undefined{
   if(day.foodPlan)return day.foodPlan;
   if(!plan||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;

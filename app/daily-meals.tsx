@@ -2,9 +2,9 @@
 import {useEffect,useRef,useState} from 'react';
 import LateralCarousel from './lateral-carousel';
 import {nextRemaining} from './carousel-model';
-import {Check,Utensils,Undo2,ArrowRight} from 'lucide-react';
+import {Check,Utensils,Undo2,ArrowRight,RefreshCw} from 'lucide-react';
 import {total,type Day,type Plan,type Profile} from './model';
-import {displayMeal,foodDayView,recordMeal,undoMeal} from './daily-food-model';
+import {displayMeal,foodDayView,recordMeal,undoMeal,refreshDailyMeal} from './daily-food-model';
 import dynamic from 'next/dynamic';
 import {previousFoods} from './food-search';
 import {MenuMacros} from './weekly-menu';
@@ -27,7 +27,7 @@ export default function DailyMeals({day,plan,date,profile,disabled,onChange,onMe
         {editor===slot?<FoodGrid initial={record?actual:[]} savedFoods={previousFoods(profile)} planned={compatible?meal.items:undefined} disabled={disabled||leaving!==null} onCancel={()=>setEditor(null)} onSave={items=>run(()=>recordMeal(day,plan,date,slot,'alternative',items),'Comida guardada. He revisado las cantidades pendientes.',slot)}/>:<>
           {record?<details className="meal-recorded-details"><summary>Ver lo registrado</summary>{description}</details>:description}
           {!compatible&&!record&&<p className="notice">Este plato guardado no encaja con tus exclusiones actuales. Registra una alternativa o revisa tu menú.</p>}
-          <div className="daily-meal-actions">{record?<><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>setEditor(slot)}>Editar lo que he comido</button><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>run(()=>undoMeal({...day,foodPlan:snapshot},slot),'Registro deshecho. Se han recalculado las comidas pendientes.')}><Undo2 size={15}/> Deshacer</button></>:<><button className="button orange" disabled={disabled||leaving!==null||!compatible} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'planned'),label+' registrada.',slot)}><Check size={20}/> Lo he comido</button><button className="button outline" disabled={disabled||leaving!==null} onClick={()=>setEditor(slot)}><Utensils size={17}/> He comido otra cosa</button><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'skipped'),label+' marcada como no realizada.',slot)}>No he hecho esta comida</button></>}</div>
+          {!record&&<button className="button outline" disabled={disabled||leaving!==null} aria-label={'Actualizar '+label.toLowerCase()+' de este día'} onClick={()=>run(()=>refreshDailyMeal(day,plan,date,slot,profile),label+' actualizada solo para este día.')}><RefreshCw size={17}/> Actualizar esta comida</button>}<div className="daily-meal-actions">{record?<><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>setEditor(slot)}>Editar lo que he comido</button><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>run(()=>undoMeal({...day,foodPlan:snapshot},slot),'Registro deshecho. Se han recalculado las comidas pendientes.')}><Undo2 size={15}/> Deshacer</button></>:<><button className="button orange" disabled={disabled||leaving!==null||!compatible} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'planned'),label+' registrada.',slot)}><Check size={20}/> Lo he comido</button><button className="button outline" disabled={disabled||leaving!==null} onClick={()=>setEditor(slot)}><Utensils size={17}/> He comido otra cosa</button><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'skipped'),label+' marcada como no realizada.',slot)}>No he hecho esta comida</button></>}</div>
         </>}
       </article>;
   }

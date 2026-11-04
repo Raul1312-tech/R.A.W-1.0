@@ -8,7 +8,7 @@ import {ExerciseExplanation,useExerciseCatalog} from './exercise-explanation';
 export default function DailyTraining({data,date,disabled,onChange,onLog,onPlan}:{data:TrainingData;date:string;disabled:boolean;onChange:(data:TrainingData)=>void;onLog:(log:WorkoutLog)=>void;onPlan:()=>void}){
   const catalog=useExerciseCatalog();const sessions=dailySessions(data,date);const plan=planForDate(data,date);const day=weekdayOf(date);
   const logs=data.logs.filter(l=>l.date===date);
-  return <section className="daily-training">
+  return <section className="daily-training" id="daily-training-log">
     <div className="section-head"><div><span className="eyebrow">MI DÍA / ENTRENAMIENTO</span><h2>Hoy toca pasar a la acción.</h2><p>{new Date(date+'T12:00:00Z').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})} · {sessions.length} sesiones de físico / carrera</p></div><button className="text-button" onClick={onPlan}>Ver / editar mi calendario <ArrowUpRight size={17}/></button></div>
     {plan&&(plan.config.technicalDays.includes(day)||plan.config.sparringDays.includes(day))&&<p className="notice">También está previsto {plan.config.sparringDays.includes(day)?'sparring':'boxeo técnico'}. Sigue a tu entrenador y registra sus minutos en «Registro → Tu actividad».</p>}
     {!sessions.length&&<div className="card calendar-rest"><Dumbbell size={25}/><h3>{plan?'Sin físico ni carrera para esta fecha.':'Aún no hay un plan para este mes.'}</h3><p>{plan?'La fecha seleccionada no tiene una sesión física programada. Puedes cambiarla desde el calendario.':'Diseña tu calendario en Mi rutina para tener aquí el entrenamiento de cada día.'}</p><button className="button outline" onClick={onPlan}>Abrir Mi rutina</button></div>}

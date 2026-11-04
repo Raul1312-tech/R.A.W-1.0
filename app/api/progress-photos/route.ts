@@ -1,12 +1,14 @@
 import {createClient} from '../../../lib/supabase/server';
 import {configured} from '../../../lib/supabase/config';
 import {reply,sameOrigin} from '../../../lib/request';
+import {hasPrivateAccess} from '../../../lib/password-auth';
 import {PHOTO_BUCKET,validProfile,validPhotoDate,validView,photoName,parsePhotoName,readPhotoBody} from '../../../lib/progress-photos';
 export const dynamic='force-dynamic';
 async function context(request:Request){
   if(!configured())return reply({error:'El álbum privado aún no está configurado.'},503);
   const profile=new URL(request.url).searchParams.get('profile')??'';if(!validProfile(profile))return reply({error:'Perfil no válido.'},400);
   const db=await createClient();const {data:{user},error}=await db.auth.getUser();if(error||!user||user.is_anonymous)return reply({error:'Inicia sesión para abrir tu álbum privado.'},401);
+  if(!hasPrivateAccess(user))return reply({error:'Esta cuenta no tiene acceso a la app privada.'},403);
   const {data:journal,error:journalError}=await db.from('journals').select('payload').eq('owner',user.id).maybeSingle();
   if(journalError)return reply({error:'No se pudo comprobar tu perfil.'},503);
   if(!journal?.payload?.profiles?.some((p:{id:string})=>p.id===profile))return reply({error:'Guarda este perfil antes de añadir fotos.'},404);

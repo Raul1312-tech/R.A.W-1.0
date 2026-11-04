@@ -40,8 +40,8 @@ export default function Login({configured,initialMode='signin'}:{configured:bool
           <button className="button soft full" onClick={()=>changeMode('signin')}><ArrowLeft size={16}/> Volver al acceso</button>
         </>:<>
           <h2>{mode==='signin'?'Vuelve a tu ritmo.':mode==='signup'?'Empieza aquí.':'Crea tu contraseña.'}</h2>
-          <p>{mode==='signin'?'Entra con tu correo y contraseña. Tu plan te espera.':mode==='signup'?'Crea tu espacio privado. Confirmarás tu correo una sola vez.':'Si antes entrabas con un enlace o has olvidado tu contraseña, te enviaremos un correo para elegir una nueva.'}</p>
-          {emailOrigin===false&&<div className="notice"><strong>Tu cuenta, en la web publicada.</strong><p>Para crear una cuenta o recuperar tu contraseña, continúa en raw-1-0.vercel.app. Así el correo no te enviará a una versión local que puede estar apagada.</p><a className="button orange full" href={publishedLoginUrl(mode)}>Continuar en la web publicada <ArrowUpRight size={18}/></a></div>}
+          <p>{mode==='signin'?'Acceso exclusivo para la cuenta autorizada. Entra con tu correo y contraseña.':'Si antes entrabas con un enlace o has olvidado tu contraseña, te enviaremos un correo para elegir una nueva.'}</p>
+          {emailOrigin===false&&<div className="notice"><strong>Tu cuenta, en la web publicada.</strong><p>Para recuperar tu contraseña, continúa en raw-1-0.vercel.app. Así el correo no te enviará a una versión local que puede estar apagada.</p><a className="button orange full" href={publishedLoginUrl(mode)}>Continuar en la web publicada <ArrowUpRight size={18}/></a></div>}
           {mode==='recover'&&<p className="notice">Este paso necesita un correo una sola vez. Si has agotado el límite de envíos, espera a que se libere el cupo antes de solicitarlo.</p>}
           {mode!=='signin'&&emailOrigin===true&&<p className="notice">Solicita el correo y abre su enlace en el mismo navegador. Si lees el correo en Chrome, abre también esta página en Chrome antes de continuar.</p>}
           {(mode==='signin'||emailOrigin===true)&&<form onSubmit={submit}>
@@ -51,7 +51,7 @@ export default function Login({configured,initialMode='signin'}:{configured:bool
             <button className="button orange full" disabled={busy||!configured}>{busy?'Un momento…':mode==='signin'?'Entrar':mode==='signup'?'Crear cuenta':'Enviar correo para crear contraseña'}<ArrowUpRight size={18}/></button>
           </form>}
           <div className="auth-links">
-            {mode==='signin'?<><button className="text-button" disabled={busy} onClick={()=>changeMode('recover')}>No tengo contraseña / La he olvidado</button><button className="text-button" disabled={busy} onClick={()=>changeMode('signup')}>Soy nuevo · Crear cuenta</button></>:<button className="text-button" disabled={busy} onClick={()=>changeMode('signin')}><ArrowLeft size={14}/> Ya tengo cuenta · Entrar</button>}
+            {mode==='signin'?<button className="text-button" disabled={busy} onClick={()=>changeMode('recover')}>No tengo contraseña / La he olvidado</button>:<button className="text-button" disabled={busy} onClick={()=>changeMode('signin')}><ArrowLeft size={14}/> Ya tengo cuenta · Entrar</button>}
           </div>
           <ul className="auth-checks"><li><Check size={15}/> Acceso con correo y contraseña</li><li><Check size={15}/> Historial sincronizado entre dispositivos</li><li><Check size={15}/> Solo tú accedes a tus perfiles y registros</li></ul>
         </>}

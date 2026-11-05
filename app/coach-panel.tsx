@@ -19,6 +19,7 @@ export default function CoachPanel({profile:p,date,demo,disabled,unsaved,onToggl
  const [review,setReview]=useState<Review|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[consent,setConsent]=useState(false);
  const attempted=useRef('');const enabled=p.preparation?.coach?.enabled===true;
  const current=review?.signature===context.signature?review:null;
+ useEffect(()=>{if(p.preparation?.coach?.weekly){setError('');setReview(null)}},[p.preparation?.coach?.weekly]);
  useEffect(()=>{
   if(!enabled||p.preparation?.coach?.weekly||demo||disabled||unsaved||!p.confirmed||date!==dateKey()||attempted.current===context.signature)return;
   const controller=new AbortController();const id=setTimeout(()=>{

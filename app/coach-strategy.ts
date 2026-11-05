@@ -85,6 +85,6 @@ export function applyStrategy(p:Profile,date:string):Profile{
    next.days[dt]={...(next.days[dt]??emptyDay(next)),target:menu.target,foodPlan:{planId:menu.id,meals,labels:['Primera comida','Tentempié','Comida','Merienda','Cena'],records:[],autoAdjust:true}};
   }
  }
- next.preparation={...next.preparation,coach:{enabled:p.preparation?.coach?.enabled??false,events:[...(p.preparation?.coach?.events??[]),{date,at:new Date().toISOString(),before:0,after:0,strategy:true,reason:proposal.reasons.join(' ').slice(0,300)}].slice(-30)}};
+ next.preparation={...next.preparation,coach:{...p.preparation?.coach,enabled:p.preparation?.coach?.enabled??false,events:[...(p.preparation?.coach?.events??[]),{date,at:new Date().toISOString(),before:0,after:0,strategy:true,reason:proposal.reasons.join(' ').slice(0,300)}].slice(-30)}};
  return next;
 }

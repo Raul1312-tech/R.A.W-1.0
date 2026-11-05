@@ -1,0 +1,15 @@
+# Revisión semanal independiente del navegador
+
+La opción `preparation.coach.weekly` es voluntaria y requiere también `coach.enabled` y perfil confirmado. El servidor la comprueba al encolar, reclamar y completar el trabajo. Al desactivarla, los trabajos pendientes se cancelan y no se publican nuevos resultados. Una petición a OpenAI ya iniciada no puede retirarse retroactivamente.
+
+Supabase Cron ejecuta el despachador cada hora. Los lunes a las 08:00 de Europe/Madrid encola una revisión por perfil y semana; el horario local respeta el cambio de hora. La clave única impide duplicados. Drena veinte trabajos por pasada; puede retrasarse si hay cola. Reintenta fallos de infraestructura un máximo de tres veces. Con la app o base de datos pausada/indisponible no se garantiza entrega puntual. No es una automatización del chat de Codex.
+
+El trabajo llama por HTTPS al servidor Vercel con una capacidad aleatoria específica del trabajo. El token nunca se guarda en la tabla visible al usuario. Las funciones públicas son SECURITY INVOKER y delegan en funciones privadas con search_path vacío y validación de token, estado, plazo y consentimiento. No se distribuye una clave service-role a Vercel. La concesión de trabajo es atómica; no es una API para enumerar cuentas.
+
+El trabajador reutiliza el coordinador y la API OpenAI existente. Guarda hechos, motivos y acción en una tabla con RLS por propietario, nunca modifica el diario. Si OpenAI falla se guarda una revisión basada en reglas, identificada como tal, que propone mantener el plan. Las revisiones semanales son adicionales al presupuesto de consultas diarias; al activar esta modalidad, el cliente deja de lanzar revisiones automáticas al abrir.
+
+Al volver a Mi día, se consulta la última revisión no archivada (sin rescatar revisiones antiguas después de archivarla). La propuesta muestra su fecha y por qué. Su vista previa exige otra acción del usuario y se calcula sobre los datos actuales. No traslada ajustes diarios de una fecha a otra, caduca a los siete días y vuelve a validar elegibilidad y firma antes de aplicar. Archivar una revisión no modifica el plan. El servidor conserva una copia privada; otros usuarios no pueden verla.
+
+Verificación: pruebas de resultados y caducidad; pruebas SQL transaccionales con usuarios ficticios y rollback para token incorrecto, reclamación duplicada, aislamiento de propietario y permiso de archivar. Cron activo comprobado. Cola protegida con RLS denegatorio y sin permisos de tabla para clientes. `pg_net` permanece instalado en su ubicación original: el auditor avisa por su namespace público; su esquema `net` y sus funciones no conceden acceso a anon/authenticated. La reinstalación fue rechazada por revisión automática y no se ejecutó.
+
+Referencias: [Supabase pg_net](https://supabase.com/docs/guides/database/extensions/pg_net), [programación con Cron](https://supabase.com/docs/guides/functions/schedule-functions), [aviso de ubicación de extensiones](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public).

@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newProfile} from '../app/model.ts';
+import {coachContext} from '../app/coach-model.ts';
+import {weeklyResult,currentWeeklyAction,weeklyReviewSchema} from '../lib/coach-weekly.ts';
+import {coachSettings} from '../app/coach-schema.ts';
+const date='2026-11-09';
+test('weekly consent is explicit and survives validation',()=>{assert.equal(coachSettings.parse({enabled:true}).weekly,undefined);assert.equal(coachSettings.parse({enabled:true,weekly:true}).weekly,true);});
+test('stored review contains explanations but no personal identity or notes',()=>{const p=newProfile('Private name');p.notes='do not send';p.health='private diagnosis';const c=coachContext(p,date);const r=weeklyResult(p,date,{priority:[c.facts[0].id],action:'keep'},'ai');assert.ok(weeklyReviewSchema.safeParse(r).success);assert.ok(r.facts.length);assert.ok(!JSON.stringify(r).includes('Private name'));assert.ok(!JSON.stringify(r).includes('private diagnosis'));});
+test('daily proposal never rolls into a different day',()=>{const p=newProfile('test'),c=coachContext(p,date);const r=weeklyResult(p,date,{priority:[c.facts[0].id],action:'keep'},'ai');assert.equal(currentWeeklyAction({...r,choice:{...r.choice,action:'fuel'}},p,'2026-11-10'),null);});
+test('old weekly review expires and unavailable actions are rejected',()=>{const p=newProfile('test'),c=coachContext(p,date);const r=weeklyResult(p,date,{priority:[c.facts[0].id],action:'keep'},'rules');assert.equal(currentWeeklyAction(r,p,'2026-11-16'),null);assert.equal(currentWeeklyAction({...r,choice:{...r.choice,action:'strategy'}},p,date),null);});

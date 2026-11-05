@@ -70,7 +70,7 @@ export function applyCoachAction(p:Profile,date:string,signature:string,action:C
   const events=[...(next.preparation?.coach?.events??[])];
   if(preview.training)events.pop();
   events.push({date,at:new Date().toISOString(),before:preview.training?.seriesBefore??0,after:preview.training?.seriesAfter??0,foodAdjusted:true,trainingAdjusted:!!preview.training,reason:'Ajuste aceptado: porciones pendientes hasta ±10 % hacia el objetivo guardado; compra mensual sincronizada. Se conserva el registro y no cambian agua, sal ni suplementos.'});
-  next={...next,days:{...next.days,[date]:preview.food.day},preparation:{...next.preparation,coach:{enabled:p.preparation?.coach?.enabled??false,events:events.slice(-30)}}};
+  next={...next,days:{...next.days,[date]:preview.food.day},preparation:{...next.preparation,coach:{...p.preparation?.coach,enabled:p.preparation?.coach?.enabled??false,events:events.slice(-30)}}};
  }
  return next;
 }
@@ -86,5 +86,5 @@ export function easeCoachDay(p:Profile,date:string,signature:string):Profile{
  let before=0,after=0;
  const sessions=entries.map(({session,pinned})=>{if(pinned)return session;return {...session,exercises:session.exercises.map(e=>{before+=e.sets;const sets=Math.max(1,e.sets-1);after+=sets;return {...e,sets}})}});
  const next=editCalendarDay(plan,date.slice(0,7),date,sessions,'date');
- return {...p,workouts:{...data,plans:[...data.plans.filter(x=>x.id!==next.id),next].slice(-12)},preparation:{...p.preparation,coach:{enabled:p.preparation?.coach?.enabled??false,events:[...(p.preparation?.coach?.events??[]),{date,at:new Date().toISOString(),before,after,reason:'Señales de recuperación registradas. Has elegido una serie menos por ejercicio pendiente, sin cambiar pesos, repeticiones, descansos ni alimentación.'}].slice(-30)}}};
+ return {...p,workouts:{...data,plans:[...data.plans.filter(x=>x.id!==next.id),next].slice(-12)},preparation:{...p.preparation,coach:{...p.preparation?.coach,enabled:p.preparation?.coach?.enabled??false,events:[...(p.preparation?.coach?.events??[]),{date,at:new Date().toISOString(),before,after,reason:'Señales de recuperación registradas. Has elegido una serie menos por ejercicio pendiente, sin cambiar pesos, repeticiones, descansos ni alimentación.'}].slice(-30)}}};
 }

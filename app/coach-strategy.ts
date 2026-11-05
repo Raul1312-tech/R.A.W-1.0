@@ -77,6 +77,7 @@ export function applyStrategy(p:Profile,date:string):Profile{
  }
  if(proposal.menu&&proposal.foodDates.length){
   const menu=proposal.menu;
+  next.plans=[...next.plans,menu].slice(-36);
   next.preparation={...next.preparation,energyTarget:proposal.energyAfter};
   if(!next.days[date])next.days[date]=emptyDay(p);
   for(const dt of proposal.foodDates){

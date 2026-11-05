@@ -1,5 +1,15 @@
 # Coordinador: propuestas conectadas
 
+## Estrategia semanal (6 de noviembre de 2026)
+
+La acción `strategy` amplía las acciones diarias descritas más abajo. Regenera las sesiones futuras a partir del catálogo y configuración del usuario (deporte, nivel, material, prioridad, días físicos y carrera), con fase base, desarrollo o descarga. La IA elige entre las alternativas calculadas; no inventa libremente una prescripción. Tres sesiones completas con RPE ≤7 permiten plantear desarrollo. Fatiga registrada o competición próxima orientan a descarga. El incremento de series por sesión se limita al 20 %; no se infieren kilos de trabajo.
+
+Para modificar energía exige al menos tres pesos en cada semana de los últimos catorce días y diez días completos con ingesta cercana al objetivo, que además debe ser comparable al actual. Compara medias semanales, descarta fluctuaciones internas superiores al 4 % y aplica pasos máximos de 150 kcal y 5 %. Los intervalos orientativos de progreso son 0,1–0,3 % semanal en ganancia, −0,25 a −0,5 % en pérdida y ±0,15 % en mantenimiento. Son reglas de producto, no límites clínicos universales. No se baja energía con fatiga, IMC inferior a 20, pesaje en los próximos catorce días o categoría que exigiría una pérdida superior al 0,5 % semanal. El mínimo estimado combina metabolismo basal y mantenimiento, pero no estima disponibilidad energética individual.
+
+La propuesta empieza mañana y cubre siete días. Mantiene días históricos, sesiones iniciadas, fechas de calendario personalizadas y fotos de comidas ya fijadas. Conserva platos habituales, muestra los menús completos y advierte si estos se alejan del nuevo objetivo. Actualiza el objetivo energético de referencia y guarda fotos diarias de los nuevos menús para que la compra mensual use las mismas cantidades. No añade suplementos ni manipula agua o sal. Una estrategia aceptada impide aceptar otra durante siete días; después se vuelven a exigir datos suficientes. Los menús mensuales fuera del periodo propuesto no se reescriben automáticamente y deben revisarse en la siguiente planificación.
+
+Referencias de contexto: [AIS, Making Weight](https://www.ausport.gov.au/ais/position_statements/making-weight-in-weight-category-sports), [Garthe et al., 2011](https://pubmed.ncbi.nlm.nih.gov/21558571/), [revisión de puesta a punto en fuerza](https://pmc.ncbi.nlm.nih.gov/articles/PMC7552788/). La evidencia orienta la pérdida progresiva y reducción de volumen; no valida este algoritmo ni permite equiparar datos de powerlifting con una prescripción individual de boxeo.
+
 ## Alcance de esta versión
 
 El servidor carga el perfil del usuario autenticado. Calcula alternativas válidas y envía a OpenAI únicamente señales agregadas, hechos y efectos numéricos de esas alternativas. Structured Outputs limita la respuesta a identificadores de hechos y una acción. Tanto cliente como servidor validan que la acción siga siendo admisible.

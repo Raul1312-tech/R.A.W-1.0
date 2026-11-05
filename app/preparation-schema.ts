@@ -1,10 +1,12 @@
 import {z} from 'zod';
+import {coachSettings} from './coach-schema.ts';
 const num=(a:number,b:number)=>z.number().finite().min(a).max(b);
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const food=z.object({id:z.string().max(100),name:z.string().max(120),unit:z.string().max(120),allergens:z.array(z.string().max(60)).max(20),k:num(0,10000),p:num(0,1000),c:num(0,2000),f:num(0,1000),group:z.string().max(60).optional()});
 const meal=z.object({name:z.string().max(150),prep:z.string().max(1000).optional(),items:z.array(z.object({food,grams:num(.1,3000)})).min(1).max(20)});
 export const competitionSchema=z.object({fight:z.string().datetime({offset:true}),weighIn:z.string().datetime({offset:true}),weight:num(30,250),taper:z.boolean(),notes:z.string().max(1200)}).refine(c=>Date.parse(c.weighIn)<=Date.parse(c.fight),'El pesaje debe ser anterior al combate.');
 export const preparationSchema=z.object({
+  coach:coachSettings.optional(),
   favorites:z.array(z.object({id:z.string().max(100),slot:num(0,4).int(),meal,repeat:z.boolean()})).max(40).optional(),
   supplements:z.array(z.object({id:z.string().max(100),name:z.string().min(1).max(100),kind:z.enum(['protein','creatine']),timing:z.enum(['breakfast','postworkout','evening']),amount:num(.1,200),unit:z.enum(['g','capsules']),gramsPerUnit:num(.01,100),k:num(0,1000),p:num(0,100),c:num(0,100),f:num(0,100),allergens:z.array(z.string().max(60)).max(20)})).max(12).optional(),
   monthlyMenus:z.array(z.object({month:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),created:z.string().datetime(),days:z.array(z.object({date,meals:z.array(meal).min(4).max(5)})).min(28).max(31)})).max(6).optional(),

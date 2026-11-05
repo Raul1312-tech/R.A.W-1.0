@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newProfile,emptyDay} from '../app/model.ts';
+import {defaultTrainingConfig,generateTrainingPlan} from '../app/training-model.ts';
+import {dailySessions} from '../app/training-calendar-model.ts';
+import {coachContext,easeCoachDay,validateCoachChoice} from '../app/coach-model.ts';
+const date='2026-11-09';
+function athlete(){const p=newProfile('Secret name');p.confirmed=true;p.days[date]={...emptyDay(p),sleep:5};p.days['2026-11-08']={...emptyDay(p),sleep:5};p.workouts={plans:[{...generateTrainingPlan(defaultTrainingConfig()),month:'2026-11'}],logs:[]};return p;}
+test('missing data is missing, not recovery inferred; no identifying data sent',()=>{const p=newProfile('Secret name');p.notes='private notes';const c=coachContext(p,date);assert.equal(c.canEase,false);assert.equal(c.evidence.sleepRecords,0);assert.ok(c.facts.some(f=>f.id==='missing-sleep'));assert.ok(!JSON.stringify(c).includes('Secret name'));assert.ok(!JSON.stringify(c).includes('private notes'));});
+test('approved volume change reaches calendar, preserves diet and cannot compound',()=>{const p=athlete(),c=coachContext(p,date);assert.ok(c.canEase);const old=structuredClone(p);const next=easeCoachDay(p,date,c.signature);const a=dailySessions(p.workouts,date)[0].session,b=dailySessions(next.workouts,date)[0].session;assert.ok(b.exercises.every((e,i)=>e.sets===Math.max(1,a.exercises[i].sets-1)));assert.deepEqual(next.days,p.days);assert.deepEqual(next.plans,p.plans);assert.deepEqual(p,old);assert.equal(coachContext(next,date).canEase,false);assert.throws(()=>easeCoachDay(next,date,c.signature));});
+test('cannot rewrite started sessions or apply stale proposals',()=>{const p=athlete(),c=coachContext(p,date),s=dailySessions(p.workouts,date)[0];p.workouts.drafts=[{id:s.key,planId:s.plan.id,date,session:s.session,checked:{[s.session.exercises[0].id]:[0]},elapsedMs:1000,runningSince:null,rpe:null}];assert.equal(coachContext(p,date).canEase,false);assert.throws(()=>easeCoachDay(p,date,c.signature));});
+test('AI only selects existing facts and eligible actions',()=>{const c=coachContext(newProfile('test'),date);assert.throws(()=>validateCoachChoice({priority:['water-cut'],action:'keep'},c));assert.throws(()=>validateCoachChoice({priority:['nutrition'],action:'ease'},c));assert.throws(()=>validateCoachChoice({priority:['nutrition','nutrition'],action:'keep'},c));assert.deepEqual(validateCoachChoice({priority:['nutrition'],action:'keep'},c),{priority:['nutrition'],action:'keep'});});
+test('restrictions do not receive automatic volume reductions',()=>{const p=athlete();p.workouts.plans[0].config.limitation=true;assert.equal(coachContext(p,date).canEase,false);});

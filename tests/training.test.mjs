@@ -70,7 +70,7 @@ test('legacy calendar editing materializes both lists and remains valid after te
   assert.equal(generateTrainingPlan(c).config.runningDays.length,3);
   c=updateTrainingConfig(c,{runningDays:[1,3]});
   const plan=generateTrainingPlan(c);assert.deepEqual(plan.config.physicalDays,[2,4]);assert.deepEqual(plan.config.runningDays,[1,3]);
-  assert.throws(()=>generateTrainingPlan({...c,duration:55}),/45, 60 o 75/);
+  assert.throws(()=>generateTrainingPlan({...c,duration:55}),/45, 60, 75, 90 o 120/);
   assert.throws(()=>generateTrainingPlan({...c,notes:'a'.repeat(801)}),/800 caracteres/);
 });
 

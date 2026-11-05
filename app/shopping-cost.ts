@@ -70,10 +70,24 @@ export const foodPrices:Record<string,FoodPrice>={
   'turkey-slices':price(12,22,200,'envase de 200 g',[],1,'kg','Estimación para lonchas halal; confirma certificación.'),
   sugar:price(1,1.8,1000,'paquete de 1 kg'),
 };
+const mercadonaSource=priceSources.push({name:'Mercadona · catálogo CP 28054 · consulta 05/11/2026',url:'https://tienda.mercadona.es/'})-1;
+const checked=(perUnit:number,pack:number,format:string,unit:'kg'|'l'='kg',yieldFactor=1)=>price(perUnit/(pack/1000),perUnit/(pack/1000),pack,format,[mercadonaSource],yieldFactor,unit,'Precio observado en Mercadona para 28054 el 05/11/2026. No se actualiza solo; verifica antes de comprar.');
+Object.assign(foodPrices,{
+ quark:checked(1.10,500,'tarrina de queso fresco batido 0 % Hacendado de 500 g'),
+ nuts:checked(2.40,200,'paquete de nueces Hacendado peladas de 200 g'),
+ almonds:checked(2.30,200,'paquete de almendra natural Hacendado de 200 g'),
+ egg:checked(2.85,600,'12 huevos medianos M (≈600 g comestibles)'),
+ oats:checked(1.30,800,'caja Brüggen de 800 g'),
+ rice:checked(1.20,1000,'paquete de arroz largo Hacendado de 1 kg'),
+ pasta:checked(1.20,1000,'paquete de spaghetti Hacendado de 1 kg'),
+ milk:checked(.96,1000,'brik de leche entera Hacendado de 1 l','l'),
+ olive:checked(4.35,1000,'botella de aceite de oliva virgen extra Hacendado de 1 l','l',.916),
+ chickpeas:checked(.80,400,'tarro de garbanzos Hacendado de 400 g escurridos'),
+});
 const cents=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
-export function estimateShopping(items:Item[],owned:ReadonlySet<string>=new Set()){
+export function estimateShopping(items:Item[],owned:ReadonlySet<string>=new Set(),overrides:Record<string,{perKg:number;packGrams:number;checked:string;source:string}>={}){
   const rows=items.filter(it=>Number.isFinite(it.grams)&&it.grams>0).map(it=>{
-    const ref=foodPrices[it.food.id];const have=owned.has(it.food.id);
+    const custom=overrides[it.food.id];const ref=custom?{low:custom.perKg,high:custom.perKg,pack:custom.packGrams,format:custom.packGrams+' g/ml (formato indicado)',unit:foodPrices[it.food.id]?.unit??'kg',yield:foodPrices[it.food.id]?.yield??1,sources:[],note:'Precio indicado · '+custom.checked+' · '+custom.source}:foodPrices[it.food.id];const have=owned.has(it.food.id);
     if(!ref)return {...it,have,ref:null,cost:null};
     const required=it.grams/ref.yield;const packs=ref.pack?Math.ceil((required-1e-7)/ref.pack):0;
     const purchase=ref.pack?packs*ref.pack:Math.ceil(required/10)*10;
@@ -86,4 +100,4 @@ export function estimateShopping(items:Item[],owned:ReadonlySet<string>=new Set(
 export const euros=(n:number)=>n.toLocaleString('es-ES',{style:'currency',currency:'EUR'});
 export const priceDateLabel=()=>new Date(priceReviewDate+'T12:00:00Z').toLocaleDateString('es-ES');
 export function pricesAreOld(today=Date.now()){return today-Date.parse(priceReviewDate+'T00:00:00Z')>30*86400000}
-export function shoppingText(estimate:ReturnType<typeof estimateShopping>,days:number){return `R.A.W · Lista de compra · ${days} días desde el lunes\nEstimación orientativa · España · Referencias revisadas: ${priceDateLabel()} (sin actualización en tiempo real).\n${estimate.unknown?'Subtotal estimado (faltan precios)':'Compra estimada'}: ${euros(estimate.mean)} · Horquilla orientativa: ${euros(estimate.low)}–${euros(estimate.high)}\nCoste proporcional del menú: ${euros(estimate.used)}${estimate.rows.some(r=>!r.cost)?' (parcial)':''}\nEnvases orientativos completos. IVA incluido; envío excluido. Revisa certificación halal.\n\n`+estimate.rows.map(r=>`${r.have?'[YA LO TENGO]':'[ ]'} ${r.food.name}: ${Math.round(r.grams)} ${r.food.unit.includes('ml')?'ml':'g'} para el menú (${r.food.unit}). ${r.cost&&r.ref?`Compra: ${r.cost.packs?`${r.cost.packs} × ${r.ref.format}`:`≈${Math.round(r.cost.purchase)} g ${r.ref.format}`} · ${r.have?euros(0):euros(r.cost.mean)} · ${r.ref.sources.length?'Referencia con precios consultados':'Precio orientativo sin cotización individual'}`:'Sin precio: no incluido en el total'}`).join('\n')+'\n\nMétodo: punto medio de rangos orientativos, no media estadística de supermercados. Frutas: merma aproximada; legumbres: peso escurrido; aceite: conversión g/l. Formatos supuestos, sin descuentos ni promociones.\nFuentes: seleccionadas como referencia de precios, no como certificación halal.\n'+priceSources.map(s=>`${s.name}: ${s.url}`).join('\n')}
+export function shoppingText(estimate:ReturnType<typeof estimateShopping>,days:number,period?:string){return `R.A.W · Lista de compra · ${days} días${period?' · '+period:' desde el lunes'}\nEstimación orientativa · España · Referencias revisadas: ${priceDateLabel()} (sin actualización en tiempo real).\n${estimate.unknown?'Subtotal estimado (faltan precios)':'Compra estimada'}: ${euros(estimate.mean)} · Horquilla orientativa: ${euros(estimate.low)}–${euros(estimate.high)}\nCoste proporcional del menú: ${euros(estimate.used)}${estimate.rows.some(r=>!r.cost)?' (parcial)':''}\nEnvases orientativos completos. IVA incluido; envío excluido. Revisa certificación halal.\n\n`+estimate.rows.map(r=>`${r.have?'[YA LO TENGO]':'[ ]'} ${r.food.name}: ${Math.round(r.grams)} ${r.food.unit.includes('ml')?'ml':'g'} para el menú (${r.food.unit}). ${r.cost&&r.ref?`Compra: ${r.cost.packs?`${r.cost.packs} × ${r.ref.format}`:`≈${Math.round(r.cost.purchase)} g ${r.ref.format}`} · ${r.have?euros(0):euros(r.cost.mean)} · ${r.ref.note??(r.ref.sources.length?'Referencia con precios consultados':'Precio orientativo sin cotización individual')}`:'Sin precio: no incluido en el total'}`).join('\n')+'\n\nMétodo: punto medio de rangos orientativos, no media estadística de supermercados. Frutas: merma aproximada; legumbres: peso escurrido; aceite: conversión g/l. Formatos supuestos, sin descuentos ni promociones.\nFuentes: seleccionadas como referencia de precios, no como certificación halal.\n'+priceSources.map(s=>`${s.name}: ${s.url}`).join('\n')}

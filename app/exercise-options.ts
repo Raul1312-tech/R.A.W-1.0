@@ -3,7 +3,7 @@ import type {Exercise} from './training-model.ts';
 const core=new Set(['shoulder-tap','short-crunch','bird-dog','crunch-hold','pallof','dead-bug','side-plank','russian-twist']);
 const plyo=new Set(['pogo-hop','line-hop','broad-jump','split-jump','landing','vertical-jump','lateral-bound','box-jump']);
 const agility=new Set(['cone-shuffle','ladder-two','boxing-in-out','boxing-pivot']);
-export function exerciseCategory(record:ExerciseRecord){return core.has(record.id)?'Abdomen':plyo.has(record.id)?'Pliometría':agility.has(record.id)?'Agilidad de pies':record.id.startsWith('run-')?'Carrera':'Fuerza y potencia'}
+export function exerciseCategory(record:ExerciseRecord){return record.id==='neck-isometric'?'Cuello':core.has(record.id)?'Abdomen':plyo.has(record.id)?'Pliometría':agility.has(record.id)?'Agilidad de pies':record.id.startsWith('run-')?'Carrera':'Fuerza y potencia'}
 const doses:Record<string,string>={'shoulder-tap':'6–8 por lado','short-crunch':'8–12','bird-dog':'6 por lado · pausa 2 s','crunch-hold':'15–20 s','pogo-hop':'10 contactos','line-hop':'8 contactos','broad-jump':'3 saltos','split-jump':'4 cambios','cone-shuffle':'15–20 s','ladder-two':'2 recorridos cortos','boxing-in-out':'6 entradas y salidas','boxing-pivot':'4 por lado','side-plank':'20–30 s por lado','dead-bug':'6–8 por lado','pallof':'8–10 por lado','russian-twist':'8 por lado','run-short':'20 s rápidos','run-long':'60 s controlados'};
 export function exerciseFromRecord(record:ExerciseRecord,id=crypto.randomUUID()):Exercise{
   const category=exerciseCategory(record);const power=category==='Pliometría'||category==='Agilidad de pies';

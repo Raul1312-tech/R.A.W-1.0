@@ -1,3 +1,4 @@
+import {competitionContext} from './preparation-model.ts';
 import {allTrainingSessions,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,trainingPlanSchema,updateTrainingConfig,workoutKey,type TrainingConfig,type TrainingData,type TrainingPlan,type TrainingSession,type WorkoutDraft,type WorkoutLog} from './training-model.ts';
 
 export const weekdayOf=(date:string)=>(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
@@ -14,7 +15,12 @@ export function planForDate(data:TrainingData,date:string){
 export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]{
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
-  return override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
+  const sessions=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
+  if(override)return sessions; // Explicit calendar edits take precedence; never taper twice.
+  const c=plan.config.competition,ctx=c?competitionContext(c,date):undefined;
+  if(!ctx?.taper)return sessions;
+  if(ctx.days<=2)return [];
+  return sessions.map(s=>({...s,title:s.title+' · Puesta a punto',minutes:Math.round(s.minutes*.6),focus:'Volumen reducido antes del combate. Sin trabajo al fallo; revisa la propuesta con tu entrenador.',exercises:s.exercises.map(e=>({...e,sets:Math.max(1,Math.ceil(e.sets*.5)),effort:'RPE 5–6/10; cómodo, sin fatiga acumulada',...(e.block==='interval'?{dose:'60 s de trote cómodo',rest:'90 s caminando'}:{}),plannedKg:null}))}));
 }
 export function scheduleSignature(config:TrainingConfig){
   const split=config.sport==='boxing'?boxingSchedule(config):{physicalDays:config.days,runningDays:[]};

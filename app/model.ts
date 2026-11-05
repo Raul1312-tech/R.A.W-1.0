@@ -1,3 +1,4 @@
+import type {Preparation} from './preparation-schema';
 import type {TrainingData} from './training-model';
 export type Macro={k:number;p:number;c:number;f:number};
 export type Food=Macro & {id:string;name:string;unit:string;allergens:string[];group?:string};
@@ -64,9 +65,9 @@ export type Plan={id:string;created:string;seed:number;target:Macro;meals:Meal[]
 export type MealRecord={slot:number;status:'planned'|'alternative'|'skipped';itemIds:string[]};
 export type DailyFoodPlan={planId:string;meals:Meal[];labels:string[];autoAdjust:boolean;records:MealRecord[]};
 export type Day={items:(Item & {id:string;meal:string})[];foodPlan?:DailyFoodPlan;water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
-export type Profile={id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
+export type Profile={preparation?:Preparation;id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
 export type State={profiles:Profile[];active:string};
-export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}
+export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=p.preparation?.energyTarget??Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}
 export function total(items:Item[]):Macro{return items.reduce((a,x)=>({k:a.k+x.food.k*x.grams/100,p:a.p+x.food.p*x.grams/100,c:a.c+x.food.c*x.grams/100,f:a.f+x.food.f*x.grams/100}),{k:0,p:0,c:0,f:0})}
 const item=(id:string,grams:number):Item=>({food:foodById(id),grams});
 type Template={name:string;vars:string[];fixed:[string,number][];prep:string};
@@ -145,6 +146,17 @@ export function generatePlan(profile:Profile,seed:number,previous?:Plan):Plan|nu
   week.push({day:weekdays[d],meals});
  }
  return {id:crypto.randomUUID(),created:new Date().toISOString(),seed,target,meals:week[0].meals,week};
+}
+/** Replace only the requested day or meal; retain every other meal unchanged. */
+export function updateMenuSelection(profile:Profile,plan:Plan,dayIndex:number,slot?:number):Plan|null{
+ const days=planDays(plan),day=days[dayIndex];
+ if(!Number.isInteger(dayIndex)||!day||slot!==undefined&&(!Number.isInteger(slot)||!day.meals[slot]))return null;
+ const generated=generatePlan(profile,plan.seed+1,plan);if(!generated?.week)return null;
+ const replacements=generated.week[dayIndex].meals;
+ const meals=day.meals.map((meal,i)=>slot===undefined||slot===i?replacements[i]:meal);
+ if(!plan.week)return {...plan,id:generated.id,created:generated.created,seed:generated.seed,meals};
+ const week=plan.week.map((d,i)=>i===dayIndex?{...d,meals}:d);
+ return {...plan,id:generated.id,created:generated.created,seed:generated.seed,week,meals:week[0].meals};
 }
 export function upgradeWeeklyState(state:State):State{
  let changed=false;

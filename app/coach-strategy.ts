@@ -58,7 +58,7 @@ export function strategyProposal(p:Profile,date:string){
  }
  if(training.length)reasons.push(`Rediseño de ${training.length} fechas futuras: fase ${phase==='deload'?'de descarga / puesta a punto':phase==='build'?'de desarrollo':'de base'}, respetando deporte, nivel, material y días seleccionados.`);
  const profileForFood={...p,preparation:{...p.preparation,energyTarget:newEnergy}};
- const menu=newEnergy!==current.k?generatePlan(profileForFood,Number(date.replaceAll('-','')),p.plans.at(-1)):null;
+ const menu=newEnergy!==current.k?generatePlan(profileForFood,Number(date.replaceAll('-',''))%100001,p.plans.at(-1)):null;
  const foodDates=menu?Array.from({length:7},(_,i)=>shift(date,i+1)).filter(d=>!p.days[d]?.foodPlan&&!p.days[d]?.items.length&&!p.days[d]?.complete):[];
  const foodPreview=menu?foodDates.map(dt=>{const meals=applyRepeats(p,structuredClone(menu.week?.[(new Date(dt+'T12:00:00Z').getUTCDay()+6)%7]?.meals??menu.meals));return {date:dt,meals,macro:total(meals.flatMap(m=>m.items))};}):[];
  if(foodPreview.some(d=>Math.abs(d.macro.k-newEnergy)>newEnergy*.1))warnings.push('Al conservar platos habituales, algún menú se aleja más del 10 % del objetivo nuevo. Revisa sus cantidades antes de aceptar.');

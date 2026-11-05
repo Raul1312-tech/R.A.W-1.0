@@ -1,7 +1,9 @@
 /** Keep provider details out of the UI; give actionable advice for known failures. */
 export function loginErrorMessage(error: unknown): string {
   const details = error && typeof error === 'object' ? error as {code?: string; status?: number} : {};
-  if (details.code === 'signup_closed' || details.code === 'private_access_only') return 'Esta app es privada. Solo puede acceder la cuenta autorizada; el registro de nuevas cuentas está cerrado.';
+  if (details.code === 'signup_closed') return 'Para crear una cuenta nueva, utiliza Continuar con Google.';
+  if (details.code === 'google_origin_required') return 'Continúa con Google desde raw-1-0.vercel.app para guardar la sesión en el navegador correcto.';
+  if (details.code === 'provider_disabled' || details.code === 'oauth_provider_not_supported') return 'El acceso con Google todavía no está disponible. Vuelve a intentarlo más tarde.';
   if (details.code === 'email_origin_required') return 'Solicita el correo desde raw-1-0.vercel.app y abre el enlace en ese mismo navegador.';
   if (details.code === 'invalid_credentials' || details.code === 'user_not_found') return 'Correo o contraseña incorrectos. Si antes entrabas con un enlace, utiliza «No tengo contraseña / La he olvidado» para establecerla.';
   if (details.code === 'email_not_confirmed') return 'Confirma tu correo antes de entrar. Revisa el mensaje de confirmación y ábrelo en el navegador donde creaste la cuenta.';

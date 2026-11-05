@@ -55,12 +55,13 @@ test('recovery uses the existing allowed callback and propagates the email quota
   }},{...input,mode:'recover'}),error);
 });
 
-test('other emails cannot initiate login or recovery',async()=>{
-  for(const mode of ['signin','recover'])await assert.rejects(submitPasswordAuth(auth,{...input,mode,email:'other@example.test'}),{code:'private_access_only'});
+test('other accounts can sign in without sending mail',async()=>{
+  assert.equal(await submitPasswordAuth({...auth,signInWithPassword:async args=>{assert.equal(args.email,'other@example.test');return {data:{session:{}},error:null}}},{...input,email:'other@example.test'}),'signed-in');
 });
 
-test('private authorization requires the exact verified identity, not editable metadata',()=>{
+test('private authorization accepts verified accounts, rejects anonymous and editable metadata',()=>{
   const owner={id:PRIVATE_OWNER_ID,email:PRIVATE_OWNER_EMAIL,email_confirmed_at:'2026-11-03T00:00:00Z',is_anonymous:false};
   assert.equal(hasPrivateAccess(owner),true);
-  for(const user of [null,undefined,{...owner,id:'other'},{...owner,email:'other@example.test'},{...owner,email_confirmed_at:undefined},{...owner,is_anonymous:true},{id:'other',user_metadata:owner}])assert.equal(hasPrivateAccess(user),false);
+  assert.equal(hasPrivateAccess({...owner,id:'other',email:'other@example.test'}),true);
+  for(const user of [null,undefined,{...owner,id:''},{...owner,email:undefined},{...owner,email_confirmed_at:undefined},{...owner,is_anonymous:true},{id:'other',user_metadata:owner}])assert.equal(hasPrivateAccess(user),false);
 });

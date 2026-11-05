@@ -5,7 +5,7 @@ export const PRIVATE_OWNER_ID='668804f0-9d88-4bef-871f-96288b202fa0';
 export const PRIVATE_OWNER_EMAIL='raulfunnels@gmail.com';
 /** Use only a user verified by Supabase getUser(), never client-supplied metadata. */
 export function hasPrivateAccess(user:{id:string;email?:string;email_confirmed_at?:string;is_anonymous?:boolean}|null|undefined){
-  return Boolean(user&&user.id===PRIVATE_OWNER_ID&&user.email?.toLowerCase()===PRIVATE_OWNER_EMAIL&&user.email_confirmed_at&&!user.is_anonymous);
+  return Boolean(user&&user.id&&user.email&&user.email_confirmed_at&&!user.is_anonymous);
 }
 export const AUTH_ORIGIN='https://raw-1-0.vercel.app';
 export function canRequestAuthEmail(origin:string){return origin===AUTH_ORIGIN}
@@ -22,7 +22,6 @@ export async function submitPasswordAuth(
 ):Promise<'signed-in'|'check-email'>{
   const email=input.email.trim();
   if(input.mode==='signup')throw {code:'signup_closed'};
-  if(email.toLowerCase()!==PRIVATE_OWNER_EMAIL)throw {code:'private_access_only'};
   if(input.mode==='signin'){
     const {data,error}=await auth.signInWithPassword({email,password:input.password});
     if(error)throw error;

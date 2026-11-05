@@ -1,0 +1,14 @@
+import Link from 'next/link';
+export const metadata={title:'Privacidad · R.A.W 1.0'};
+export default function Privacy(){return <main style={{maxWidth:800,margin:'40px auto',padding:24,lineHeight:1.8}}>
+  <Link href="/login">← R.A.W 1.0</Link><h1>Tu privacidad en R.A.W.</h1><p>Actualizado el 5 de noviembre de 2026.</p>
+  <h2>Quién gestiona tus datos</h2><p>R.A.W. es un proyecto de Raúl González Sánchez. Contacto para privacidad y soporte: <a href="mailto:raulfunnels@gmail.com">raulfunnels@gmail.com</a>.</p>
+  <h2>Qué datos se utilizan y para qué</h2><p>Al entrar con Google, recibimos tu identificador de cuenta, correo y datos básicos de perfil, como nombre y foto de perfil, para identificarte y mantener tu sesión. No recibimos tu contraseña de Google ni solicitamos acceso a Gmail, Drive o tus contactos.</p>
+  <p>Guardamos los perfiles, preferencias de alimentación, planes, registros de comidas y entrenamiento, medidas y fotos de progreso que decides añadir para ofrecerte el seguimiento y sincronizarlo entre dispositivos. Las fotos son opcionales. No subas información o fotografías de otras personas sin su autorización.</p>
+  <h2>Dónde se guardan y quién puede acceder</h2><p>La aplicación se aloja en Vercel. Supabase gestiona las cuentas, la base de datos y el almacenamiento privado de fotos. Google interviene en la identificación cuando eliges ese acceso. Estos proveedores procesan información necesaria para prestar sus servicios, incluidos datos técnicos de conexión y seguridad.</p>
+  <p>Las reglas de acceso separan los registros por cuenta: otros usuarios no pueden consultar tu historial ni tu álbum. El administrador y los proveedores técnicos pueden acceder a información cuando resulte necesario para operar, mantener o resolver incidencias del servicio. No se publica un directorio de perfiles ni se comparten tus registros con otros deportistas.</p>
+  <h2>Almacenamiento en tu dispositivo</h2><p>Usamos cookies de sesión y almacenamiento del navegador para mantener el acceso y el funcionamiento de la aplicación. En el modo de prueba, los registros se conservan en ese navegador. Borrar sus datos puede eliminar esa copia local.</p>
+  <h2>Conservación y control</h2><p>Los registros se conservan mientras mantengas tu cuenta y no solicites su eliminación. Puedes editar tus registros, exportar el historial mediante las opciones de la app y borrar fotos desde el álbum. Para solicitar acceso, corrección, eliminación de la cuenta o de sus datos, o plantear dudas sobre el tratamiento, escribe al contacto anterior desde el correo de tu cuenta. Las copias de seguridad y los registros técnicos pueden tener plazos de conservación distintos de los datos visibles en la app.</p>
+  <p>También puedes retirar el acceso a R.A.W. en tu cuenta de Google. Esto no elimina por sí solo los registros ya guardados en R.A.W.; solicita su eliminación si también quieres borrarlos.</p>
+  <Link href="/condiciones">Información de uso</Link>
+</main>}

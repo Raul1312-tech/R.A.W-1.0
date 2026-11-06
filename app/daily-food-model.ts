@@ -1,5 +1,6 @@
 import {generatePlan,total,type Profile,type Day,type DailyFoodPlan,type Item,type Macro,type Meal,type MealRecord,type Plan} from './model.ts';
 import {mealLabelsFor} from './meal-layout.ts';
+import {outsideMealEstimate} from './nutrition-estimates.ts';
 export const displayMeal=(label:string)=>label==='Primera comida'?'Desayuno':label==='Tentempié'?'Almuerzo':label;
 /** Replace a pending meal only in this day's snapshot, keeping all logged food intact. */
 export function refreshDailyMeal(day:Day,plan:Plan|undefined,date:string,slot:number,profile:Profile):Day{
@@ -38,9 +39,13 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   const pending=meals.map((_,i)=>i).filter(i=>!done.has(i));
   const eligible=pending.filter(i=>i>cursor);
   const recorded=total(day.items);
-  const projected=()=>total([...day.items,...pending.flatMap(i=>meals[i].items)]);
+  const projected=()=>{
+    const actual=total([...day.items,...pending.flatMap(i=>meals[i].items)]);
+    for(const slot of pending){const reserve=outsideMealEstimate(day,slot);if(reserve&&!meals[slot].items.length)for(const key of keys)actual[key]+=reserve[key]}
+    return actual;
+  };
   const baseline=projected();
-  const hasAlternatives=snapshot.records.some(r=>r.status!=='planned')||day.items.some(it=>!snapshot.records.some(r=>r.itemIds.includes(it.id)));
+  const hasAlternatives=!!day.nutrition||snapshot.records.some(r=>r.status!=='planned')||day.items.some(it=>!snapshot.records.some(r=>r.itemIds.includes(it.id)));
   const denominators=[Math.max(500,day.target.k),Math.max(30,day.target.p),Math.max(50,day.target.c),Math.max(20,day.target.f)];
   const weights=[1.5,1,.7,.7];
   const score=(macro:Macro)=>keys.reduce((n,k,i)=>n+weights[i]*((macro[k]-day.target[k])/denominators[i])**2,0);

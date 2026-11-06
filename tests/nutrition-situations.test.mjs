@@ -1,23 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newProfile,generatePlan,emptyDay,total} from '../app/model.ts';
+import {newProfile,generatePlan,emptyDay,total,targets} from '../app/model.ts';
 import {saveNutritionSituation,applyNutritionSituation,clearNutritionSituation,previewNutritionSituation} from '../app/nutrition-situations-model.ts';
 import {nutritionSituationSchema} from '../app/nutrition-situation-schema.ts';
 import {recordMeal,foodDayView} from '../app/daily-food-model.ts';
 import {freezeMonth,monthlyShopping,toggleSupplement,saveFavorite,supplementsForDay} from '../app/preparation-model.ts';
 import {mealTimes} from '../app/meal-layout.ts';
 import {stateSchema} from '../app/validation.ts';
+import {situationEnergy,outsideMealEstimate} from '../app/nutrition-estimates.ts';
+import {generateTrainingPlan,defaultTrainingConfig} from '../app/training-model.ts';
 const date='2026-11-07';
 const setup=()=>{let p={...newProfile('Atleta'),confirmed:true};const plan=generatePlan(p,3);p.plans=[plan];return {p,plan}};
 const situation=(count=2)=>({id:'weekend',name:'Fin de semana',mealCount:count,times:mealTimes(count,'weekend'),energyTarget:2400,training:'rest',supplements:[]});
 const roundTrip=p=>stateSchema.parse(JSON.parse(JSON.stringify({active:p.id,profiles:[p]}))).profiles[0];
 
-test('saved situations generate two to six meals with the chosen energy and times, survive reload and leave other dates/week untouched',()=>{
+test('saved situations generate two to six meals with calculated energy and chosen times, survive reload and leave other dates/week untouched',()=>{
   for(let count=2;count<=6;count++){
     const {p,plan}=setup();p.days['2026-11-06']={...emptyDay(p),water:750};
     const before=JSON.stringify(p),s=situation(count),saved=saveNutritionSituation(p,s),next=applyNutritionSituation(saved,s.id,date);
-    const day=next.days[date];assert.equal(day.foodPlan.meals.length,count);assert.equal(day.target.k,2400);assert.deepEqual(day.nutrition.times,s.times);assert.equal(day.items.length,0);
-    assert.ok(Math.abs(total(day.foodPlan.meals.flatMap(m=>m.items)).k-2400)<120);
+    const day=next.days[date];assert.equal(day.foodPlan.meals.length,count);assert.equal(day.target.k,2800);assert.deepEqual(day.nutrition.times,s.times);assert.equal(day.items.length,0);
+    assert.ok(Math.abs(total(day.foodPlan.meals.flatMap(m=>m.items)).k-day.target.k)<day.target.k*.05);
     assert.deepEqual(next.plans,[plan]);assert.deepEqual(next.days['2026-11-06'],p.days['2026-11-06']);assert.equal(JSON.stringify(p),before);
     assert.deepEqual(roundTrip(next).days[date],day);
   }
@@ -33,12 +35,14 @@ test('a dated situation overrides a fixed month in the daily snapshot and shoppi
   const restored=clearNutritionSituation(changed,date,plan);assert.equal(restored.days[date].nutrition,undefined);assert.deepEqual(restored.days[date].foodPlan.meals,fixed.meals);assert.equal(restored.days[date].water,900);
 });
 
-test('editing or deleting a saved situation cannot mutate an applied day and recorded days cannot be replaced',()=>{
+test('editing definitions cannot mutate an applied day and applying after eating preserves the exact records',()=>{
   const {p,plan}=setup();let next=applyNutritionSituation(saveNutritionSituation(p,situation()),'weekend',date);
   const before=JSON.stringify(next.days[date]);next=saveNutritionSituation(next,{...situation(),name:'Otro finde',energyTarget:2600});
   assert.equal(JSON.stringify(next.days[date]),before);next.preparation.situations=[];assert.equal(next.days[date].nutrition.name,'Fin de semana');
   next=saveNutritionSituation(next,situation());next.days[date]=recordMeal(next.days[date],plan,date,0,'planned');
-  const logged=JSON.stringify(next);assert.throws(()=>applyNutritionSituation(next,'weekend',date),/registrados/);assert.throws(()=>clearNutritionSituation(next,date,plan),/registrados/);assert.equal(JSON.stringify(next),logged);
+  const logged=JSON.stringify(next),changed=applyNutritionSituation(next,'weekend',date);
+  assert.deepEqual(changed.days[date].items,next.days[date].items);assert.deepEqual(changed.days[date].foodPlan.records,next.days[date].foodPlan.records);
+  assert.throws(()=>clearNutritionSituation(next,date,plan),/registrados/);assert.equal(JSON.stringify(next),logged);
 });
 
 test('supplement choices and doses count in the chosen total without inventing consumption or withdrawing any product globally',()=>{
@@ -48,9 +52,56 @@ test('supplement choices and doses count in the chosen total without inventing c
   assert.deepEqual(next.preparation.supplements,[whey,creatine]);assert.equal(day.items.length,0);assert.deepEqual(day.nutrition.supplements,s.supplements);
   assert.deepEqual(supplementsForDay(next,day),[{...whey,amount:20,timing:'breakfast'}]);
   assert.deepEqual(supplementsForDay(next,emptyDay(next)),[whey,creatine]);
-  const expected=total(day.foodPlan.meals.flatMap(m=>m.items));assert.ok(Math.abs(expected.k+80-2400)<120);assert.ok(Math.abs(expected.p+16-day.target.p)<2);
+  const expected=total(day.foodPlan.meals.flatMap(m=>m.items));assert.ok(Math.abs(expected.k+80-day.target.k)<day.target.k*.05);assert.ok(Math.abs(expected.p+16-day.target.p)<2);
   const checked=toggleSupplement(day,{...whey,amount:20,timing:'breakfast'});assert.equal(total(checked.items).k,80);assert.equal(checked.items[0].meal,'Suplementos · Desayuno');
   assert.equal(roundTrip({...next,days:{[date]:checked}}).days[date].items[0].grams,20);
+});
+
+test('late starts and fewer meals keep energy, rest calculates less, and obsolete manual situation calories are ignored',()=>{
+  const {p}=setup(),base=targets(p),usual={...situation(),training:'usual'};
+  assert.equal(situationEnergy(p,usual,date).target.k,base.k);
+  const late=previewNutritionSituation(p,{...usual,mealCount:3,times:['12:00','16:00','21:00'],energyTarget:1200},date);
+  assert.equal(late.target.k,base.k);
+  const rest=previewNutritionSituation(p,{...situation(),energyTarget:6500},date);
+  assert.ok(rest.target.k<base.k);assert.ok(rest.target.k>=base.k-Math.min(300,base.k*.1)-25);assert.equal(rest.target.p,base.p);
+  assert.equal(previewNutritionSituation(p,{...situation(),energyTarget:1200},date).target.k,rest.target.k);
+  const noCalories={...usual};delete noCalories.energyTarget;assert.ok(nutritionSituationSchema.safeParse(noCalories).success);
+});
+
+test('calendar activity is periodized around the existing average without adding exercise twice',()=>{
+  const {p}=setup();p.workouts={plans:[generateTrainingPlan({...defaultTrainingConfig(),days:[0,2,4],duration:60})],logs:[]};
+  const rest=situationEnergy(p,{training:'rest'},'2026-11-02'),training=situationEnergy(p,{training:'usual'},'2026-11-02');
+  assert.equal(training.source,'calendar');assert.ok(training.target.k>rest.target.k);assert.ok(training.target.k-targets(p).k<250);
+  const soft=situationEnergy(p,{training:'training',trainingMinutes:30,trainingIntensity:'light'},date),hard=situationEnergy(p,{training:'training',trainingMinutes:90,trainingIntensity:'hard'},date);
+  assert.ok(hard.target.k>soft.target.k);
+  assert.equal(situationEnergy({...p,preparation:{energyTarget:2500}},{training:'rest'},date).target.k,2500);
+});
+
+test('a rest override accounts for completed training and never deletes its log or adds its calories twice',()=>{
+  const {p}=setup(),untrained=situationEnergy(p,{training:'rest'},date);p.days[date]={...emptyDay(p),minutes:60};
+  const completed=situationEnergy(p,{training:'rest'},date);assert.equal(completed.completedMinutes,60);assert.ok(completed.target.k>untrained.target.k);
+  const definition=situation();const applied=applyNutritionSituation(saveNutritionSituation(p,definition),definition.id,date);
+  assert.equal(applied.days[date].minutes,60);assert.equal(applied.days[date].target.k,completed.target.k);
+  assert.equal(situationEnergy(applied,{training:'rest'},date).target.k,completed.target.k);
+});
+
+test('outside meals reserve energy without invented consumption and recording the actual meal updates only pending quantities',()=>{
+  const {p}=setup();const s={...situation(3),training:'usual',outsideMeals:[{slot:2,size:'large'}]};
+  let next=applyNutritionSituation(saveNutritionSituation(p,s),s.id,date),day=next.days[date];
+  assert.equal(day.target.k,targets(p).k);assert.equal(day.foodPlan.meals[1].items.length,0);assert.equal(day.items.length,0);
+  const view=foodDayView(day,undefined,date),reserve=outsideMealEstimate(day,1);assert.ok(reserve.k>day.target.k*.38);assert.ok(view.adjustments.length>0);
+  const actual=[{food:{id:'outside-label',name:'Plato según etiqueta',unit:'según envase',allergens:[],k:190,p:10,c:25,f:6},grams:400}];
+  day=recordMeal(day,undefined,date,1,'alternative',actual);const after=foodDayView(day,undefined,date);
+  assert.equal(total(day.items).k,760);assert.equal(day.foodPlan.records.length,1);assert.ok(after.adjustments.every(a=>a.slot>1));
+  assert.ok(Math.abs(after.projected.k-total([...day.items,...after.pending.flatMap(i=>after.meals[i].items)]).k)<.001);
+  assert.equal(roundTrip({...next,days:{[date]:day}}).days[date].items[0].food.id,'outside-label');
+});
+
+test('reducing meal count after an outside lunch retains its slot, food IDs and other dated data',()=>{
+  const {p,plan}=setup();const original=recordMeal({...emptyDay(p),water:800,minutes:50},plan,date,2,'planned');p.days[date]=original;
+  const next=applyNutritionSituation(saveNutritionSituation(p,situation()),'weekend',date),day=next.days[date];
+  assert.equal(day.foodPlan.meals.length,3);assert.equal(day.nutrition.mealCount,3);assert.deepEqual(day.items,original.items);assert.equal(day.foodPlan.labels[day.foodPlan.records[0].slot],'Comida');assert.deepEqual(day.foodPlan.records[0].itemIds,original.foodPlan.records[0].itemIds);assert.equal(day.water,800);assert.equal(day.minutes,50);
+  assert.deepEqual(roundTrip(next).days[date].foodPlan.records,day.foodPlan.records);
 });
 
 test('invalid dates, schedules, quantities, unavailable supplements and impossible diets fail without partial changes',()=>{

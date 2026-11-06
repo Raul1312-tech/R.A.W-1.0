@@ -1,5 +1,7 @@
 import {emptyDay,generatePlan,targets,total,type Profile,type Plan,type Day,type Macro} from './model.ts';
 import {foodSnapshot} from './daily-food-model.ts';
+import {mealSlots,mealLabelsFor} from './meal-layout.ts';
+import {situationEnergy} from './nutrition-estimates.ts';
 import {planForFoodDate} from './preparation-model.ts';
 import {nutritionSituationSchema,type NutritionSituation} from './nutrition-situation-schema.ts';
 import {stateSchema} from './validation.ts';
@@ -21,16 +23,18 @@ function checkSupplements(p:Profile,s:NutritionSituation){
     if(chosen.amount*(supplement.unit==='capsules'?supplement.gramsPerUnit:1)>200)throw Error('Revisa la cantidad de los suplementos: máximo 200 g por toma.');
   }
 }
-/** Builds the actual dated menu, without changing the reference week or consuming food. */
+/** Builds a dated plan, retaining every actual food item and recorded meal. */
 export function previewNutritionSituation(p:Profile,input:unknown,date:string,seed=1){
   const situation=nutritionSituationSchema.parse(input);
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)throw Error('Selecciona una fecha válida.');
   checkSupplements(p,situation);
-  const profile={...p,mealCount:situation.mealCount,preparation:{...p.preparation,energyTarget:situation.energyTarget}};
-  if(targets(profile).c<100)throw Error('Este objetivo deja muy pocos hidratos con tu reparto actual. Revisa el objetivo energético.');
-  const calculated=targets(profile);
-  const target:Macro={k:calculated.k,p:calculated.p,c:calculated.c,f:calculated.f};
-  const supplementMacros=total(situation.supplements.map(chosen=>{
+  const day=p.days[date]??emptyDay(p),old=foodSnapshot(day,planForFoodDate(p,p.plans.at(-1),date),date);
+  const required=(old?.records??[]).map(r=>mealSlots(old!.meals.length)[r.slot]);
+  const count=[2,3,4,5,6].find(n=>n>=situation.mealCount&&required.every(slot=>mealSlots(n).includes(slot)))!;
+  const target=situationEnergy(p,situation,date).target;
+  const profile={...p,mealCount:count,preparation:{...p.preparation,energyTarget:target.k}};
+  const supplements=situation.supplements.map(s=>situation.training==='rest'&&s.timing==='postworkout'?{...s,timing:'breakfast' as const}:s);
+  const supplementMacros=total(supplements.map(chosen=>{
     const s=p.preparation!.supplements!.find(x=>x.id===chosen.id)!;
     return {food:{...s,k:s.kind==='creatine'?0:s.k,p:s.kind==='creatine'?0:s.p,c:s.kind==='creatine'?0:s.c,f:s.kind==='creatine'?0:s.f},grams:chosen.amount*(s.unit==='capsules'?s.gramsPerUnit:1)};
   }));
@@ -40,12 +44,16 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
   if(!generated)throw Error('No se puede construir una dieta con esas cantidades y restricciones. Prueba otro objetivo o número de comidas.');
   const weekday=(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
   const plan:Plan={...generated,id:'situation-'+situation.id,meals:generated.week![weekday].meals,week:undefined};
-  const day=p.days[date]??emptyDay(p);
+  const snapshot=foodSnapshot({...day,foodPlan:undefined,items:[]},plan,date)!;
+  for(const record of old?.records??[]){const slot=mealSlots(count).indexOf(mealSlots(old!.meals.length)[record.slot]);snapshot.meals[slot]=structuredClone(old!.meals[record.slot]);snapshot.records.push({...structuredClone(record),slot})}
+  snapshot.meals=snapshot.meals.map((meal,slot)=>situation.outsideMeals?.some(outside=>outside.slot===mealSlots(count)[slot])&&!snapshot.records.some(r=>r.slot===slot)?{name:mealLabelsFor(count)[slot]+' fuera · pendiente de registrar',items:[]}:meal);
   const {id,...settings}=situation;
-  return {...day,target,foodPlan:foodSnapshot({...day,foodPlan:undefined,items:[]},plan,date)!,nutrition:{situationId:id,...structuredClone(settings)}};
+  const toMinutes=(t:string)=>Number(t.slice(0,2))*60+Number(t.slice(3));
+  const start=toMinutes(situation.times[0]),end=toMinutes(situation.times.at(-1)!);
+  const times=count===situation.mealCount?situation.times:Array.from({length:count},(_,i)=>{const minute=Math.round(start+(end-start)*i/(count-1));return String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0')});
+  return {...day,target,complete:snapshot.records.length===count,foodPlan:snapshot,nutrition:{situationId:id,...structuredClone(settings),mealCount:count,times,energyTarget:target.k,supplements}};
 }
 export function applyNutritionSituation(p:Profile,id:string,date:string):Profile{
-  if(hasNutritionRecords(p.days[date]))throw Error('Este día ya tiene alimentos registrados. Elige otro día para conservar lo que has comido.');
   const s=p.preparation?.situations?.find(x=>x.id===id);
   if(!s)throw Error('Guarda primero la situación.');
   const day=previewNutritionSituation(p,s,date);

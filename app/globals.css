@@ -100,3 +100,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .auth-links{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-top:22px}.auth-links .text-button{font-size:12px;text-align:left;line-height:1.5;min-height:28px}.auth-card .field small{font-size:11px;color:#667169;line-height:1.6;margin-top:8px}.auth-error.auth-card h1{font-family:var(--display);font-weight:400;text-transform:uppercase}.auth-card form .button{width:100%}
 
 .demo-banner{display:flex;flex-wrap:wrap;gap:8px 24px;padding:14px 28px;background:#eaf2ec;border-bottom:1px solid #bed3c3;color:#28573d;font-size:12px;line-height:1.6}.demo-banner strong{font-size:10px;letter-spacing:1px;white-space:nowrap}.demo-banner span{flex:1;min-width:240px}.auth-card .demo-login-note{font-size:11px;margin-top:9px}.auth-card a.full{text-decoration:none;display:flex;align-items:center;gap:12px}
+
+@media(max-width:760px){.today-grid>.daily{display:none}}

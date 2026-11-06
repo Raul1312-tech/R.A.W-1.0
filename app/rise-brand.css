@@ -1,0 +1,128 @@
+/* RISE Boxing · Light editorial edition. White working surfaces, dark brand moments. */
+:root{color-scheme:light;--bg:#f6f6f2;--paper:#fff;--ink:#18231d;--muted:#59685e;--border:#d9e1d9;--orange:#006847;--green:#006847;--yellow:#8a754e;--purple:#a63c3c;--display:Impact,'Arial Narrow','Segoe UI',sans-serif}
+:root body{background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
+:root body ::selection{background:#006847;color:#fff}
+:root body h1,:root body h2,:root body h3,:root body h4{color:var(--ink)}
+:root body p,:root body .muted{color:var(--muted)}
+:root body h1{font-family:var(--display);font-style:normal;letter-spacing:.015em;font-weight:400}
+:root body h2,:root body h3{font-family:'Segoe UI',Arial,sans-serif;letter-spacing:-.035em}
+:root body .header{background:#111513f5;border-bottom:1px solid var(--border);min-height:94px;height:auto;padding-top:14px;padding-bottom:14px}
+:root body .brand{gap:0;color:var(--ink);flex-shrink:0}
+:root body .rise-logo{display:block;width:155px;height:auto;max-width:100%;object-fit:contain}
+:root body .header nav button{border-radius:6px;color:var(--muted)}
+:root body .header nav button.active,:root body .header nav button[aria-current=page]{background:#1d3431;color:var(--ink);box-shadow:inset 0 -2px #9dcab1}
+:root body .header nav button:hover{background:#27352e;color:var(--ink)}
+:root body .profile-btn>span{background:#1d3431;color:var(--ink);border:1px solid #527260}
+:root body .card,:root body .modal,:root body .daily-meal-card,:root body .planned-exercise-card{background:var(--paper);border-color:var(--border);box-shadow:none}
+:root body input,:root body select,:root body textarea{background:#fff;color:var(--ink);border-color:#abbcaf;border-radius:8px}
+:root body input::placeholder,:root body textarea::placeholder{color:#657469;opacity:1}
+:root body input[type=checkbox],:root body input[type=radio]{accent-color:#006847}
+:root body .button.orange,:root body button.primary{background:#006847;color:#fff;border:1px solid #438d6d;box-shadow:none}
+:root body .button.orange:hover{background:#087c57;border-color:#8cbea2}
+:root body .button.outline,:root body .button.soft{background:#fff;color:var(--ink);border-color:#abbcaf}
+:root body .button.outline:hover,:root body .button.soft:hover{background:#edf3ee}
+:root body :is(button,a,input,select,textarea,summary):focus-visible{outline:2px solid #00825a;outline-offset:4px}
+:root body .eyebrow{color:#59685e;letter-spacing:.2em}
+:root body .today-welcome{position:relative;isolation:isolate;overflow:hidden;min-height:300px;padding:40px;border:1px solid #39483f;border-radius:16px;align-items:flex-end;background:linear-gradient(90deg,#111513eb 5%,#11151385 60%,#11151330),url('/brand/rise-gym.webp') center 48%/cover}
+:root body .today-welcome:before{content:'';position:absolute;top:0;left:40px;width:66px;height:3px;background:linear-gradient(90deg,#006847 33.33%,#e8e0cf 33.33% 66.66%,#a63c3c 66.66%)}
+:root body .today-welcome h1{font-size:clamp(38px,4.5vw,66px);max-width:650px;line-height:1.03;margin:15px 0}
+:root body .today-welcome p,:root body .today-welcome .eyebrow{color:#e8e0cf;max-width:470px;text-shadow:0 1px 12px #000}
+:root body .today-welcome .date-input{background:#111513e8;color:#e8e0cf;flex-shrink:0;width:auto}
+:root body .quick-destinations a{background:#fff;border-color:#c5d5c8;color:#006847}
+:root body .motivation-card{background:linear-gradient(140deg,#1d3431,#17221d);border-color:#39483f;border-top:2px solid #a63c3c}
+:root body .motivation-card blockquote{color:#e8e0cf;font-style:italic;font-weight:600}
+:root body .notice,:root body .meal-adjustment-control{background:#edf4ee;border-color:#c5d5c8;color:#284b37}
+:root body .error,:root body .auth-error-message{background:#fff2f0;color:#943a38;border-color:#dfaaa4}
+:root body .demo-banner{background:#eaf1eb;color:#284b37;border-bottom-color:#d9e1d9}
+:root body .demo-banner span{color:#59685e}
+:root body .habit-card:after{content:'RISE / EL TRABAJO HABLA.';color:#59685e}
+:root body .learning-journal{--journal-green:#006847;--journal-paper:#fff;--journal-red:#a63c3c;color:#18231d}
+:root body .journal-hero h1 em{color:#006847}
+:root body .journal-hero figure{background:#ecebe3}
+:root body .auth-page{background:none}
+:root body .auth-brand{display:flex;align-items:center;gap:22px}
+:root body .auth-brand .rise-logo{width:200px}
+:root body .auth-version{color:#59685e;font-size:10px;letter-spacing:.18em}
+:root body .auth-story{background:linear-gradient(90deg,#111513e8,#11151375),url('/brand/rise-gym.webp') 58% center/cover;border:1px solid #39483f;border-radius:14px;padding:36px;overflow:hidden}
+:root body .auth-story h1{font-size:clamp(48px,5.5vw,78px);line-height:1.03}
+:root body .auth-story h1 em{color:#e8e0cf;font-style:italic}
+:root body .auth-story p,:root body .auth-story .eyebrow,:root body .auth-rules span{color:#e8e0cf}
+:root body .auth-card{background:#fff;border-color:#d9e1d9}
+:root body .auth-card h2{font-family:var(--display);font-size:38px;letter-spacing:.015em;font-weight:400}
+:root body .auth-stamp{background:#111513ba;color:#e8e0cf;border-color:#4a5d50}
+:root body .auth-footer,:root body footer{border-color:#d9e1d9;color:#59685e}
+:root body .auth-footer .flag-line{background:linear-gradient(90deg,#006847 33.33%,#e8e0cf 33.33% 66.66%,#a63c3c 66.66%)}
+:root body footer .rise-logo{width:145px}
+:root body .chart-card svg line{stroke:#d9e1d9}
+:root body .chart-card svg text{fill:#59685e}
+:root body .chart-card svg polyline{stroke:#006847}
+:root body .chart-card svg circle{fill:#006847}
+:root body .modal-backdrop{background:#000b}
+:root body .toast{background:#e8e0cf;color:#111513;box-shadow:0 8px 40px #0006}
+@media(max-width:760px){
+  :root body .header{min-height:76px;padding:12px 18px}
+  :root body .header .rise-logo{width:126px}
+  :root body .header nav{background:#111513fa;border-color:#39483f;backdrop-filter:blur(14px)}
+  :root body .today-welcome{min-height:280px;padding:25px 22px;justify-content:flex-end;gap:18px;background-position:center,62% center}
+  :root body .today-welcome:before{left:22px}
+  :root body .today-welcome h1{font-size:40px;max-width:310px}
+  :root body .today-welcome p{max-width:285px;font-size:14px}
+  :root body .today-welcome .date-input{width:100%}
+  :root body .auth-brand{gap:16px;flex-wrap:wrap}
+  :root body .auth-brand .rise-logo{width:165px}
+  :root body .auth-story{padding:26px}
+}
+@media print{html:root body{background:white;color:black}html:root body .today-welcome{background:none}html:root body .rise-logo{filter:brightness(0)}}
+
+/* Only these editorial blocks use the dark palette. */
+:root body :is(.header,.today-welcome,.motivation-card,.auth-story){--ink:#e8e0cf;--muted:#c1c9bf;--border:#39483f;color:#e8e0cf;color-scheme:dark}
+:root body :is(.today-welcome,.auth-story) h1{color:#e8e0cf}
+:root body .motivation-card p,:root body .motivation-card .eyebrow,:root body .motivation-card>b{color:#c1c9bf}
+:root body .header .profile-btn{color:#e8e0cf}
+:root body .auth-story .auth-stamp{color:#e8e0cf}
+:root body .journal-hero figcaption{color:#4f6154}
+:root body .card{box-shadow:0 5px 24px #18231d04}
+:root body .auth-card{box-shadow:0 12px 36px #18231d08}
+@media(max-width:760px){
+  :root body .header nav{background:#fffffff5;border-color:#d9e1d9;color-scheme:light}
+  :root body .header nav button{color:#59685e}
+  :root body .header nav button.active,:root body .header nav button[aria-current=page]{background:#eaf2ec;color:#005c3f;box-shadow:inset 0 -2px #006847}
+  :root body .header nav button:hover{background:#edf3ee;color:#18231d}
+}
+
+/* Editorial rhythm: bright working areas, dark milestones between them.
+   Named sections keep the balance stable when cards are added or reordered. */
+:root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head){
+  --ink:#fff;--muted:#fff;--border:#4c6154;
+  background:linear-gradient(115deg,#111513,#1d3431);color:#fff;color-scheme:dark;
+  border:1px solid #394d41;border-radius:14px;padding:28px 30px;
+}
+:root body :is(.header,.today-welcome,.motivation-card,.auth-story,.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head)
+  :is(h1,h2,h3,h4,p,span,small,b,strong,em,label,legend,summary,a,blockquote,figcaption){color:#fff}
+:root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head)
+  :is(.eyebrow,.muted,.big-number,.macroline,.journal-read){color:#fff}
+:root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head)
+  :is(input,select,textarea,.button,.pill,.routine-hero-stat,.journal-read){background:#20372b;color:#fff;border-color:#729581}
+:root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head)
+  :is(input,textarea)::placeholder{color:#fff;opacity:.8}
+:root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head)
+  :is(button,a,input,select,textarea,summary):focus-visible{outline-color:#fff}
+:root body .chart-card svg text{fill:#fff}
+:root body .chart-card svg line{stroke:#597363}
+:root body .chart-card svg polyline{stroke:#a9ddbf}
+:root body .chart-card svg circle{fill:#fff}
+:root body .routine-hero,:root body .journal-week{border-left:3px solid #a63c3c}
+:root body .journal-action{margin-top:26px}
+:root body .week-day-heading{margin:24px 0}
+:root body .header nav button{color:#fff}
+/* The fixed mobile navigation stays light, outside the dark-header treatment. */
+@media(max-width:760px){
+  :root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head){padding:22px 18px}
+  :root body .header nav button,:root body .header nav button span{color:#314b3b}
+  :root body .header nav button[aria-current=page],:root body .header nav button[aria-current=page] span{color:#005c3f}
+}
+@media print{
+  :root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head){background:white;--ink:#111;--muted:#333;color:#111;color-scheme:light}
+  :root body :is(.week-day-heading,.routine-hero,.routine-context,.journal-week,.journal-action,.chart-card,.hydration-guide,.daily-training>.section-head) :is(h1,h2,h3,h4,p,span,small,b,strong,em,label,legend,summary,a,blockquote){color:#111}
+  :root body .chart-card svg text{fill:#111}
+}

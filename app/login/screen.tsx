@@ -1,4 +1,5 @@
 'use client';
+import Brand from '../brand';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ShieldCheck,Mail,ArrowLeft,Dumbbell,Check} from 'lucide-react';
 import {createClient} from '../../lib/supabase/client';
@@ -36,9 +37,9 @@ export default function Login({configured,googleEnabled=false,initialMode='signi
     finally{submitting.current=false;setBusy(false)}
   }
   return <main className="auth-page">
-    <div className="auth-brand"><span className="brand-icon" aria-hidden="true"><i/><i/><i/></span><b>R.A.W<span className="brand-period">.</span></b><span className="auth-version">1.0 / FUERZA · NUTRICIÓN</span></div>
+    <div className="auth-brand"><Brand onLight/><span className="auth-version">DISCIPLINA · OFICIO · EVOLUCIÓN</span></div>
     <div className="auth-layout">
-      <section className="auth-story"><span className="eyebrow">EL TRABAJO EMPIEZA CONTIGO</span><h1>ENTRENA.<br/>ALIMÉNTATE.<br/><em>SUPÉRATE.</em></h1><p>Un plan para cada día. Un registro de cada esfuerzo.<br/>Tu progreso, siempre contigo.</p><div className="auth-rules"><span><b>01</b> Alimentación con propósito</span><span><b>02</b> Hábitos que se pueden medir</span><span><b>03</b> Constancia por encima de perfección</span></div><div className="auth-stamp"><Dumbbell size={24}/><span>DISCIPLINA DIARIA.<br/><b>PROGRESO REAL.</b></span></div></section>
+      <section className="auth-story"><span className="eyebrow">EL TRABAJO EMPIEZA CONTIGO</span><h1>EL TRABAJO<br/><em>HABLA.</em></h1><p>Un plan para cada día. Un registro de cada esfuerzo.<br/>Tu progreso, siempre contigo.</p><div className="auth-rules"><span><b>01</b> Alimentación con propósito</span><span><b>02</b> Hábitos que se pueden medir</span><span><b>03</b> Constancia por encima de perfección</span></div><div className="auth-stamp"><Dumbbell size={24}/><span>DISCIPLINA DIARIA.<br/><b>PROGRESO REAL.</b></span></div></section>
       <section className="auth-card"><span className="pill green-pill"><ShieldCheck size={14}/> ESPACIO PRIVADO</span>
         {sent?<>
           <div className="auth-mail"><Mail size={32}/></div><h2>Revisa tu correo.</h2>
@@ -71,9 +72,9 @@ export default function Login({configured,googleEnabled=false,initialMode='signi
         {error&&<p className="notice error" role="alert">{error}</p>}
         <a className="button soft full" href="/demo">Entrar sin cuenta · Modo de prueba <ArrowUpRight size={18}/></a>
         <p className="demo-login-note">Prueba la app con datos de ejemplo. Los cambios se guardan solo en este navegador.</p>
-        <p className="auth-fine">R.A.W 1.0 · Alimentación y entrenamiento para adultos.<br/>Tus datos de seguimiento requieren iniciar sesión.<br/><a href="/privacidad">Privacidad</a> · <a href="/condiciones">Información de uso</a></p>
+        <p className="auth-fine">RISE Boxing · Alimentación y entrenamiento para adultos.<br/>Tus datos de seguimiento requieren iniciar sesión.<br/><a href="/privacidad">Privacidad</a> · <a href="/condiciones">Información de uso</a></p>
       </section>
     </div>
-    <footer className="auth-footer"><span>R.A.W 1.0</span><span>FUERZA. HÁBITOS. EVOLUCIÓN.</span><span className="flag-line" aria-hidden="true"/></footer>
+    <footer className="auth-footer"><span>RISE Boxing</span><span>CADA DÍA, UN NIVEL MÁS.</span><span className="flag-line" aria-hidden="true"/></footer>
   </main>;
 }

@@ -23,7 +23,7 @@ export default function PasswordScreen(){
     finally{submitting.current=false;setBusy(false)}
   }
   return <main className="auth-error auth-card">
-    <span className="eyebrow">R.A.W 1.0 · ACCESO PRIVADO</span>
+    <span className="eyebrow">RISE Boxing · ACCESO PRIVADO</span>
     <h1>{saved?'Contraseña guardada.':'Tu acceso, listo.'}</h1>
     {saved?<><p role="status">Ya puedes entrar con tu correo y contraseña, sin solicitar un enlace cada vez.</p><a className="button orange full" href="/">Ir a mi plan</a></>:<>
       <p>Elige una contraseña para entrar sin correos. Si ya elegiste una al crear tu cuenta, puedes continuar a tu plan.</p>

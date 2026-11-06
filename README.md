@@ -106,6 +106,12 @@ Las nuevas sesiones físicas trabajan potencia vertical/lateral, rotación, fuer
 - Despliegue inicial y retorno de autenticación verificados en el dominio de producción.
 - Pendiente para usuarios externos: configurar SMTP propio.
 
+## Prioridad de competición
+
+Guardar categoría, fecha y hora del pesaje y del combate activa un plan por fases. El peso pendiente genera una alerta roja visible en todas las secciones. Campamento, puesta a punto, fight week, pesaje, recuperación y combate sustituyen la planificación ordinaria pendiente; las cantidades siguen la actividad de la fase y se retira la ganancia de peso incompatible con la categoría. El calendario aplica topes de trabajo los últimos 14 días, también a fechas editadas, conservando sesiones iniciadas o guardadas. La vista semanal de dieta muestra fechas reales y la compra mensual utiliza sus planes diarios.
+
+El resultado real del pesaje se confirma explícitamente y activa la recuperación. No se presume que se haya dado el peso al llegar a la fecha. Al quitar o cambiar el evento se restauran fechas futuras pendientes; el historial se conserva. El texto aportado por el usuario está archivado con su procedencia y límites en [docs/context/README.md](docs/context/README.md). No se automatizan sus protocolos de deshidratación, retirada de sal/agua, calor ni restricción extrema de hidratos. El corte agudo necesita una estrategia individual supervisada.
+
 ## Importar datos previos
 
 En Mi alimentación, «Tus comidas habituales» abre el recetario guardado en un diálogo, con opciones para renombrar, repetir o quitar platos. Los ingredientes del registro semanal y de Mi día se pueden sustituir desde el catálogo o la etiqueta, ajustar en gramos y registrar juntos; las comidas posteriores del mismo día mantienen el ajuste automático limitado al 20 %.

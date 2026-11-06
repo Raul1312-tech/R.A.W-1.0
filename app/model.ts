@@ -63,11 +63,11 @@ export type Item={food:Food;grams:number};
 export type Meal={name:string;items:Item[];prep?:string};
 export const weekdays=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 export const mealNames=['Primera comida','Tentempié','Comida','Merienda','Cena'];
-export type MenuDay={day:string;meals:Meal[]};
+export type MenuDay={day:string;meals:Meal[];estimates?:Record<number,Macro>};
 export type Plan={id:string;created:string;seed:number;target:Macro;meals:Meal[];week?:MenuDay[]};
 export type MealRecord={slot:number;status:'planned'|'alternative'|'skipped';itemIds:string[]};
 export type DailyFoodPlan={planId:string;meals:Meal[];labels:string[];autoAdjust:boolean;records:MealRecord[]};
-export type Day={items:(Item & {id:string;meal:string})[];foodPlan?:DailyFoodPlan;nutrition?:AppliedNutrition;water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
+export type Day={items:(Item & {id:string;meal:string})[];foodPlan?:DailyFoodPlan;nutrition?:AppliedNutrition;competition?:{key:string;phase:string;review:boolean;error?:string};water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
 export type Profile={mealCount?:number;athlete?:Athlete;preparation?:Preparation;id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
 export type State={profiles:Profile[];active:string};
 export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=p.preparation?.energyTarget??Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}

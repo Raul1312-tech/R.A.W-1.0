@@ -1,4 +1,4 @@
-import {competitionContext} from './preparation-model.ts';
+import {competitionPhase} from './competition-phase.ts';
 import {allTrainingSessions,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,trainingPlanSchema,updateTrainingConfig,workoutKey,type TrainingConfig,type TrainingData,type TrainingPlan,type TrainingSession,type WorkoutDraft,type WorkoutLog} from './training-model.ts';
 
 export const weekdayOf=(date:string)=>(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
@@ -16,11 +16,12 @@ export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
   const sessions=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
-  if(override)return sessions; // Explicit calendar edits take precedence; never taper twice.
-  const c=plan.config.competition,ctx=c?competitionContext(c,date):undefined;
-  if(!ctx?.taper)return sessions;
-  if(ctx.days<=2)return [];
-  return sessions.map(s=>({...s,title:s.title+' · Puesta a punto',minutes:Math.round(s.minutes*.6),focus:'Volumen reducido antes del combate. Sin trabajo al fallo; revisa la propuesta con tu entrenador.',exercises:s.exercises.map(e=>({...e,sets:Math.max(1,Math.ceil(e.sets*.5)),effort:'RPE 5–6/10; cómodo, sin fatiga acumulada',...(e.block==='interval'?{dose:'60 s de trote cómodo',rest:'90 s caminando'}:{}),plannedKg:null}))}));
+  const c=plan.config.competition,phase=c?competitionPhase(c,date):undefined;
+  if(!c?.taper||!phase?.active||phase.daysToFight>14)return sessions;
+  if(phase.daysToFight<=2||phase.phase==='weigh-in'||phase.phase==='recovery')return [];
+  const lastWeek=phase.daysToWeigh<=7,minutes=lastWeek?30:45,sets=lastWeek?2:3;
+  // Absolute caps are idempotent, including manually edited days. Started/saved sessions are pinned separately.
+  return sessions.map(s=>({...s,title:s.title.replace(/ · (Puesta a punto|Preparación de competición)$/,'')+' · Preparación de competición',minutes:Math.min(s.minutes,minutes),focus:lastWeek?'Activación corta de competición. Prioriza ejecución, recuperación y trabajo técnico acordado con tu entrenador.':'Puesta a punto: menos volumen, sin cargas nuevas ni trabajo al fallo.',exercises:s.exercises.slice(0,lastWeek?4:6).map(e=>({...e,sets:Math.min(e.sets,sets),effort:'RPE 5–6/10; cómodo, sin fatiga acumulada',...(e.block==='interval'?{dose:'60 s de trote cómodo',rest:'90 s caminando'}:{}),plannedKg:null}))}));
 }
 export function scheduleSignature(config:TrainingConfig){
   const split=config.sport==='boxing'?boxingSchedule(config):{physicalDays:config.days,runningDays:[]};

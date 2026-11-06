@@ -2,6 +2,7 @@ import {emptyDay,targets,total,generatePlan,type Profile} from './model.ts';
 import {dailySessions,planForDate,editCalendarDay,sessionsForDate} from './training-calendar-model.ts';
 import {generateTrainingPlan,type TrainingSession} from './training-model.ts';
 import {applyRepeats} from './preparation-model.ts';
+import {competitionPhase} from './competition-phase.ts';
 const shift=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const mean=(v:number[])=>v.reduce((a,b)=>a+b,0)/v.length;
 export function strategyProposal(p:Profile,date:string){
@@ -63,7 +64,7 @@ export function strategyProposal(p:Profile,date:string){
  const foodPreview=menu?foodDates.map(dt=>{const meals=applyRepeats(p,structuredClone(menu.week?.[(new Date(dt+'T12:00:00Z').getUTCDay()+6)%7]?.meals??menu.meals));return {date:dt,meals,macro:total(meals.flatMap(m=>m.items))};}):[];
  if(foodPreview.some(d=>Math.abs(d.macro.k-newEnergy)>newEnergy*.1))warnings.push('Al conservar platos habituales, algún menú se aleja más del 10 % del objetivo nuevo. Revisa sus cantidades antes de aceptar.');
  if(newEnergy!==current.k&&!foodDates.length)warnings.push('No hay fechas de alimentación libres para regenerar; conserva y revisa tus menús manuales.');
- const enabled=p.confirmed&&!cooldown&&!plan?.config.limitation&&(training.length>0||!!menu&&foodDates.length>0);
+ const enabled=p.confirmed&&!cooldown&&!plan?.config.limitation&&!(competition&&competitionPhase(competition,date).active)&&(training.length>0||!!menu&&foodDates.length>0);
  if(cooldown)warnings.push('Ya aceptaste una estrategia esta semana. Se esperan nuevos datos antes de volver a ajustarla.');
  return {enabled,trend,currentWeight,direction,daysToFight,daysToWeigh,required,phase,reasons,warnings,training,foodDates,foodPreview,menu,energyBefore:current.k,energyAfter:menu&&foodDates.length?newEnergy:current.k};
 }

@@ -31,7 +31,7 @@ test('a dated situation overrides a fixed month in the daily snapshot and shoppi
   const original=total(monthlyShopping(next,'2026-11')).k;const fixed=next.preparation.monthlyMenus[0].days.find(x=>x.date===date);
   const changed=applyNutritionSituation(next,'weekend',date),day=changed.days[date];
   assert.equal(day.water,900);assert.equal(day.steps,2000);assert.equal(day.minutes,35);assert.equal(day.notes,'Notas del día');
-  assert.ok(Math.abs(total(monthlyShopping(changed,'2026-11')).k-original-(total(day.foodPlan.meals.flatMap(m=>m.items)).k-total(fixed.meals.flatMap(m=>m.items)).k))<.001);
+  assert.ok(Math.abs(total(monthlyShopping(changed,'2026-11')).k-original-(total(foodDayView(day,undefined,date).meals.flatMap(m=>m.items)).k-total(fixed.meals.flatMap(m=>m.items)).k))<.001);
   const restored=clearNutritionSituation(changed,date,plan);assert.equal(restored.days[date].nutrition,undefined);assert.deepEqual(restored.days[date].foodPlan.meals,fixed.meals);assert.equal(restored.days[date].water,900);
 });
 

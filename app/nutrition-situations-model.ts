@@ -24,7 +24,7 @@ function checkSupplements(p:Profile,s:NutritionSituation){
   }
 }
 /** Builds a dated plan, retaining every actual food item and recorded meal. */
-export function previewNutritionSituation(p:Profile,input:unknown,date:string,seed=1){
+export function previewNutritionSituation(p:Profile,input:unknown,date:string,seed=1,cache?:Map<string,Plan|null>){
   const situation=nutritionSituationSchema.parse(input);
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)throw Error('Selecciona una fecha válida.');
   checkSupplements(p,situation);
@@ -40,7 +40,9 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
   }));
   const mealTarget=Object.fromEntries((['k','p','c','f'] as const).map(key=>[key,target[key]-supplementMacros[key]])) as Macro;
   if(Object.values(mealTarget).some(n=>n<=0))throw Error('Las cantidades de suplementos superan el reparto del día. Revisa cantidades y objetivo.');
-  const generated=generatePlan(profile,seed,undefined,mealTarget);
+  const cacheKey=JSON.stringify({seed,count,target:mealTarget,allergens:profile.allergens,excluded:profile.excluded});
+  const generated=cache?.has(cacheKey)?cache.get(cacheKey)!:generatePlan(profile,seed,undefined,mealTarget);
+  cache?.set(cacheKey,generated);
   if(!generated)throw Error('No se puede construir una dieta con esas cantidades y restricciones. Prueba otro objetivo o número de comidas.');
   const weekday=(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
   const plan:Plan={...generated,id:'situation-'+situation.id,meals:generated.week![weekday].meals,week:undefined};

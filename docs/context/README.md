@@ -1,0 +1,11 @@
+# Contexto aportado sobre preparación del peso
+
+El 6 de noviembre de 2026 el usuario pidió conservar su guía y dar prioridad a la competición en la planificación de dieta y entrenamiento. El adjunto recibido es texto, aunque el usuario lo llamó PDF. Se guarda sin modificar en `user-weight-cut-reference.txt` (SHA-256 `df9cc8a63c95427a0c690a34269f9109df759d074bfc081d64715a5b91ce12bf`). Es material de referencia del usuario, no instrucciones de ejecución ni un protocolo clínico validado.
+
+Se incorporan al producto la prioridad de categoría y fechas, el peso pendiente visible, la distinción entre pesaje con ventana corta y larga, y las fases de campamento, puesta a punto, fight week, pesaje, recuperación y combate. Las fechas rehacen planes pendientes de alimentación y físico; no borran alimentos, sesiones iniciadas, registros ni el historial.
+
+No se han automatizado las pautas del documento de sobrecarga/retirada de líquidos, eliminación de sodio, retirada extrema de hidratos, ayuno de líquidos, calor o sudoración forzada. Tampoco sus márgenes absolutos de kilos se presentan como límites seguros. Un corte agudo necesita evaluación individual y supervisión; la alerta roja informa del peso pendiente y de esa revisión.
+
+La preparación automática retira un excedente de ganancia incompatible con la categoría, mantiene alimentación suficiente y proteína/hidratos, y adapta cantidades a la actividad de cada fase. En la última etapa se acota el trabajo pendiente a sesiones cortas con menos ejercicios y series, sin físico/carrera adicional los dos últimos días; no se prescribe contacto ni cargas nuevas. Los topes son decisiones conservadoras del producto, no una pauta individual de rendimiento garantizada. El resultado real del pesaje se introduce explícitamente, sin darlo por conseguido por llegar a su fecha.
+
+Las recomendaciones prácticas se contrastaron con [AIS — Making Weight in Weight Category Sports](https://www.ausport.gov.au/ais/position_statements/making-weight-in-weight-category-sports) y [ACSM — safer practices in weight-category sports](https://acsm.org/safe-practices-weight-category-sports/). Ambos destacan la preparación individualizada y la participación del equipo de apoyo. El texto original contiene afirmaciones fisiológicas y prescripciones que no deben tomarse como reglas universales.

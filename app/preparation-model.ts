@@ -1,5 +1,5 @@
 import {total,type Profile,type Meal,type Day,type Plan,type Item} from './model.ts';
-import {foodSnapshot} from './daily-food-model.ts';
+import {foodSnapshot,foodDayView} from './daily-food-model.ts';
 import type {Supplement,Competition} from './preparation-schema.ts';
 import {mealSlots} from './meal-layout.ts';
 export const mealCompatible=(p:Profile,m:Meal)=>m.items.every(i=>!p.excluded.includes(i.food.id)&&!i.food.allergens.some(a=>p.allergens.includes(a)));
@@ -35,7 +35,7 @@ export function planForFoodDate(p:Profile,plan:Plan|undefined,date:string):Plan|
 export function monthlyShopping(p:Profile,month:string):Item[]{
  const fixed=p.preparation?.monthlyMenus?.find(m=>m.month===month);if(!fixed)return [];
  const sums=new Map<string,Item>();
- for(const d of fixed.days){const actual=p.days[d.date]?.foodPlan?.meals??d.meals;for(const it of actual.flatMap(m=>m.items))sums.set(it.food.id,{...it,grams:(sums.get(it.food.id)?.grams??0)+it.grams});}
+ for(const d of fixed.days){const day=p.days[d.date],view=day?.foodPlan?foodDayView(day,undefined,d.date):undefined;const actual=(view?.meals??d.meals).flatMap((meal,slot)=>{const record=view?.snapshot.records.find(r=>r.slot===slot);return record?day.items.filter(it=>record.itemIds.includes(it.id)):meal.items});for(const it of actual)sums.set(it.food.id,{...it,grams:(sums.get(it.food.id)?.grams??0)+it.grams});}
  return [...sums.values()].sort((a,b)=>a.food.name.localeCompare(b.food.name,'es'));
 }
 export function toggleSupplement(day:Day,s:Supplement):Day{

@@ -1,0 +1,2 @@
+# Keep the supplied reference byte-for-byte, including its original CRLF endings.
+docs/context/user-weight-cut-reference.txt -text whitespace=cr-at-eol

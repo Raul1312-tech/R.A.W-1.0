@@ -1,3 +1,5 @@
+import type {Athlete} from './athlete-schema';
+import {mealSlots,mealFractions} from './meal-layout.ts';
 import type {Preparation} from './preparation-schema';
 import type {TrainingData} from './training-model';
 export type Macro={k:number;p:number;c:number;f:number};
@@ -65,7 +67,7 @@ export type Plan={id:string;created:string;seed:number;target:Macro;meals:Meal[]
 export type MealRecord={slot:number;status:'planned'|'alternative'|'skipped';itemIds:string[]};
 export type DailyFoodPlan={planId:string;meals:Meal[];labels:string[];autoAdjust:boolean;records:MealRecord[]};
 export type Day={items:(Item & {id:string;meal:string})[];foodPlan?:DailyFoodPlan;water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
-export type Profile={preparation?:Preparation;id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
+export type Profile={mealCount?:number;athlete?:Athlete;preparation?:Preparation;id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
 export type State={profiles:Profile[];active:string};
 export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=p.preparation?.energyTarget??Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}
 export function total(items:Item[]):Macro{return items.reduce((a,x)=>({k:a.k+x.food.k*x.grams/100,p:a.p+x.food.p*x.grams/100,c:a.c+x.food.c*x.grams/100,f:a.f+x.food.f*x.grams/100}),{k:0,p:0,c:0,f:0})}
@@ -111,7 +113,7 @@ for(const legume of ['lentils','chickpeas','beans']){
   mainTemplates.push({name:`${foodById(legume).name} con ${proteinNames[protein].toLowerCase()} y ${carbNames[carb]}`,vars:[protein,carb,'olive'],fixed:[[legume,100],[veg,150]],prep:'Escurre las legumbres y caliéntalas con las verduras. Cocina la proteína y el cereal por separado, combina y añade el aceite medido.'});
  }
 }
-const fractions=[.22,.12,.28,.12,.26];
+
 export const planDays=(p:Plan):MenuDay[]=>p.week??[{day:'Menú anterior',meals:p.meals}];
 export const allPlanItems=(p:Plan)=>planDays(p).flatMap(d=>d.meals.flatMap(m=>m.items));
 export function shoppingList(plan:Plan,dayCount=7){const sums=new Map<string,Item>();for(const d of planDays(plan).slice(0,dayCount))for(const meal of d.meals)for(const it of meal.items)sums.set(it.food.id,{food:it.food,grams:(sums.get(it.food.id)?.grams??0)+it.grams});return [...sums.values()].sort((a,b)=>a.food.name.localeCompare(b.food.name,'es'));}
@@ -128,13 +130,14 @@ function recipeMeal(t:Template,profile:Profile,ratio:number):Meal|null{
 }
 function noise(seed:number,text:string){let h=seed|0;for(let i=0;i<text.length;i++){h=Math.imul(h^text.charCodeAt(i),16777619)}return (h>>>0)/4294967296}
 export function generatePlan(profile:Profile,seed:number,previous?:Plan):Plan|null{
- const target=targets(profile),week:MenuDay[]=[];
+ const target=targets(profile),week:MenuDay[]=[],slots=mealSlots(profile.mealCount??5),fractions=mealFractions(profile.mealCount??5);
  const usedNames=new Set<string>(),uses=new Map<string,number>();
  const previousNames=new Set(previous?planDays(previous).flatMap(d=>d.meals.map(m=>m.name)):[]);
  for(let d=0;d<7;d++){
   const meals:Meal[]=[];
-  for(let slot=0;slot<5;slot++){
-   const templates=slot===0?breakfastTemplates:(slot===1||slot===3)?snackTemplates:mainTemplates;
+  for(let slot=0;slot<slots.length;slot++){
+   const identity=slots[slot];
+   const templates=identity===0?breakfastTemplates:(identity===1||identity===3||identity===5)?snackTemplates:mainTemplates;
    const previousMeal=previous?.week?.[d]?.meals[slot];
    const candidates=templates.map(t=>recipeMeal(t,profile,fractions[slot])).filter((m):m is Meal=>!!m&&m.name!==previousMeal?.name);
    const score=(m:Meal)=> (usedNames.has(m.name)?1000:0)+(previousNames.has(m.name)?2:0)+m.items.filter(it=>it.food.id!=='olive').reduce((a,it)=>a+(uses.get(it.food.id)??0)*.28,0)+noise(seed*7919+d*311+slot*101,m.name)*3;

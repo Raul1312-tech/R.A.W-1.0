@@ -4,7 +4,7 @@ import {Bookmark,Download,Pill,Check} from 'lucide-react';
 import {type Profile,type Plan,type Day,total,generatePlan,targets} from './model';
 import {freezeMonth,toggleSupplement} from './preparation-model';
 import {preparationSchema,type Supplement} from './preparation-schema';
-const labels=['Desayuno','Almuerzo','Comida','Merienda','Cena'];
+const labels=['Desayuno','Almuerzo','Comida','Merienda','Cena','Recena'];
 export function NutritionHabits({profile:p,plan,disabled,onChange,onShopping}:{profile:Profile;plan?:Plan;disabled:boolean;onChange:(p:Profile)=>void;onShopping:()=>void}){
  const [month,setMonth]=useState(new Date().toISOString().slice(0,7)),[message,setMessage]=useState('');
  const fixed=p.preparation?.monthlyMenus?.find(m=>m.month===month);

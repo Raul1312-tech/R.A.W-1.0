@@ -1,5 +1,6 @@
 import {strategyProposal,applyStrategy} from './coach-strategy.ts';
 import {z} from 'zod';
+import {sportOptions,levelOptions,goalOptions} from './athlete-schema.ts';
 import {emptyDay,targets,total,type Profile} from './model.ts';
 import {planForFoodDate} from './preparation-model.ts';
 import {dailySessions,planForDate,editCalendarDay} from './training-calendar-model.ts';
@@ -23,6 +24,9 @@ export function coachContext(p:Profile,date:string){
  const priorEvent=p.preparation?.coach?.events.findLast(e=>e.date===date);
  const facts:CoachFact[]=[];
  const add=(f:CoachFact)=>facts.push(f);
+ if(p.athlete){const athlete=p.athlete;add({id:'athlete',area:'preparation',status:'active',title:'Tu punto de partida deportivo',text:`${athlete.sport==='other'?athlete.otherSport:sportOptions[athlete.sport]} · ${levelOptions[athlete.level]}. Objetivo: ${goalOptions[athlete.goal].toLowerCase()}. ${p.mealCount??5} comidas al día.`,why:'Tu perfil aporta contexto. Las sesiones se configuran en Mi rutina y las fechas registradas conservan su propio plan.'});
+  const pending=athlete.competitionWeight;if(!competition&&pending.mode==='target')add({id:'competition-weight',area:'preparation',status:'review',title:'Un peso de competición por preparar',text:`Peso objetivo: ${pending.weight} kg${pending.date?' · pesaje previsto '+pending.date:''}.`,why:'Completa las fechas en Mi rutina para coordinar el calendario. No convertimos esta diferencia de peso en un déficit automático.'});
+ }
  if(competition&&until!==null&&until>=0)add({id:'competition',area:'preparation',status:'active',title:until===0?'Hoy compites':`A ${until} días del combate`,text:`Entre el pesaje y el combate hay ${Math.round(hours!*10)/10} horas.`,why:'El tiempo disponible para recuperar importa. La fecha no activa un déficit ni cambios de agua o sal.'});
  const taper=!!competition?.taper&&until!==null&&until>=0&&until<=7&&!plan?.overrides?.some(o=>o.date===date);
  const pinned=sessions.some(s=>s.pinned);
@@ -49,7 +53,7 @@ export function coachContext(p:Profile,date:string){
  const allowedActions:CoachAction[]=['keep',...(eligible?['ease' as const]:[]),...(food?['fuel' as const]:[]),...(eligible&&food?['coordinate' as const]:[]),...(strategy.enabled?['strategy' as const]:[])];
  const payload={version:3,date,evidence,facts,allowedActions,options:{strategy:strategy.enabled?{trend:strategy.trend,phase:strategy.phase,energyBefore:strategy.energyBefore,energyAfter:strategy.energyAfter,trainingDates:strategy.training.length,foodDates:strategy.foodDates.length,reasons:strategy.reasons,warnings:strategy.warnings}:null,training:eligible?{pendingSessions:adjustable.length,seriesBefore:adjustable.reduce((n,s)=>n+s.session.exercises.reduce((v,e)=>v+e.sets,0),0),seriesAfter:adjustable.reduce((n,s)=>n+s.session.exercises.reduce((v,e)=>v+Math.max(1,e.sets-1),0),0)}:null,food:food?{before:food.before,after:food.after,target:food.target,changedPortions:food.changes.length}:null}};
  // Bind acceptance to the exact local plan, not just aggregate calories/minutes.
- const source={strategyData:{days:p.days,workouts:p.workouts,preparation:p.preparation,goal:p.goal},day:d,sessions:sessions.map(s=>({session:s.session,pinned:s.pinned})),meals,allergens:p.allergens,excluded:p.excluded,events:p.preparation?.coach?.events};
+ const source={strategyData:{days:p.days,workouts:p.workouts,preparation:p.preparation,goal:p.goal},day:d,sessions:sessions.map(s=>({session:s.session,pinned:s.pinned})),meals,athlete:p.athlete,mealCount:p.mealCount,allergens:p.allergens,excluded:p.excluded,events:p.preparation?.coach?.events};
  return {...payload,signature:JSON.stringify({payload,stamp:planStamp(source)}),canEase:eligible};
 }
 export function previewCoachAction(p:Profile,date:string,action:CoachAction){

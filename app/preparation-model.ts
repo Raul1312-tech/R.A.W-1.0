@@ -1,12 +1,13 @@
 import {total,type Profile,type Meal,type Day,type Plan,type Item} from './model.ts';
 import {foodSnapshot} from './daily-food-model.ts';
 import type {Supplement,Competition} from './preparation-schema.ts';
+import {mealSlots} from './meal-layout.ts';
 export const mealCompatible=(p:Profile,m:Meal)=>m.items.every(i=>!p.excluded.includes(i.food.id)&&!i.food.allergens.some(a=>p.allergens.includes(a)));
-export function saveFavorite(p:Profile,meal:Meal,slot:number):Profile{
+export function saveFavorite(p:Profile,meal:Meal,slot:number,count=p.mealCount??5):Profile{
  const favorites=p.preparation?.favorites??[];
  if(favorites.length>=40)throw new Error('Puedes guardar hasta 40 comidas. Elimina alguna para añadir otra.');
  if(!meal.items.length)throw new Error('Esta comida no tiene alimentos.');
- return {...p,preparation:{...p.preparation,favorites:[...favorites,{id:crypto.randomUUID(),slot,meal:structuredClone(meal),repeat:false}]}};
+ return {...p,preparation:{...p.preparation,favorites:[...favorites,{id:crypto.randomUUID(),slot:mealSlots(count)[slot],meal:structuredClone(meal),repeat:false}]}};
 }
 export function useFavorite(day:Day,plan:Plan|undefined,date:string,p:Profile,id:string,slot:number):Day{
  const favorite=p.preparation?.favorites?.find(f=>f.id===id),snapshot=foodSnapshot(day,plan,date);
@@ -15,7 +16,7 @@ export function useFavorite(day:Day,plan:Plan|undefined,date:string,p:Profile,id
  return {...day,foodPlan:{...snapshot,meals:snapshot.meals.map((m,i)=>i===slot?structuredClone(favorite.meal):m)}};
 }
 export function applyRepeats(p:Profile,meals:Meal[]):Meal[]{
- return meals.map((meal,slot)=>{const favorite=p.preparation?.favorites?.find(f=>f.repeat&&f.slot===slot&&mealCompatible(p,f.meal));return favorite?structuredClone(favorite.meal):meal});
+ return meals.map((meal,slot)=>{const favorite=p.preparation?.favorites?.find(f=>f.repeat&&f.slot===mealSlots(meals.length)[slot]&&mealCompatible(p,f.meal));return favorite?structuredClone(favorite.meal):meal});
 }
 export function freezeMonth(p:Profile,plan:Plan,month:string):Profile{
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('Selecciona un mes válido.');

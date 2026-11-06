@@ -1,15 +1,14 @@
-import {generatePlan,mealNames,total,type Profile,type Day,type DailyFoodPlan,type Item,type Macro,type Meal,type MealRecord,type Plan} from './model.ts';
+import {generatePlan,total,type Profile,type Day,type DailyFoodPlan,type Item,type Macro,type Meal,type MealRecord,type Plan} from './model.ts';
+import {mealLabelsFor} from './meal-layout.ts';
 export const displayMeal=(label:string)=>label==='Primera comida'?'Desayuno':label==='Tentempié'?'Almuerzo':label;
 /** Replace a pending meal only in this day's snapshot, keeping all logged food intact. */
 export function refreshDailyMeal(day:Day,plan:Plan|undefined,date:string,slot:number,profile:Profile):Day{
   const snapshot=foodSnapshot(day,plan,date);
   if(!snapshot||!Number.isInteger(slot)||!snapshot.meals[slot])throw new Error('No hay una comida prevista para actualizar.');
   if(snapshot.records.some(r=>r.slot===slot))throw new Error('Deshaz el registro antes de cambiar esta comida.');
-  const sourceSlot=snapshot.meals.length===4?[0,2,3,4][slot]:slot;
+  const previous:Plan={id:snapshot.planId,created:'',seed:plan?.seed??0,target:day.target,meals:snapshot.meals,week:Array.from({length:7},()=>({day:'',meals:snapshot.meals}))};
   const old=snapshot.meals[slot];
-  const previousMeals=Array.from({length:5},(_,i)=>i===sourceSlot?old:snapshot.meals[Math.min(i,snapshot.meals.length-1)]);
-  const previous:Plan={id:snapshot.planId,created:'',seed:plan?.seed??0,target:day.target,meals:previousMeals,week:Array.from({length:7},()=>({day:'',meals:previousMeals}))};
-  const replacement=generatePlan(profile,Math.floor(Math.random()*1000000),previous)?.meals[sourceSlot];
+  const replacement=generatePlan({...profile,mealCount:snapshot.meals.length},Math.floor(Math.random()*1000000),previous)?.meals[slot];
   if(!replacement)throw new Error('No hay otra opción compatible con tus restricciones. Puedes registrar una alternativa.');
   const ratio=total(old.items).k/total(replacement.items).k;
   const meal={...replacement,items:replacement.items.map(it=>({...it,grams:Math.max(1,Math.round(it.grams*ratio))}))};
@@ -21,7 +20,7 @@ export function foodSnapshot(day:Day,plan:Plan|undefined,date:string):DailyFoodP
   if(!plan||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
   const weekday=(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
   const meals=structuredClone(plan.week?.[weekday].meals??plan.meals);
-  const labels=meals.length===4?['Primera comida','Comida','Merienda','Cena']:[...mealNames];
+  const labels=mealLabelsFor(meals.length);
   const records:MealRecord[]=labels.flatMap((label,slot)=>{
     const items=day.items.filter(it=>it.meal===label||it.meal===displayMeal(label));
     return items.length?[{slot,status:'alternative',itemIds:items.map(it=>it.id)}]:[];

@@ -4,7 +4,8 @@ Aplicación privada de alimentación y entrenamiento. Next.js en Vercel y Supaba
 
 ## Funciones
 
-- Menús de lunes a domingo, cinco comidas por día y rotación de toda la semana.
+- Perfil deportivo con disciplina, experiencia, objetivo, horarios y peso pendiente para competición.
+- Menús de lunes a domingo, de tres a seis comidas por día según el perfil y rotación de toda la semana.
 - Alimentación halal, exclusiones, cantidades y lista de compra.
 - Registro de comida, agua, peso, pasos, entrenamiento y sueño.
 - «Mi rutina»: hipertrofia de 2–5 días y preparación física de boxeo con 2 sesiones de fuerza/potencia y 0–2 de carrera por intervalos.
@@ -19,6 +20,14 @@ Aplicación privada de alimentación y entrenamiento. Next.js en Vercel y Supaba
 Los perfiles iniciales son ejemplos sin confirmar. Los datos reales se introducen o importan tras iniciar sesión. El código, los archivos públicos y el repositorio no incluyen historiales personales.
 
 ## Desarrollo
+
+### Perfil del deportista
+
+El formulario recoge deporte, experiencia, objetivo, datos físicos, actividad habitual, entre tres y seis comidas diarias, horario, presupuesto, alergias, exclusiones y observaciones. La rutina se diseña en «Mi rutina»; el perfil no pide un excedente de kcal ni un texto duplicado de entrenamiento. El objetivo elegido determina la estimación inicial; un objetivo energético acordado con el equipo conserva su prioridad.
+
+El peso de competición puede guardarse sin conocer todavía la fecha del pesaje. Se muestra en «Mi día» y sirve para completar después las fechas de combate y pesaje en «Mi rutina». No activa un déficit automático. Si ya existen fechas detalladas, la categoría se comparte y esas fechas se conservan.
+
+Guardar un perfil confirmado genera una nueva semana y actualiza los menús mensuales pendientes desde la fecha actual. Los días pasados y las fechas con comidas registradas conservan sus objetivos y comidas. Las comidas habituales mantienen su franja (por ejemplo, la cena), aunque cambie el número de tomas. Los perfiles antiguos siguen siendo compatibles; las nuevas preferencias se validan en el mismo JSON privado, sin cambios de tablas.
 
 ### Modo de prueba sin cuenta
 

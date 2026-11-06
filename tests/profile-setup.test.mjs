@@ -8,9 +8,17 @@ import {saveFavorite,applyRepeats,freezeMonth,monthlyShopping,planForFoodDate} f
 import {mealLabelsFor,mealSlots,mealTimes} from '../app/meal-layout.ts';
 import {coachContext} from '../app/coach-model.ts';
 import {defaultTrainingConfig,generateTrainingPlan} from '../app/training-model.ts';
+import {saveNutritionSituation,applyNutritionSituation} from '../app/nutrition-situations-model.ts';
 
 const input=(p,count=5)=>({name:p.name,age:p.age,sex:p.sex,height:p.height,weight:p.weight,goal:p.goal,activity:p.activity,waterGoal:p.waterGoal,health:p.health,budget:p.budget,allergens:p.allergens,excluded:p.excluded,confirmed:true,mealCount:count,athlete:{sport:'boxing',level:'experienced',goal:'performance',schedule:'regular',competitionWeight:{mode:'none'}}});
 const date='2026-11-06';
+
+test('updating the usual profile preserves an explicitly planned dated situation',()=>{
+  let p={...newProfile('Atleta'),confirmed:true};p.plans=[generatePlan(p,1)];
+  p=applyNutritionSituation(saveNutritionSituation(p,{id:'late',name:'Me levanto tarde',mealCount:2,times:['12:00','20:00'],energyTarget:2400,training:'rest',supplements:[]}),'late','2026-11-07');
+  const before=structuredClone(p.days['2026-11-07']);const next=saveProfileSetup(p,input(p,4),date);
+  assert.equal(next.plans.at(-1).meals.length,4);assert.deepEqual(next.days['2026-11-07'],before);
+});
 
 test('three to six meals produce complete, balanced weeks and survive saving, logging and monthly shopping',()=>{
   for(const count of [3,4,5,6])for(const sex of ['male','female']){

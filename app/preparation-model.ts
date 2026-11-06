@@ -5,6 +5,7 @@ import {mealSlots} from './meal-layout.ts';
 export const mealCompatible=(p:Profile,m:Meal)=>m.items.every(i=>!p.excluded.includes(i.food.id)&&!i.food.allergens.some(a=>p.allergens.includes(a)));
 export function saveFavorite(p:Profile,meal:Meal,slot:number,count=p.mealCount??5):Profile{
  const favorites=p.preparation?.favorites??[];
+ if(favorites.some(f=>f.slot===mealSlots(count)[slot]&&f.meal.name===meal.name&&f.meal.prep===meal.prep&&f.meal.items.length===meal.items.length&&f.meal.items.every((it,i)=>it.grams===meal.items[i].grams&&(['id','name','unit','k','p','c','f'] as const).every(key=>it.food[key]===meal.items[i].food[key]))))return p;
  if(favorites.length>=40)throw new Error('Puedes guardar hasta 40 comidas. Elimina alguna para añadir otra.');
  if(!meal.items.length)throw new Error('Esta comida no tiene alimentos.');
  return {...p,preparation:{...p.preparation,favorites:[...favorites,{id:crypto.randomUUID(),slot:mealSlots(count)[slot],meal:structuredClone(meal),repeat:false}]}};
@@ -44,6 +45,12 @@ export function toggleSupplement(day:Day,s:Supplement):Day{
  const grams=s.unit==='capsules'?s.amount*s.gramsPerUnit:s.amount;
  const food={id,name:s.name,unit:'por 100 g de producto',allergens:s.allergens,k:s.kind==='creatine'?0:s.k,p:s.kind==='creatine'?0:s.p,c:s.kind==='creatine'?0:s.c,f:s.kind==='creatine'?0:s.f};
  return {...day,items:[...day.items,{id,meal:s.timing==='postworkout'?'Suplementos · Postentreno':s.timing==='breakfast'?'Suplementos · Desayuno':'Suplementos · Noche',food,grams}]};
+}
+export function supplementsForDay(p:Profile,day:Day):Supplement[]{
+ return (p.preparation?.supplements??[]).flatMap(s=>{
+  const choice=day.nutrition?.supplements.find(x=>x.id===s.id);
+  return !day.nutrition?[s]:choice?[{...s,amount:choice.amount,timing:choice.timing}]:day.items.some(i=>i.id==='supplement-'+s.id)?[s]:[];
+ });
 }
 export function competitionContext(c:Competition,date:string){
  const days=Math.ceil((Date.parse(c.fight)-Date.parse(date+'T23:59:59'))/86400000);

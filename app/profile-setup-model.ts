@@ -32,7 +32,7 @@ export function saveProfileSetup(profile:Profile,input:unknown,today:string):Pro
     if(!plan)throw new Error('No podemos generar un menú con esta combinación de comidas, objetivo y exclusiones. Revisa el perfil; tus datos anteriores siguen guardados.');
     next={...next,plans:[...profile.plans,plan].slice(-36)};
     const target=targets(next);
-    next.days=Object.fromEntries(Object.entries(profile.days).map(([date,day])=>[date,date>=today&&!hasFoodHistory(day)?{...day,target,foodPlan:undefined}:day]));
+    next.days=Object.fromEntries(Object.entries(profile.days).map(([date,day])=>[date,date>=today&&!hasFoodHistory(day)&&!day.nutrition?{...day,target,foodPlan:undefined}:day]));
     if(next.preparation?.monthlyMenus)next.preparation={...next.preparation,monthlyMenus:next.preparation.monthlyMenus.map(month=>({...month,created:month.days.some(day=>day.date>=today&&!hasFoodHistory(profile.days[day.date]))?new Date().toISOString():month.created,days:month.days.map(day=>{
       if(day.date<today||hasFoodHistory(profile.days[day.date]))return day;
       const weekday=(new Date(day.date+'T12:00:00Z').getUTCDay()+6)%7;

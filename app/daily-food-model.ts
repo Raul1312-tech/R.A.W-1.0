@@ -8,7 +8,7 @@ export function refreshDailyMeal(day:Day,plan:Plan|undefined,date:string,slot:nu
   if(snapshot.records.some(r=>r.slot===slot))throw new Error('Deshaz el registro antes de cambiar esta comida.');
   const previous:Plan={id:snapshot.planId,created:'',seed:plan?.seed??0,target:day.target,meals:snapshot.meals,week:Array.from({length:7},()=>({day:'',meals:snapshot.meals}))};
   const old=snapshot.meals[slot];
-  const replacement=generatePlan({...profile,mealCount:snapshot.meals.length},Math.floor(Math.random()*1000000),previous)?.meals[slot];
+  const replacement=generatePlan({...profile,mealCount:snapshot.meals.length,preparation:{...profile.preparation,energyTarget:day.target.k}},Math.floor(Math.random()*1000000),previous)?.meals[slot];
   if(!replacement)throw new Error('No hay otra opción compatible con tus restricciones. Puedes registrar una alternativa.');
   const ratio=total(old.items).k/total(replacement.items).k;
   const meal={...replacement,items:replacement.items.map(it=>({...it,grams:Math.max(1,Math.round(it.grams*ratio))}))};

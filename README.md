@@ -108,6 +108,10 @@ Las nuevas sesiones físicas trabajan potencia vertical/lateral, rotación, fuer
 
 ## Importar datos previos
 
+En Mi alimentación, «Tus comidas habituales» abre el recetario guardado en un diálogo, con opciones para renombrar, repetir o quitar platos. Los ingredientes del registro semanal y de Mi día se pueden sustituir desde el catálogo o la etiqueta, ajustar en gramos y registrar juntos; las comidas posteriores del mismo día mantienen el ajuste automático limitado al 20 %.
+
+«Tus situaciones» permite guardar hasta 12 configuraciones con 2 a 6 comidas, horas ordenadas, kcal elegidas, descanso/entrenamiento y suplementos con cantidades y momentos propios. Se aplican a una fecha antes de registrar alimentos; se puede previsualizar la dieta y volver al plan habitual. Cada día conserva su copia al editar o borrar la situación. Las kcal y macros de los suplementos elegidos se reservan dentro del objetivo diario; no se registran como consumidos automáticamente. La semana de referencia, el calendario de entrenamiento y los días ya registrados se conservan. La compra mensual usa las comidas de la situación aplicada a cada fecha.
+
 En la versión anterior, pulsar **Exportar datos**. En R.A.W, iniciar sesión y pulsar **Importar historial**, seleccionar el JSON y confirmar tras revisar el resumen. El archivo puede ser un estado exportado o una copia local con `{ state, revision }`. La revisión antigua se ignora y se usa la de la cuenta de destino.
 
 La importación sustituye los perfiles de esa cuenta. Exportar primero si ya hay datos que se quieran conservar. Los historiales locales existentes permanecen en su carpeta original y no se suben a GitHub.

@@ -5,7 +5,7 @@ import {exerciseCatalog,exerciseRecordSchema,findExerciseRecord} from '../app/ex
 import {generateTrainingPlan,defaultTrainingConfig} from '../app/training-model.ts';
 
 test('every catalog record has unique identity, complete guide and a persistent image asset',()=>{
-  assert.equal(exerciseCatalog.length,58);
+  assert.equal(exerciseCatalog.length,60);
   assert.equal(new Set(exerciseCatalog.map(r=>r.id)).size,exerciseCatalog.length);
   const names=exerciseCatalog.flatMap(r=>[r.name,...r.aliases].map(n=>n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
   assert.equal(new Set(names).size,names.length);
@@ -13,7 +13,7 @@ test('every catalog record has unique identity, complete guide and a persistent 
 });
 
 test('all generated exercises in both sports and all equipment variants resolve by id AND legacy name',()=>{
-  for(const equipment of ['gym','dumbbells'])for(const phase of ['base','build','deload'])for(const level of ['beginner','intermediate','advanced']){
+  for(const equipment of ['gym','dumbbells','bodyweight'])for(const phase of ['base','build','deload'])for(const level of ['beginner','intermediate','advanced']){
     for(const days of [[0,3],[0,2,4],[0,1,3,4],[0,1,3,4,5]]){
       if(level==='beginner'&&days.length>3)continue;
       const plan=generateTrainingPlan({...defaultTrainingConfig(),equipment,phase,level,days,duration:75});

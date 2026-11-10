@@ -35,7 +35,7 @@ export default function ChangeDayPlan({profile,date,disabled,onChange}:{
     trainingMinutes:choice==='rest'?undefined:applied?.trainingMinutes,
     trainingIntensity:choice==='rest'?undefined:applied?.trainingIntensity,
     mealCount:count,
-    times:applied?.times??mealTimes(count,schedule),
+    times:applied?.times??mealTimes(count,schedule,profile.onboarding?.completed?.answers.nutrition),
     supplements:applied?.supplements??(profile.preparation?.supplements??[]).map(({id,amount,timing})=>({id,amount,timing})),
     outsideMeals:choice==='outside'&&slot!==undefined?[...(applied?.outsideMeals??[]).filter(x=>x.slot!==slot),{slot,size}]:applied?.outsideMeals,
   };

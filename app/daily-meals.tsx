@@ -45,7 +45,7 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
   const records=snapshot.records;
   const schedule=profile.athlete?.schedule;
   const weekday=new Date(date+'T12:00:00Z').getUTCDay();
-  const times=day.nutrition?.times??mealTimes(meals.length,(!schedule||schedule==='variable')&&(weekday===0||weekday===6)?'weekend':schedule??'regular');
+  const times=day.nutrition?.times??mealTimes(meals.length,(!schedule||schedule==='variable')&&(weekday===0||weekday===6)?'weekend':schedule??'regular',profile.onboarding?.completed?.answers.nutrition);
   const next=meals.findIndex((_,slot)=>!records.some(r=>r.slot===slot));
   const actual=(slot:number)=>day.items.filter(it=>records.find(r=>r.slot===slot)?.itemIds.includes(it.id));
   const undo=(slot:number)=>run(()=>undoMeal({...day,foodPlan:snapshot},slot),'Comida deshecha.');

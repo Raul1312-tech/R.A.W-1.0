@@ -18,3 +18,29 @@
 @media(max-width:1050px){.setup-layout{grid-template-columns:minmax(0,1fr) 270px;gap:18px}.setup-section{padding:24px}.setup-aside .card{padding:20px}}
 @media(max-width:900px){.setup-layout{grid-template-columns:minmax(0,1fr)}.setup-aside{position:static;display:grid;grid-template-columns:1fr 1fr}.setup-aside>.setup-preview{grid-column:1/-1}.setup-preview dl{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}}
 @media(max-width:600px){.setup-section{padding:24px 18px}.setup-section-heading{gap:11px}.setup-section-heading h2{font-size:18px}.setup-number{width:30px;height:30px}.setup-form .form-grid{grid-template-columns:1fr}.setup-meal-options{gap:7px}.setup-meal-options button{padding:18px 5px}.setup-meal-options span{font-size:9px}.setup-choice{grid-template-columns:1fr}.setup-save{padding:22px 18px}.setup-save>.button{width:100%;justify-content:center;font-size:11px}.setup-form>.notice{margin:18px}.setup-aside{grid-template-columns:1fr}.setup-preview dl{grid-template-columns:1fr}.setup-food-list{grid-template-columns:1fr}.setup-competition-fields{padding:14px}}
+
+.raw-app .raw-onboarding { width:min(100%,760px); margin-inline:auto; padding:clamp(16px,4vw,30px); overflow:visible }
+.onboarding-progress { margin-bottom:20px }
+.onboarding-progress p { margin:0 0 8px; color:#166448; font-size:14px; font-weight:750 }
+.onboarding-progress-track { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:5px; margin-bottom:16px }
+.onboarding-progress-track span { height:5px; border-radius:8px; background:#dce9df }
+.onboarding-progress-track span.filled { background:#20805a }
+.onboarding-progress h2 { margin:0; font-size:clamp(22px,5vw,30px) }
+.raw-onboarding fieldset.onboarding-multi { margin:12px 0 18px }
+.onboarding-multi legend { margin-bottom:8px; font-weight:700; color:#355343 }
+.onboarding-sports { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px }
+.onboarding-sports button { display:flex; flex-direction:column; gap:6px; align-items:flex-start; min-height:100px; text-align:left }
+.onboarding-sports button,.onboarding-days button { padding:10px; border:1px solid #b5cdbd; border-radius:10px; color:#214332; background:#f4f8f2 }
+.onboarding-sports button span { font-size:12px }
+.onboarding-sports button[aria-pressed=true],.onboarding-days button[aria-pressed=true] { color:#005139; background:#dceee2; border-color:#2d805e; box-shadow:inset 0 0 0 1px #2d805e }
+.onboarding-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px }
+.onboarding-days button { min-width:0; min-height:44px; padding:4px 1px; font-size:.77rem }
+.onboarding-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr)); gap:5px; max-height:244px; overflow:auto; padding:3px }
+.onboarding-options label,.onboarding-confirm { min-height:44px; padding:5px 8px; border:1px solid #d4e1d6; border-radius:8px; background:#f8fbf7 }
+.onboarding-day-row,.onboarding-review { margin:8px 0; padding:10px 13px; border:1px solid #d1e1d4; border-radius:12px; background:#f8fbf7 }
+.onboarding-day-row h3,.onboarding-review h3 { margin:0; font-size:16px }
+.onboarding-day-row .field { margin-bottom:6px }
+.onboarding-review ul { padding-left:0; list-style:none }
+.onboarding-review li { display:grid; gap:4px; padding:9px 0; border-bottom:1px solid #d6e2d7 }
+.onboarding-review p { margin:5px 0 10px }
+.raw-onboarding .raw-setup-actions { margin-top:18px }

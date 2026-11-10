@@ -11,7 +11,11 @@ function calendarLoad(p:Profile,date:string){
  let minutes=0,net=0;
  for(const {session} of sessions){const met=session.kind==='conditioning'?5:3.5;minutes+=session.minutes;net+=(met-1)*p.weight*session.minutes/60}
  const wd=weekdayOf(date),technical=plan?.config.sparringDays.includes(wd)?7.8:plan?.config.technicalDays.includes(wd)?5.8:0;
- if(technical){minutes+=60;net+=(technical-1)*p.weight}
+ if(technical){
+   const club=plan?.config.sport==='boxing'?p.onboarding?.completed?.answers.boxing.club?.find(session=>session.day===wd):undefined;
+   const clubMinutes=club?.minutes??60;
+   minutes+=clubMinutes;net+=(technical-1)*p.weight*clubMinutes/60;
+ }
  return {minutes,net,known:!!plan||sessions.length>0};
 }
 export function situationEnergy(p:Profile,s:Pick<NutritionSituation,'training'|'trainingMinutes'|'trainingIntensity'>,date:string){

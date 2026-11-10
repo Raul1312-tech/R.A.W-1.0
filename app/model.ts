@@ -1,3 +1,4 @@
+import type {Onboarding} from './onboarding-schema';
 import type {Athlete} from './athlete-schema';
 import {mealSlots,mealFractions} from './meal-layout.ts';
 import type {Preparation} from './preparation-schema';
@@ -68,7 +69,7 @@ export type Plan={id:string;created:string;seed:number;target:Macro;meals:Meal[]
 export type MealRecord={slot:number;status:'planned'|'alternative'|'skipped';itemIds:string[]};
 export type DailyFoodPlan={planId:string;meals:Meal[];labels:string[];autoAdjust:boolean;records:MealRecord[]};
 export type Day={items:(Item & {id:string;meal:string})[];foodPlan?:DailyFoodPlan;nutrition?:AppliedNutrition;competition?:{key:string;phase:string;review:boolean;error?:string};water:number;weight:number|null;steps:number|null;minutes:number;training:string;sleep:number|null;notes:string;complete:boolean;target:Macro};
-export type Profile={mealCount?:number;athlete?:Athlete;preparation?:Preparation;id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
+export type Profile={onboarding?:Onboarding;mealCount?:number;athlete?:Athlete;preparation?:Preparation;id:string;name:string;age:number;sex:'male'|'female';height:number;weight:number;goal:number;activity:number;surplus:number;waterGoal:number;confirmed:boolean;allergens:string[];excluded:string[];health:string;training:string;budget:string;workouts?:TrainingData;plans:Plan[];days:Record<string,Day>};
 export type State={profiles:Profile[];active:string};
 export function targets(p:Profile){const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);const maintenance=bmr*p.activity;const k=p.preparation?.energyTarget??Math.round((maintenance+p.surplus)/50)*50;const protein=Math.round(p.weight*2/5)*5;const f=Math.round(k*.27/9);return {bmr,maintenance,k,p:protein,f,c:(k-4*protein-9*f)/4};}
 export function total(items:Item[]):Macro{return items.reduce((a,x)=>({k:a.k+x.food.k*x.grams/100,p:a.p+x.food.p*x.grams/100,c:a.c+x.food.c*x.grams/100,f:a.f+x.food.f*x.grams/100}),{k:0,p:0,c:0,f:0})}
@@ -133,6 +134,7 @@ function noise(seed:number,text:string){let h=seed|0;for(let i=0;i<text.length;i
 export function generatePlan(profile:Profile,seed:number,previous?:Plan,override?:Macro):Plan|null{
  const target=override??targets(profile),week:MenuDay[]=[],slots=mealSlots(profile.mealCount??5),fractions=mealFractions(profile.mealCount??5);
  const usedNames=new Set<string>(),uses=new Map<string,number>();
+ const preferred=new Set(profile.onboarding?.completed?.answers.food.preferred??[]);
  const previousNames=new Set(previous?planDays(previous).flatMap(d=>d.meals.map(m=>m.name)):[]);
  for(let d=0;d<7;d++){
   const meals:Meal[]=[];
@@ -141,7 +143,7 @@ export function generatePlan(profile:Profile,seed:number,previous?:Plan,override
    const templates=identity===0?breakfastTemplates:(identity===1||identity===3||identity===5)?snackTemplates:mainTemplates;
    const previousMeal=previous?.week?.[d]?.meals[slot];
    const candidates=templates.map(t=>recipeMeal(t,profile,fractions[slot],target)).filter((m):m is Meal=>!!m&&m.name!==previousMeal?.name);
-   const score=(m:Meal)=> (usedNames.has(m.name)?1000:0)+(previousNames.has(m.name)?2:0)+m.items.filter(it=>it.food.id!=='olive').reduce((a,it)=>a+(uses.get(it.food.id)??0)*.28,0)+noise(seed*7919+d*311+slot*101,m.name)*3;
+   const score=(m:Meal)=> (usedNames.has(m.name)?1000:0)+(previousNames.has(m.name)?2:0)-m.items.filter(it=>preferred.has(it.food.id)).length*1.5+m.items.filter(it=>it.food.id!=='olive').reduce((a,it)=>a+(uses.get(it.food.id)??0)*.28,0)+noise(seed*7919+d*311+slot*101,m.name)*3;
    candidates.sort((a,b)=>score(a)-score(b));
    const meal=candidates[0];if(!meal)return null;
    meals.push(meal);usedNames.add(meal.name);for(const it of meal.items)uses.set(it.food.id,(uses.get(it.food.id)??0)+1);

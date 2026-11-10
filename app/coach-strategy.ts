@@ -1,3 +1,4 @@
+import {mealLabelsFor} from './meal-layout.ts';
 import {emptyDay,targets,total,generatePlan,type Profile} from './model.ts';
 import {dailySessions,planForDate,editCalendarDay,sessionsForDate} from './training-calendar-model.ts';
 import {generateTrainingPlan,type TrainingSession} from './training-model.ts';
@@ -83,7 +84,7 @@ export function applyStrategy(p:Profile,date:string):Profile{
   if(!next.days[date])next.days[date]=emptyDay(p);
   for(const dt of proposal.foodDates){
    const meals=applyRepeats(p,structuredClone(menu.week?.[(new Date(dt+'T12:00:00Z').getUTCDay()+6)%7]?.meals??menu.meals));
-   next.days[dt]={...(next.days[dt]??emptyDay(next)),target:menu.target,foodPlan:{planId:menu.id,meals,labels:['Primera comida','Tentempié','Comida','Merienda','Cena'],records:[],autoAdjust:true}};
+   next.days[dt]={...(next.days[dt]??emptyDay(next)),target:menu.target,foodPlan:{planId:menu.id,meals,labels:mealLabelsFor(meals.length),records:[],autoAdjust:true}};
   }
  }
  next.preparation={...next.preparation,coach:{...p.preparation?.coach,enabled:p.preparation?.coach?.enabled??false,events:[...(p.preparation?.coach?.events??[]),{date,at:new Date().toISOString(),before:0,after:0,strategy:true,reason:proposal.reasons.join(' ').slice(0,300)}].slice(-30)}};

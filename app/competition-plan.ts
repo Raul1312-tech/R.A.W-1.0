@@ -23,7 +23,7 @@ export function replanCompetition(p:Profile,today:string):Profile{
  // Stop an ordinary mass-gain surplus while a lower competition category is the active objective.
  // Acute dehydration and last-minute deficits are never inferred from the gap to the category.
  const source:Profile={...p,surplus:c.weight<p.weight?0:p.surplus,workouts};
- const baseKey=stamp({c,weight:current.weight,profileWeight:p.weight,schedule:p.athlete?.schedule,age:p.age,height:p.height,sex:p.sex,activity:p.activity,surplus:source.surplus,energy:p.preparation?.energyTarget,allergens:p.allergens,excluded:p.excluded,count:p.mealCount,supplements:p.preparation?.supplements,seed:p.plans.at(-1)?.seed});
+ const baseKey=stamp({c,weight:current.weight,profileWeight:p.weight,schedule:p.athlete?.schedule,mealHours:p.onboarding?.completed?.answers.nutrition,age:p.age,height:p.height,sex:p.sex,activity:p.activity,surplus:source.surplus,energy:p.preparation?.energyTarget,allergens:p.allergens,excluded:p.excluded,count:p.mealCount,supplements:p.preparation?.supplements,seed:p.plans.at(-1)?.seed});
  const cache=new Map<string,Plan|null>();
  for(let offset=0;offset<90;offset++){
   const date=shift(today,offset),phase=competitionPhase(c,date);if(!phase.active)break;
@@ -36,7 +36,7 @@ export function replanCompetition(p:Profile,today:string):Profile{
   const supplements=(p.preparation?.supplements??[]).map(s=>({id:s.id,amount:s.amount,timing:s.timing}));
   try{
    const prepared=previewNutritionSituation({...source,days,preparation:{...source.preparation,energyTarget:target.k}},
-    {id:'competition-'+phase.phase,name:phase.label+' · competición',mealCount:count,times:old?.nutrition?.mealCount===count?old.nutrition.times:mealTimes(count,p.athlete?.schedule??'regular'),training,supplements,outsideMeals:old?.nutrition?.outsideMeals?.filter(x=>mealSlots(count).includes(x.slot))},date,(p.plans.at(-1)?.seed??0)+1,cache);
+    {id:'competition-'+phase.phase,name:phase.label+' · competición',mealCount:count,times:old?.nutrition?.mealCount===count?old.nutrition.times:mealTimes(count,p.athlete?.schedule??'regular',p.onboarding?.completed?.answers.nutrition),training,supplements,outsideMeals:old?.nutrition?.outsideMeals?.filter(x=>mealSlots(count).includes(x.slot))},date,(p.plans.at(-1)?.seed??0)+1,cache);
    days[date]={...prepared,competition:{key,phase:phase.phase,review:current.gap>0}};
   }catch{
    const fallback=old??{items:[],water:0,weight:null,steps:null,minutes:0,training:'',sleep:null,notes:'',complete:false,target};

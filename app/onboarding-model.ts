@@ -20,7 +20,7 @@ export function startOnboarding(p:Profile):OnboardingDraft{
     goalWeight:p.goal>p.weight?p.goal:undefined,
   }:{name:p.name==='Nuevo perfil'?undefined:p.name};
   answers.nutrition={mealCount:p.mealCount,schedule:p.athlete?.schedule};
-  answers.food={allergies:p.allergens,intolerances:[],excluded:p.excluded,preferred:[]};
+  answers.food={preferences:p.preparation?.foodPreferences,allergies:p.allergens,intolerances:[],excluded:p.excluded,preferred:[]};
   const competition=p.preparation?.competition;
   const pending=p.athlete?.competitionWeight;
   if(competition){
@@ -60,7 +60,7 @@ function competitionFor(a:OnboardingAnswers,p:Profile):Competition|undefined{
   const weighIn=instant(c.weighDate,c.weighTime,timeZone),fight=instant(c.fightDate,c.fightTime,timeZone);
   if(!weighIn||!fight)return;
   const existing=p.preparation?.competition;
-  return competitionSchema.parse({weight:c.category,weighIn,fight,timeZone,taper:existing?.taper??true,notes:existing?.notes??'',
+  return competitionSchema.parse({weight:c.category,weighIn,fight,timeZone,rounds:existing?.rounds,roundMinutes:existing?.roundMinutes,taper:existing?.taper??true,notes:existing?.notes??'',
     weighInResult:existing?.weighIn===weighIn&&existing.fight===fight?existing.weighInResult:undefined});
 }
 
@@ -75,7 +75,7 @@ function trainingFor(a:OnboardingAnswers,competition?:Competition):TrainingConfi
   const level=learning?'beginner':'intermediate';
   const equipment=selectedEquipment(a.strength.equipment);
   const settings:TrainingConfig={
-    ...defaultTrainingConfig(),sport:boxing?'boxing':'hypertrophy',level,
+    ...defaultTrainingConfig(),sport:boxing?'boxing':'hypertrophy',level,intensity:learning?'gentle':a.strength.intensity,
     phase:a.recovery.state==='low'?'deload':'base',equipment:equipment.includes('gym')?'gym':equipment.includes('dumbbells')?'dumbbells':'bodyweight',
     days:available.map(slot=>slot.day),duration:45,sessionLimits:available.map(({day,minutes})=>({day,minutes})),
     technicalDays:boxing?technicalDays:[],sparringDays:boxing?sparringDays:[],
@@ -88,7 +88,7 @@ function trainingFor(a:OnboardingAnswers,competition?:Competition):TrainingConfi
   const ranked=available.slice().sort((a,b)=>load(a.day)-load(b.day)||a.day-b.day);
   const runAvailable=a.running.effort!=='pain'&&!a.running.preferBike&&a.running.place!=='bike';
   const runMode=a.running.frequency==='none'||a.running.frequency==='occasional'||a.running.mode==='walk'||a.running.mode==='walkRun'||a.running.effort==='stop'
-    ?'walk-run':'easy';
+    ?'walk-run':a.boxing.experience==='compete'&&a.recovery.state==='ready'&&a.running.frequency==='often'&&a.running.effort==='easy'?'mixed':'easy';
   const guided=ranked.filter(slot=>!sparringDays.includes(slot.day));
   const physical=mode==='manual'?ranked.filter(slot=>slot.kind==='physical'):
     guided.slice(0,guided.length>2&&a.recovery.state==='ready'?2:1);
@@ -122,7 +122,7 @@ export function prepareOnboarding(profile:Profile,answers:OnboardingAnswers,toda
   const level=answers.boxing.experience==='compete'&&basics.sport==='boxing'?'competitive':config.level==='beginner'?'beginner':'recreational';
   const next=saveProfileSetup({...profile,
     onboarding:{version:1,completed:{at:new Date().toISOString(),answers}},
-    preparation:{...profile.preparation,competition},
+    preparation:{...profile.preparation,competition,foodPreferences:food.preferences??profile.preparation?.foodPreferences},
   },{
     name:basics.name,age:basics.age,sex:basics.sex,height:basics.height,weight:basics.weight,
     goal:basics.goalWeight??basics.weight,activity,waterGoal:profile.waterGoal,

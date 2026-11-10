@@ -1,5 +1,5 @@
 import type {Competition} from './preparation-schema';
-import type {Profile} from './model';
+import {weightTrend,type Profile} from './model.ts';
 export const phaseNames={camp:'Campamento',taper:'Puesta a punto','fight-week':'Fight week','weigh-in':'Día de pesaje',recovery:'Recuperación tras el pesaje','fight-day':'Día de combate',complete:'Competición finalizada'};
 export type CompetitionPhase=keyof typeof phaseNames;
 const dateFormatters=new Map<string,Intl.DateTimeFormat>();
@@ -23,6 +23,10 @@ export function competitionStatus(p:Profile,date:string){
  const context=c?competitionPhase(c,date):null;
  const result=context?.weighed?c!.weighInResult:undefined;
  const weight=result?.weight??latest?.[1].weight??p.weight,target=c?.weight??pending!.weight;
+ const trend=weightTrend({...p,days:Object.fromEntries(Object.entries(p.days).filter(([dt])=>dt<=date))});
+ const recentTrend=trend&&distance(trend.end,date)<=7?trend:null;
  const gap=Math.max(0,Math.round((weight-target)*10)/10),active=context?.active??true;
- return {context,weight,target,gap,weightDate:result?localCompetitionDate(result.at,c!):latest?.[0],red:active&&gap>0,needsDates:!c,staleWeight:!result&&(!latest||distance(latest[0],date)>7),event:pending?.event,notes:c?.notes,active};
+ const trendGap=recentTrend?Math.max(0,recentTrend.current-target):null;
+ const trajectory=recentTrend&&context&&context.daysToWeigh>0&&trendGap!==null?recentTrend.current+recentTrend.change*context.daysToWeigh/7:null;
+ return {context,weight,target,gap,trend:recentTrend,trajectory,weightDate:result?localCompetitionDate(result.at,c!):latest?.[0],red:active&&gap>0,needsDates:!c,staleWeight:!result&&(!latest||distance(latest[0],date)>7),event:pending?.event,notes:c?.notes,active};
 }

@@ -2,7 +2,7 @@ import {total,type Profile,type Meal,type Day,type Plan,type Item} from './model
 import {foodSnapshot,foodDayView} from './daily-food-model.ts';
 import type {Supplement,Competition} from './preparation-schema.ts';
 import {mealSlots} from './meal-layout.ts';
-export const mealCompatible=(p:Profile,m:Meal)=>m.items.every(i=>!p.excluded.includes(i.food.id)&&!i.food.allergens.some(a=>p.allergens.includes(a)));
+export const mealCompatible=(p:Profile,m:Meal)=>m.items.every(i=>!p.excluded.includes(i.food.id)&&p.preparation?.foodPreferences?.foods[i.food.id]!=='avoid'&&!i.food.allergens.some(a=>p.allergens.includes(a)));
 export function saveFavorite(p:Profile,meal:Meal,slot:number,count=p.mealCount??5):Profile{
  const favorites=p.preparation?.favorites??[];
  if(favorites.some(f=>f.slot===mealSlots(count)[slot]&&f.meal.name===meal.name&&f.meal.prep===meal.prep&&f.meal.items.length===meal.items.length&&f.meal.items.every((it,i)=>it.grams===meal.items[i].grams&&(['id','name','unit','k','p','c','f'] as const).every(key=>it.food[key]===meal.items[i].food[key]))))return p;

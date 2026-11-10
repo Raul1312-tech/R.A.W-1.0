@@ -1,6 +1,6 @@
 import {targets,type Profile,type Day,type Macro} from './model.ts';
 import {mealSlots,mealFractions} from './meal-layout.ts';
-import {dailySessions,planForDate,weekdayOf} from './training-calendar-model.ts';
+import {clubForDate,dailySessions,planForDate,weekdayOf} from './training-calendar-model.ts';
 import type {NutritionSituation} from './nutrition-situation-schema.ts';
 
 const shift=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
@@ -10,7 +10,7 @@ function calendarLoad(p:Profile,date:string){
  const sessions=dailySessions(data,date);
  let minutes=0,net=0;
  for(const {session} of sessions){const met=session.kind==='conditioning'?5:3.5;minutes+=session.minutes;net+=(met-1)*p.weight*session.minutes/60}
- const wd=weekdayOf(date),technical=plan?.config.sparringDays.includes(wd)?7.8:plan?.config.technicalDays.includes(wd)?5.8:0;
+ const wd=weekdayOf(date),kind=clubForDate(plan,date),technical=kind==='sparring'?7.8:kind==='technique'?5.8:0;
  if(technical){
    const club=plan?.config.sport==='boxing'?p.onboarding?.completed?.answers.boxing.club?.find(session=>session.day===wd):undefined;
    const clubMinutes=club?.minutes??60;

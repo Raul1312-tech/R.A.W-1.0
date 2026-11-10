@@ -12,6 +12,10 @@ export function planForDate(data:TrainingData,date:string){
   const monthly=data.plans.filter(p=>p.month===date.slice(0,7)).at(-1);
   return monthly??(data.plans.some(p=>p.month)?undefined:data.plans.at(-1));
 }
+export function clubForDate(plan:TrainingPlan|undefined,date:string){
+  const override=plan?.clubOverrides?.[date],day=weekdayOf(date);
+  return override==='none'?undefined:override??(plan?.config.sparringDays.includes(day)?'sparring':plan?.config.technicalDays.includes(day)?'technique':undefined);
+}
 export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]{
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
@@ -44,7 +48,7 @@ export function reschedulePlan(plan:TrainingPlan,selection:TrainingConfig,month:
     }
   }
   const overrides=plan.month===month?(plan.overrides??[]).map(o=>({date:o.date,sessions:[...o.sessions.filter(s=>!changedKinds.has(s.kind)),...sessionsForDate(next,o.date).filter(s=>changedKinds.has(s.kind))]})):[];
-  return trainingPlanSchema.parse({...next,overrides});
+  return trainingPlanSchema.parse({...next,overrides,clubOverrides:plan.month===month?plan.clubOverrides:undefined});
 }
 export function editCalendarDay(plan:TrainingPlan,month:string,date:string,sessions:TrainingSession[],scope:'date'|'weekday'){
   if(!monthDates(month).includes(date))throw new Error('La fecha no pertenece al mes.');
@@ -58,9 +62,9 @@ export function monthlyLoadWarnings(plan:TrainingPlan,month:string){
   const dates=monthDates(month),offset=weekdayOf(dates[0]);
   for(const [i,date] of dates.entries()){
     const key=Math.floor((i+offset)/7),week=weeks.get(key)??{physical:0,running:0,busy:0,overlap:false};
-    const sessions=sessionsForDate(plan,date),wd=weekdayOf(date);
+    const sessions=sessionsForDate(plan,date);
     const physical=sessions.some(s=>s.kind==='lift'),running=sessions.some(s=>s.kind==='conditioning');
-    week.physical+=Number(physical);week.running+=Number(running);week.busy+=Number(physical||running||plan.config.technicalDays.includes(wd)||plan.config.sparringDays.includes(wd));week.overlap||=physical&&running;weeks.set(key,week);
+    week.physical+=Number(physical);week.running+=Number(running);week.busy+=Number(physical||running||!!clubForDate(plan,date));week.overlap||=physical&&running;weeks.set(key,week);
   }
   const values=[...weeks.values()],warnings:string[]=[];
   if(values.some(w=>w.physical>3))warnings.push('Hay semanas con más de tres días de físico. Revisa volumen, intensidad y recuperación antes de añadir carga. Puedes mantenerlos.');
@@ -98,7 +102,7 @@ export function upcomingTrainingWeek(data:TrainingData,date:string){
   return Array.from({length:7},(_,index)=>{
     const date=new Date(start+index*86400000).toISOString().slice(0,10);
     const plan=planForDate(data,date),day=weekdayOf(date);
-    const club=plan?.config.sparringDays.includes(day)?'Sparring':plan?.config.technicalDays.includes(day)?'Boxeo técnico':undefined;
+    const kind=clubForDate(plan,date),club=kind==='sparring'?'Sparring':kind==='technique'?'Boxeo técnico':undefined;
     return {date,day,planned:!!plan,club,sessions:dailySessions(data,date)};
   });
 }

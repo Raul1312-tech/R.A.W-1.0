@@ -2,6 +2,7 @@
 
 import {createContext,useContext,useRef,useState,type ReactNode} from 'react';
 import {ArrowLeft,ArrowRight,Check,Dumbbell,Flame,LoaderCircle,Save} from 'lucide-react';
+import {FoodPreferenceFields} from './food-preferences-editor';
 import SelectField from './select-field';
 import {choices,selectedEquipment,stepIssues,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema';
 import {startOnboarding,prepareOnboarding,onboardingSportName} from './onboarding-model';
@@ -182,6 +183,9 @@ function Food({a,update}:{a:OnboardingAnswers;update:Update}){
       <Multi field="food.allergies" label="Alergias alimentarias" options={allergenOptions} values={f.allergies} max={20} onChange={allergies=>update('food',{allergies})}/>
       <Multi field="food.intolerances" label="Intolerancias alimentarias" options={allergenOptions} values={f.intolerances} max={20} onChange={intolerances=>update('food',{intolerances})}/>
     </details>
+    <details className="raw-disclosure"><summary>Mis hidratos, proteínas y variedad · opcional</summary>
+      <FoodPreferenceFields value={f.preferences} onChange={preferences=>update('food',{preferences})}/>
+    </details>
     <details className="raw-disclosure"><summary>Alimentos que quieres evitar o repetir</summary>
       <label className="field"><span>Buscar en el catálogo</span><input type="search" value={foodQuery} onChange={e=>setFoodQuery(e.target.value)}/></label>
       <Multi field="food.excluded" label="Evitar en mi menú" options={foodOptions} values={f.excluded} onChange={excluded=>update('food',{excluded,preferred:f.preferred?.filter(id=>!excluded.includes(id))??[]})}/>
@@ -252,6 +256,7 @@ function Strength({a,update,boxing}:{a:OnboardingAnswers;update:Update;boxing:bo
       {boxing&&<Choice field="strength.frequency" label="¿Cuántos días por semana has hecho físico en el último mes?" options={choices.strengthFrequency}
         value={s.frequency} onChange={frequency=>update('strength',{frequency,recent:frequency==='none'?undefined:s.recent})}/>}
       <Choice field="strength.practice" label="¿Qué tipo de físico has hecho hasta ahora?" options={choices.strengthPractice} value={s.practice} onChange={practice=>update('strength',{practice})}/>
+      <Choice label="¿Con qué exigencia quieres empezar? · opcional" options={choices.intensity} value={s.intensity} onChange={intensity=>update('strength',{intensity})}/>
       <Choice field="strength.confidence" label="¿Cuánta ayuda necesitas con los ejercicios?" options={choices.confidence} value={s.confidence} onChange={confidence=>update('strength',{confidence})}/>
 
     </div>

@@ -7,6 +7,8 @@ import dynamic from 'next/dynamic';
 import {mealSlots,mealTimes} from './meal-layout';
 import {saveFavorite,useFavorite} from './preparation-model';
 import {outsideMealEstimate} from './nutrition-estimates';
+import {MealSupplements} from './personal-nutrition';
+import {alternatives,foodAllowed,swapPendingIngredient} from './preparation-engine';
 import {total,type Day,type Plan,type Profile} from './model';
 import {displayMeal,foodDayView,recordMeal,undoMeal,refreshDailyMeal} from './daily-food-model';
 import {previousFoods} from './food-search';
@@ -66,7 +68,7 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
       const label=displayMeal(snapshot.labels[slot]);
       const items=record?actual(slot):meal.items;
       const outside=!record&&!meal.items.length?outsideMealEstimate(day,slot):undefined;
-      const compatible=meal.items.every(it=>!profile.excluded.includes(it.food.id)&&!it.food.allergens.some(a=>profile.allergens.includes(a)));
+      const compatible=meal.items.every(it=>foodAllowed(profile,it.food));
       const favorites=(profile.preparation?.favorites??[]).filter(f=>f.slot===mealSlots(meals.length)[slot]);
       return <article className={'card raw-meal '+(slot===next?'raw-meal-next':'')} data-status={record?.status==='skipped'?'skipped':record?'recorded':'pending'} key={slot}>
         <header><span className="raw-meal-time">{times[slot]}</span><span>{label}</span><small>{record?.status==='skipped'?'Omitida':record?'Registrada':'Pendiente'}</small></header>
@@ -85,6 +87,7 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
             {!!items.length&&<MenuMacros m={total(items)}/>}
             {!record&&meal.prep&&<p>{meal.prep}</p>}
           </>}
+          {!record&&!outside&&meal.items.map((it,i)=>{const options=alternatives(profile,it.food);return options.length>0&&<SelectField key={it.food.id+':'+i} label={'Sustituir '+it.food.name} value="" disabled={disabled} onValueChange={id=>{if(id)run(()=>swapPendingIngredient(profile,day,plan,date,slot,i,id),'Ingrediente sustituido por una ración equivalente.')}}><option value="">Elegir equivalente</option>{options.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</SelectField>})}
           {!record&&!outside&&<div className="raw-actions"><button className="text-button" disabled={disabled} onClick={()=>setEditor({slot,usePlan:true})}>Cambiar ingredientes o cantidades</button><button className="text-button" disabled={disabled} onClick={()=>run(()=>refreshDailyMeal(day,plan,date,slot,profile),'Nueva propuesta para '+label.toLowerCase()+'.')}><RefreshCw size={15}/> Proponer otro plato</button></div>}
           {!!items.length&&<button className="text-button" disabled={disabled} onClick={()=>{
             try{onProfile(saveFavorite(profile,record?.status==='alternative'?{name:'Mi '+label.toLowerCase(),items}:meal,slot,meals.length));setFeedback({message:'Guardada en Comidas habituales.'});setError('')}
@@ -96,6 +99,7 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
           }}><option value="">Elegir plato</option>{favorites.map(f=><option key={f.id} value={f.id}>{f.meal.name}</option>)}</SelectField>}
           {!record&&<button className="text-button" disabled={disabled} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'skipped'),label+' omitida.',slot)}>No he hecho esta comida</button>}
         </details>
+        <MealSupplements profile={profile} date={date} day={day} slot={slot} times={times} disabled={disabled} onChange={onChange} onProfile={onProfile}/>
       </article>;
     })}
     {!compact&&<details className="raw-disclosure card">

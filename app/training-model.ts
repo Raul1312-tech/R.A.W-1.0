@@ -12,7 +12,8 @@ export const trainingConfigSchema=z.object({
   duration:z.union([z.literal(20),z.literal(30),z.literal(45),z.literal(60),z.literal(75),z.literal(90),z.literal(120)]),equipment:z.enum(['gym','dumbbells','bodyweight']),
   sessionLimits:z.array(z.object({day:whole(0,6),minutes:whole(20,120)})).max(7)
     .refine(slots=>new Set(slots.map(slot=>slot.day)).size===slots.length).optional(),
-  conditioningMode:z.enum(['walk-run','easy','intervals']).optional(),
+  intensity:z.enum(['gentle','steady','experienced']).optional(),
+  conditioningMode:z.enum(['walk-run','easy','intervals','mixed']).optional(),
   musclePriority:z.enum(['balanced','legs','back','upper']).optional(),
   strengthGoal:z.enum(['muscle','strength','start','return']).optional(),
   medicineBall:z.boolean(),conditioningDays:whole(0,7),technicalDays:uniqueDays,sparringDays:uniqueDays,
@@ -25,7 +26,7 @@ export type Exercise=z.infer<typeof exerciseSchema>;
 const sessionSchema=z.object({day:whole(0,6),slot:z.enum(['physical','running']).optional(),title:z.string().max(120),focus:z.string().max(400),minutes:whole(0,120),kind:z.enum(['lift','conditioning','rest']),warmup:z.string().max(500),exercises:z.array(exerciseSchema).max(10)});
 export type TrainingSession=z.infer<typeof sessionSchema>;
 const dateSchema=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>!Number.isNaN(Date.parse(v))&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v);
-export const trainingPlanSchema=z.object({id:z.string().max(100),created:z.string().datetime(),config:trainingConfigSchema,sessions:z.array(sessionSchema).length(7),extraSessions:z.array(sessionSchema).max(7).optional(),warnings:z.array(z.string().max(500)).max(64),month:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),overrides:z.array(z.object({date:dateSchema,sessions:z.array(sessionSchema).max(2)})).max(31).optional()}).refine(p=>p.sessions.every((s,i)=>s.day===i)&&(p.extraSessions??[]).every(s=>s.kind==='conditioning'&&s.slot==='running'&&p.sessions[s.day].kind==='lift')&&new Set((p.extraSessions??[]).map(s=>s.day)).size===(p.extraSessions??[]).length).refine(p=>!(p.overrides?.length)||!!p.month&&new Set(p.overrides.map(o=>o.date)).size===p.overrides.length&&p.overrides.every(o=>o.date.startsWith(p.month!+'-')&&o.sessions.every(s=>s.day===(new Date(o.date+'T12:00:00Z').getUTCDay()+6)%7&&s.kind!=='rest'&&s.exercises.length>0&&new Set(s.exercises.map(e=>e.id)).size===s.exercises.length)&&new Set(o.sessions.map(s=>s.kind)).size===o.sessions.length));
+export const trainingPlanSchema=z.object({id:z.string().max(100),created:z.string().datetime(),config:trainingConfigSchema,sessions:z.array(sessionSchema).length(7),extraSessions:z.array(sessionSchema).max(7).optional(),warnings:z.array(z.string().max(500)).max(64),month:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),clubOverrides:z.record(dateSchema,z.enum(['none','technique','sparring'])).refine(x=>Object.keys(x).length<=31).optional(),overrides:z.array(z.object({date:dateSchema,sessions:z.array(sessionSchema).max(2)})).max(31).optional()}).refine(p=>p.sessions.every((s,i)=>s.day===i)&&(p.extraSessions??[]).every(s=>s.kind==='conditioning'&&s.slot==='running'&&p.sessions[s.day].kind==='lift')&&new Set((p.extraSessions??[]).map(s=>s.day)).size===(p.extraSessions??[]).length).refine(p=>!(p.overrides?.length)||!!p.month&&new Set(p.overrides.map(o=>o.date)).size===p.overrides.length&&p.overrides.every(o=>o.date.startsWith(p.month!+'-')&&o.sessions.every(s=>s.day===(new Date(o.date+'T12:00:00Z').getUTCDay()+6)%7&&s.kind!=='rest'&&s.exercises.length>0&&new Set(s.exercises.map(e=>e.id)).size===s.exercises.length)&&new Set(o.sessions.map(s=>s.kind)).size===o.sessions.length));
 export type TrainingPlan=z.infer<typeof trainingPlanSchema>;
 export const workoutLogSchema=z.object({id:z.string().max(200),planId:z.string().max(100),day:whole(0,6),date:dateSchema,session:sessionSchema.optional(),title:z.string().max(120),sport:z.enum(['hypertrophy','boxing']),minutes:whole(1,240),rpe:z.number().min(1).max(10),notes:z.string().max(1000),entries:z.array(z.object({exerciseId:z.string().max(100),name:z.string().max(160),prescribed:z.string().max(300),sets:whole(0,20),setIndexes:z.array(whole(0,19)).max(20).optional(),actual:z.string().max(100),kg:z.number().min(0).max(500).nullable()})).max(10)});
 export type WorkoutLog=z.infer<typeof workoutLogSchema>;
@@ -221,7 +222,7 @@ function fitSession(exercises:Exercise[],minutes:number){
     return {...ex,sets,group:grouped?ex.group:undefined};
   });
 }
-function baseConditioning(day:number,mode:'walk-run'|'easy',minutes:number):TrainingSession{
+export function baseConditioning(day:number,mode:'walk-run'|'easy',minutes:number):TrainingSession{
   const walking=mode==='walk-run';
   const sets=walking?Math.max(1,Math.floor((minutes-10)/3)):1;
   const work=movementExercise(walking?'run-walk':'run-easy');
@@ -282,14 +283,14 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
     });
     schedule.runningDays.forEach((day,index)=>{
       const limit=c.sessionLimits?.find(slot=>slot.day===day)?.minutes;
-      if(c.conditioningMode==='walk-run'||c.conditioningMode==='easy'||limit!==undefined&&limit<35){
+      if(c.conditioningMode==='walk-run'||c.conditioningMode==='easy'||c.conditioningMode==='mixed'&&(index===0||c.phase==='deload')||limit!==undefined&&limit<35){
         const mode=c.conditioningMode==='walk-run'?'walk-run':'easy';
         const running=baseConditioning(day,mode,Math.min(limit??30,30));
         if(sessions[day].kind==='lift')extraSessions.push(running);else sessions[day]=running;
         return;
       }
       const short=index%2===0;const reduced=c.phase==='deload';const bouts=reduced?4:c.level==='beginner'?5:c.level==='elite'?(short?10:8):c.level==='competitive'?(short?9:7):short?8:6;const specific=c.phase==='build';
-      const running:TrainingSession={day,slot:'running',title:short?'Carrera · intervalos cortos':'Carrera · intervalos sostenidos',kind:'conditioning',minutes:reduced?25:short?30:35,focus:short?'Repite esfuerzos rápidos manteniendo la mecánica; no son sprints máximos.':'Sostén esfuerzos controlados y recupera entre repeticiones. No persigas un ritmo fijo si pierdes técnica.',warmup:'10 min de trote progresivo y movilidad. Añade 2–3 aceleraciones suaves. Termina con 5–8 min suaves.',exercises:[{id:short?'run-short':'run-long',name:short?'Intervalos de carrera cortos':'Intervalos de carrera sostenidos',block:'interval',sets:bouts,dose:short?(specific?'30 s rápidos':'20 s rápidos'):(specific?'90 s controlados':'60 s controlados'),rest:short?'90 s caminando o trotando':'120 s de trote suave',effort:reduced?'RPE 6/10':c.level==='beginner'?'RPE 6–7/10':'RPE 7–8/10, nunca a tope',cue:'Adapta el ritmo a tu nivel y terreno. Si no corres habitualmente, empieza alternando carrera y marcha. Detén la sesión si hay dolor.',alternative:'Bicicleta estática con los mismos tiempos y esfuerzo percibido'}]};
+      const running:TrainingSession={day,slot:'running',title:short?'Carrera · intervalos cortos':'Carrera · intervalos sostenidos',kind:'conditioning',minutes:reduced?25:short?30:35,focus:short?'Repite esfuerzos rápidos manteniendo la mecánica; no son sprints máximos.':'Sostén esfuerzos controlados y recupera entre repeticiones. No persigas un ritmo fijo si pierdes técnica.',warmup:'10 min de trote progresivo y movilidad. Añade 2–3 aceleraciones suaves. Termina con 5–8 min suaves.',exercises:[{id:short?'run-short':'run-long',name:short?'Intervalos de carrera cortos':'Intervalos de carrera sostenidos',block:'interval',sets:bouts,dose:short?(specific?'30 s rápidos':'20 s rápidos'):(specific?'90 s controlados':'60 s controlados'),rest:short?'90 s caminando o trotando':'120 s de trote suave',effort:reduced||c.intensity==='gentle'?'RPE 6/10':c.intensity==='steady'?'RPE 6–7/10':c.level==='beginner'?'RPE 6–7/10':'RPE 7–8/10, nunca a tope',cue:'Adapta el ritmo a tu nivel y terreno. Si no corres habitualmente, empieza alternando carrera y marcha. Detén la sesión si hay dolor.',alternative:'Bicicleta estática con los mismos tiempos y esfuerzo percibido'}]};
       if(sessions[day].kind==='lift')extraSessions.push(running);else sessions[day]=running;
     });
   }
@@ -304,6 +305,12 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
     session.minutes=Math.min(120,Math.max(c.duration,estimate));
   }
   if(c.phase==='deload')warnings.push('Descarga: menos series o intervalos, lejos del fallo. Valora la recuperación antes de volver a subir el volumen.');
+  if(c.intensity)for(const session of sessions.filter(s=>s.kind==='lift'))for(const ex of session.exercises){
+    if(ex.block==='strength'||ex.block==='muscle'){
+      if(c.intensity==='gentle')ex.sets=Math.min(2,ex.sets);
+      ex.effort=c.phase==='deload'||c.intensity==='gentle'?'Deja unas 4 repeticiones con buena técnica.':c.intensity==='experienced'?'Deja 2 repeticiones con buena técnica.':'Deja unas 3 repeticiones con buena técnica.';
+    }
+  }
   for(const session of [...sessions,...extraSessions])for(const exercise of session.exercises){
     const record=findExerciseRecord(exercise);if(!record)throw new Error('Falta la ficha del ejercicio '+exercise.name+'. No se ha guardado la rutina.');exercise.catalogId=record.id;
   }

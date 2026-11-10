@@ -41,6 +41,7 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   const recorded=total(day.items);
   const projected=()=>{
     const actual=total([...day.items,...pending.flatMap(i=>meals[i].items)]);
+    for(const [id,expected] of Object.entries(day.supplementForecast??{}))if(!day.items.some(it=>it.id==='supplement-'+id))for(const key of keys)actual[key]+=expected[key];
     for(const slot of pending){const reserve=outsideMealEstimate(day,slot);if(reserve&&!meals[slot].items.length)for(const key of keys)actual[key]+=reserve[key]}
     return actual;
   };

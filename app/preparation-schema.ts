@@ -1,13 +1,19 @@
 import {z} from 'zod';
+import {foodPreferencesSchema,readinessSchema,baselineSchema} from './preparation-preferences.ts';
 import {coachSettings} from './coach-schema.ts';
 import {nutritionSituationSchema} from './nutrition-situation-schema.ts';
 const num=(a:number,b:number)=>z.number().finite().min(a).max(b);
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const food=z.object({id:z.string().max(100),name:z.string().max(120),unit:z.string().max(120),allergens:z.array(z.string().max(60)).max(20),k:num(0,10000),p:num(0,1000),c:num(0,2000),f:num(0,1000),group:z.string().max(60).optional()});
 const meal=z.object({name:z.string().max(150),prep:z.string().max(1000).optional(),items:z.array(z.object({food,grams:num(.1,3000)})).min(1).max(20)});
-export const competitionSchema=z.object({fight:z.string().datetime({offset:true}),weighIn:z.string().datetime({offset:true}),weight:num(30,250),taper:z.boolean(),notes:z.string().max(1200),timeZone:z.string().max(100).refine(value=>{try{new Intl.DateTimeFormat('en',{timeZone:value});return true}catch{return false}},'Zona horaria no válida.').optional(),weighInResult:z.object({weight:num(30,250),at:z.string().datetime({offset:true})}).optional()}).refine(c=>Date.parse(c.weighIn)<=Date.parse(c.fight),'El pesaje debe ser anterior al combate.');
+export const competitionSchema=z.object({fight:z.string().datetime({offset:true}),weighIn:z.string().datetime({offset:true}),weight:num(30,250),rounds:num(1,15).int().optional(),roundMinutes:num(1,5).int().optional(),taper:z.boolean(),notes:z.string().max(1200),timeZone:z.string().max(100).refine(value=>{try{new Intl.DateTimeFormat('en',{timeZone:value});return true}catch{return false}},'Zona horaria no válida.').optional(),weighInResult:z.object({weight:num(30,250),at:z.string().datetime({offset:true})}).optional()}).refine(c=>Date.parse(c.weighIn)<=Date.parse(c.fight),'El pesaje debe ser anterior al combate.');
 export const preparationSchema=z.object({
   coach:coachSettings.optional(),
+  foodPreferences:foodPreferencesSchema.optional(),
+  readiness:z.record(date,readinessSchema).refine(x=>Object.keys(x).length<=90).optional(),
+  baselines:z.array(baselineSchema).max(30).optional(),
+  supplementFeedback:z.record(date,z.record(z.string().max(100),z.enum(['skipped','poor-tolerance'])).refine(x=>Object.keys(x).length<=12)).refine(x=>Object.keys(x).length<=90).optional(),
+
   situations:z.array(nutritionSituationSchema).max(12).optional(),
   favorites:z.array(z.object({id:z.string().max(100),slot:num(0,5).int(),meal,repeat:z.boolean()})).max(40).optional(),
   supplements:z.array(z.object({id:z.string().max(100),name:z.string().min(1).max(100),kind:z.enum(['protein','creatine']),timing:z.enum(['breakfast','postworkout','evening']),amount:num(.1,200),unit:z.enum(['g','capsules']),gramsPerUnit:num(.01,100),k:num(0,1000),p:num(0,100),c:num(0,100),f:num(0,100),allergens:z.array(z.string().max(60)).max(20)})).max(12).optional(),

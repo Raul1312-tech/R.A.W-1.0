@@ -2,6 +2,7 @@ import {targets,weekdays,type Profile,type Day,type Plan} from './model.ts';
 import {competitionPhase,competitionStatus} from './competition-phase.ts';
 import {previewNutritionSituation,hasNutritionRecords} from './nutrition-situations-model.ts';
 import {situationEnergy} from './nutrition-estimates.ts';
+import {supplementChoices} from './preparation-engine.ts';
 import {mealTimes,mealSlots} from './meal-layout.ts';
 import {foodDayView} from './daily-food-model.ts';
 import {outsideMealEstimate} from './nutrition-estimates.ts';
@@ -13,7 +14,7 @@ export function replanCompetition(p:Profile,today:string):Profile{
  if(!/^\d{4}-\d{2}-\d{2}$/.test(today))return p;
  const c=p.preparation?.competition,days={...p.days};let changed=false;
  for(const [dt,d] of Object.entries(days))if(dt>=today&&d.competition&&(!c||!competitionPhase(c,dt).active)&&!hasNutritionRecords(d)){
-  days[dt]={...d,foodPlan:undefined,nutrition:undefined,competition:undefined,target:targets(p)};changed=true;
+  days[dt]={...d,foodPlan:undefined,supplementForecast:undefined,nutrition:undefined,competition:undefined,target:targets(p)};changed=true;
  }
  const workouts=p.workouts&&{...p.workouts,plans:p.workouts.plans.map(plan=>JSON.stringify(plan.config.competition)===JSON.stringify(c)?plan:{...plan,config:{...plan.config,competition:c}})};
  if(workouts&&workouts.plans.some((plan,i)=>plan!==p.workouts!.plans[i]))changed=true;
@@ -23,20 +24,20 @@ export function replanCompetition(p:Profile,today:string):Profile{
  // Stop an ordinary mass-gain surplus while a lower competition category is the active objective.
  // Acute dehydration and last-minute deficits are never inferred from the gap to the category.
  const source:Profile={...p,surplus:c.weight<p.weight?0:p.surplus,workouts};
- const baseKey=stamp({c,weight:current.weight,profileWeight:p.weight,schedule:p.athlete?.schedule,mealHours:p.onboarding?.completed?.answers.nutrition,age:p.age,height:p.height,sex:p.sex,activity:p.activity,surplus:source.surplus,energy:p.preparation?.energyTarget,allergens:p.allergens,excluded:p.excluded,count:p.mealCount,supplements:p.preparation?.supplements,seed:p.plans.at(-1)?.seed});
+ const baseKey=stamp({c,weight:current.weight,profileWeight:p.weight,schedule:p.athlete?.schedule,mealHours:p.onboarding?.completed?.answers.nutrition,age:p.age,height:p.height,sex:p.sex,activity:p.activity,surplus:source.surplus,energy:p.preparation?.energyTarget,allergens:p.allergens,excluded:p.excluded,count:p.mealCount,supplements:p.preparation?.supplements,feedback:p.preparation?.supplementFeedback,preferences:p.preparation?.foodPreferences,seed:p.plans.at(-1)?.seed});
  const cache=new Map<string,Plan|null>();
  for(let offset=0;offset<90;offset++){
   const date=shift(today,offset),phase=competitionPhase(c,date);if(!phase.active)break;
   const old=days[date];if(old?.complete)continue;
-  const training=phase.daysToFight<=2||phase.phase==='weigh-in'||phase.phase==='recovery'?'rest' as const:'usual' as const;
+  const training=old?.nutrition?.situationId==='quick-rest'||phase.daysToFight<=2||phase.phase==='weigh-in'||phase.phase==='recovery'?'rest' as const:'usual' as const;
   const target=situationEnergy(source,{training},date).target;
-  const key=baseKey+':'+phase.phase+':'+target.k;
-  if(old?.competition?.key===key&&old.target.k===target.k&&old.nutrition?.situationId.startsWith('competition-'))continue;
+  const key=baseKey+':'+phase.phase+':'+target.k+':'+training+':'+stamp(old?.nutrition?.outsideMeals??[]);
+  if(old?.competition?.key===key&&old.target.k===target.k&&(old.nutrition?.situationId.startsWith('competition-')||old.nutrition?.situationId==='quick-rest'))continue;
   const count=p.mealCount??5;
-  const supplements=(p.preparation?.supplements??[]).map(s=>({id:s.id,amount:s.amount,timing:s.timing}));
+  const supplements=supplementChoices(p,date);
   try{
    const prepared=previewNutritionSituation({...source,days,preparation:{...source.preparation,energyTarget:target.k}},
-    {id:'competition-'+phase.phase,name:phase.label+' · competición',mealCount:count,times:old?.nutrition?.mealCount===count?old.nutrition.times:mealTimes(count,p.athlete?.schedule??'regular',p.onboarding?.completed?.answers.nutrition),training,supplements,outsideMeals:old?.nutrition?.outsideMeals?.filter(x=>mealSlots(count).includes(x.slot))},date,(p.plans.at(-1)?.seed??0)+1,cache);
+    {id:old?.nutrition?.situationId==='quick-rest'?'quick-rest':'competition-'+phase.phase,name:phase.label+' · competición',mealCount:count,times:old?.nutrition?.mealCount===count?old.nutrition.times:mealTimes(count,p.athlete?.schedule??'regular',p.onboarding?.completed?.answers.nutrition),training,supplements,outsideMeals:old?.nutrition?.outsideMeals?.filter(x=>mealSlots(count).includes(x.slot))},date,(p.plans.at(-1)?.seed??0)+1,cache);
    days[date]={...prepared,competition:{key,phase:phase.phase,review:current.gap>0}};
   }catch{
    const fallback=old??{items:[],water:0,weight:null,steps:null,minutes:0,training:'',sleep:null,notes:'',complete:false,target};

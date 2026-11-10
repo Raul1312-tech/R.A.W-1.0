@@ -2,7 +2,7 @@ import {emptyDay,generatePlan,targets,total,type Profile,type Plan,type Day,type
 import {foodSnapshot} from './daily-food-model.ts';
 import {mealSlots,mealLabelsFor} from './meal-layout.ts';
 import {situationEnergy} from './nutrition-estimates.ts';
-import {planForFoodDate} from './preparation-model.ts';
+import {applyRepeats,planForFoodDate} from './preparation-model.ts';
 import {nutritionSituationSchema,type NutritionSituation} from './nutrition-situation-schema.ts';
 import {stateSchema} from './validation.ts';
 
@@ -34,10 +34,12 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
   const target=situationEnergy(p,situation,date).target;
   const profile={...p,mealCount:count,preparation:{...p.preparation,energyTarget:target.k}};
   const supplements=situation.supplements.map(s=>situation.training==='rest'&&s.timing==='postworkout'?{...s,timing:'breakfast' as const}:s);
-  const supplementMacros=total(supplements.map(chosen=>{
+  const portions=supplements.map(chosen=>{
     const s=p.preparation!.supplements!.find(x=>x.id===chosen.id)!;
     return {food:{...s,k:s.kind==='creatine'?0:s.k,p:s.kind==='creatine'?0:s.p,c:s.kind==='creatine'?0:s.c,f:s.kind==='creatine'?0:s.f},grams:chosen.amount*(s.unit==='capsules'?s.gramsPerUnit:1)};
-  }));
+  });
+  const supplementForecast=Object.fromEntries(portions.map((portion,i)=>[supplements[i].id,total([portion])]));
+  const supplementMacros=total(portions);
   const mealTarget=Object.fromEntries((['k','p','c','f'] as const).map(key=>[key,target[key]-supplementMacros[key]])) as Macro;
   if(Object.values(mealTarget).some(n=>n<=0))throw Error('Las cantidades de suplementos superan el reparto del día. Revisa cantidades y objetivo.');
   const cacheKey=JSON.stringify({seed,count,target:mealTarget,allergens:profile.allergens,excluded:profile.excluded});
@@ -47,13 +49,14 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
   const weekday=(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
   const plan:Plan={...generated,id:'situation-'+situation.id,meals:generated.week![weekday].meals,week:undefined};
   const snapshot=foodSnapshot({...day,foodPlan:undefined,items:[]},plan,date)!;
+  if(!situation.supplements.length&&!(situation.id.startsWith('competition-')))snapshot.meals=applyRepeats(p,snapshot.meals);
   for(const record of old?.records??[]){const slot=mealSlots(count).indexOf(mealSlots(old!.meals.length)[record.slot]);snapshot.meals[slot]=structuredClone(old!.meals[record.slot]);snapshot.records.push({...structuredClone(record),slot})}
   snapshot.meals=snapshot.meals.map((meal,slot)=>situation.outsideMeals?.some(outside=>outside.slot===mealSlots(count)[slot])&&!snapshot.records.some(r=>r.slot===slot)?{name:mealLabelsFor(count)[slot]+' fuera · pendiente de registrar',items:[]}:meal);
   const {id,...settings}=situation;
   const toMinutes=(t:string)=>Number(t.slice(0,2))*60+Number(t.slice(3));
   const start=toMinutes(situation.times[0]),end=toMinutes(situation.times.at(-1)!);
   const times=count===situation.mealCount?situation.times:Array.from({length:count},(_,i)=>{const minute=Math.round(start+(end-start)*i/(count-1));return String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0')});
-  return {...day,target,complete:snapshot.records.length===count,foodPlan:snapshot,nutrition:{situationId:id,...structuredClone(settings),mealCount:count,times,energyTarget:target.k,supplements}};
+  return {...day,target,supplementForecast,complete:snapshot.records.length===count,foodPlan:snapshot,nutrition:{situationId:id,...structuredClone(settings),mealCount:count,times,energyTarget:target.k,supplements}};
 }
 export function applyNutritionSituation(p:Profile,id:string,date:string):Profile{
   const s=p.preparation?.situations?.find(x=>x.id===id);
@@ -66,7 +69,7 @@ export function applyNutritionSettings(p:Profile,settings:NutritionSituation,dat
 }
 export function clearNutritionSituation(p:Profile,date:string,reference:Plan|undefined):Profile{
   if(hasNutritionRecords(p.days[date]))throw Error('Este día ya tiene alimentos registrados. Se conserva su planificación.');
-  const day={...(p.days[date]??emptyDay(p)),nutrition:undefined,foodPlan:undefined,target:targets(p)};
+  const day={...(p.days[date]??emptyDay(p)),nutrition:undefined,foodPlan:undefined,supplementForecast:undefined,target:targets(p)};
   const plan=planForFoodDate(p,reference,date);
   return validate({...p,days:{...p.days,[date]:{...day,foodPlan:foodSnapshot(day,plan,date)}}});
 }

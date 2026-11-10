@@ -3,6 +3,7 @@ import {emptyDay,targets,total,generatePlan,type Profile} from './model.ts';
 import {dailySessions,planForDate,editCalendarDay,sessionsForDate} from './training-calendar-model.ts';
 import {generateTrainingPlan,type TrainingSession} from './training-model.ts';
 import {applyRepeats} from './preparation-model.ts';
+import {versionStamp} from './strategy-version.ts';
 import {competitionPhase} from './competition-phase.ts';
 const shift=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const mean=(v:number[])=>v.reduce((a,b)=>a+b,0)/v.length;
@@ -17,7 +18,9 @@ export function strategyProposal(p:Profile,date:string){
  const currentWeight=b.length?mean(b):p.weight,goal=p.goal,current=targets(p);
  const poorSleep=recent.filter(([d,v])=>d>=shift(date,-6)&&v.sleep!==null&&v.sleep<6).length;
  const hard=data.logs.filter(l=>l.date>=shift(date,-6)&&l.date<=date&&l.rpe>=8).length;
- const fatigue=poorSleep>=2||hard>=3;
+ const readiness=Object.entries(p.preparation?.readiness??{}).filter(([d])=>d>=shift(date,-6)&&d<=date);
+ const pain=p.preparation?.readiness?.[date]?.pain==='present';
+ const fatigue=poorSleep>=2||hard>=3||readiness.filter(([,r])=>r.fatigue==='high'||r.sleep==='poor').length>=2;
  const complete=recent.filter(([,d])=>d.complete);
  const adherence=complete.length>=10&&complete.filter(([,d])=>Math.abs(d.target.k-current.k)<=current.k*.05&&Math.abs(total(d.items).k-d.target.k)<=d.target.k*.15).length>=10;
  const cooldown=p.preparation?.coach?.events.some(e=>e.strategy&&e.date>shift(date,-7)&&e.date<=date);
@@ -46,7 +49,7 @@ export function strategyProposal(p:Profile,date:string){
  const progressing=data.logs.filter(l=>l.date>=shift(date,-13)&&l.date<=date&&l.rpe<=7&&l.session?.exercises.length&&l.session.exercises.every(e=>(l.entries.find(v=>v.exerciseId===e.id)?.sets??0)>=e.sets)).length>=3;
  const phase=fatigue||(daysToFight!==null&&daysToFight>=0&&daysToFight<=14)?'deload':plan?.config.level==='beginner'?'base':progressing?'build':plan?.config.phase??'base';
  const training:{date:string;before:TrainingSession[];after:TrainingSession[]}[]=[];
- if(plan&&!plan.config.limitation){
+ if(plan&&!plan.config.limitation&&!pain){
   for(let n=1;n<=7;n++){
    const dt=shift(date,n),source=planForDate(data,dt);if(!source||source.overrides?.some(o=>o.date===dt)||dailySessions(data,dt).some(s=>s.pinned))continue;
    const until=competition?Math.ceil((Date.parse(competition.fight)-Date.parse(dt+'T12:00:00Z'))/86400000):null;
@@ -55,6 +58,17 @@ export function strategyProposal(p:Profile,date:string){
    const before=sessionsForDate(source,dt),after=sessionsForDate(generated,dt);
    for(const s of after){const old=before.find(v=>v.kind===s.kind);if(!old)continue;let budget=Math.floor(old.exercises.reduce((n,e)=>n+e.sets,0)*1.2);const sum=()=>s.exercises.reduce((n,e)=>n+e.sets,0);while(sum()>budget&&s.exercises.some(e=>e.sets>1)){for(const e of [...s.exercises].reverse()){if(sum()<=budget)break;if(e.sets>1)e.sets--;}}}
    // Prescriptions are regenerated for the declared sport, level, equipment and priority.
+   if(chosen==='build'){
+    for(const s of after){
+     const old=before.find(x=>x.kind===s.kind);
+     if(old&&chosen!==source.config.phase){
+      const eligible=old.kind==='lift'&&old.exercises.reduce((sum,e)=>sum+e.sets,0)>=5&&s.minutes>=old.minutes+3;
+      const last=data.logs.filter(l=>l.date<=date&&l.rpe<=7&&l.session?.kind==='lift').sort((a,b)=>b.date.localeCompare(a.date));
+      const index=eligible?old.exercises.findIndex(e=>e.block==='strength'&&e.sets<4&&last.some(l=>l.entries.some(r=>r.exerciseId===e.id&&r.sets>=e.sets))):-1;
+      Object.assign(s,old,{exercises:old.exercises.map((e,i)=>i===index?{...e,sets:e.sets+1}:e),minutes:index>=0?Math.min(s.minutes,old.minutes+3):old.minutes});
+     }
+    }
+   }
    if(JSON.stringify(before)!==JSON.stringify(after))training.push({date:dt,before,after});
   }
  }
@@ -88,5 +102,11 @@ export function applyStrategy(p:Profile,date:string):Profile{
   }
  }
  next.preparation={...next.preparation,coach:{...p.preparation?.coach,enabled:p.preparation?.coach?.enabled??false,events:[...(p.preparation?.coach?.events??[]),{date,at:new Date().toISOString(),before:0,after:0,strategy:true,reason:proposal.reasons.join(' ').slice(0,300)}].slice(-30)}};
+ next.strategyVersion={
+  date,trainingDates:proposal.training.map(e=>e.date),
+  ...(proposal.training.length?{training:p.workouts!.plans,trainingAfter:versionStamp(next.workouts!.plans)}:{}),
+  food:proposal.foodDates.map(dt=>({date:dt,target:p.days[dt]?.target??targets(p),after:versionStamp(next.days[dt].foodPlan)})),
+  ...(proposal.menu&&proposal.foodDates.length?{menuId:proposal.menu.id,energyBefore:p.preparation?.energyTarget,energyAfter:proposal.energyAfter}:{}),
+ };
  return next;
 }

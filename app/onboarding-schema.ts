@@ -1,3 +1,4 @@
+import {foodPreferencesSchema} from './preparation-preferences.ts';
 import {z} from 'zod';
 
 export const choices={
@@ -31,6 +32,7 @@ export const choices={
   muscle:{balanced:'Reparto equilibrado',legs:'Piernas y glúteos',back:'Espalda',upper:'Pecho, hombros y brazos'},
   strengthFrequency:{none:'Ningún día',occasional:'Algún día suelto',oneTwo:'Uno o dos días por semana',threePlus:'Tres o más días por semana'},
   strengthPractice:{none:'Estoy empezando de cero',circuit:'Circuitos del club',bodyweight:'Ejercicios con mi peso',weights:'Máquinas, mancuernas o barra'},
+  intensity:{gentle:'Empezar con calma',steady:'Entrenar con margen',experienced:'Ya manejo cargas exigentes'},
   confidence:{guided:'Quiero aprender desde cero',some:'Conozco algunos movimientos',confident:'Hago los movimientos básicos con confianza'},
   equipment:{gym:'Máquinas y pesas del gimnasio',dumbbells:'Mancuernas',bodyweight:'Mi peso corporal y espacio libre'},
   exercisePattern:{squat:'Sentadilla o levantarte de una silla',hinge:'Levantar un peso del suelo',push:'Empujar con los brazos',pull:'Remar o tirar hacia ti',core:'Estabilizar el tronco'},
@@ -77,6 +79,7 @@ const nutrition=z.object({
   supplements:unique(option(choices.supplement),5).optional(),
 }).strict();
 const food=z.object({
+  preferences:foodPreferencesSchema.optional(),
   reviewedRestrictions:z.boolean().refine(v=>v),allergies:ids,intolerances:ids,excluded:ids,preferred:ids,
   cook:option(choices.cook),access:option(choices.access),budget:z.number().finite().min(1).max(1000).optional(),
   menuStyle:option(choices.menuStyle),health:option(choices.foodReview).optional(),
@@ -93,6 +96,7 @@ const boxing=z.object({
   hardestDay:activityDay.optional(),roundLimit:option(choices.roundLimit),
 }).strict();
 const strength=z.object({
+  intensity:option(choices.intensity).optional(),
   frequency:option(choices.strengthFrequency),practice:option(choices.strengthPractice),confidence:option(choices.confidence),
   // Keep accepting scalar selections from already saved v1 profiles and drafts.
   equipment:z.union([option(choices.equipment),unique(option(choices.equipment),3)]),patterns:unique(option(choices.exercisePattern),5).optional(),

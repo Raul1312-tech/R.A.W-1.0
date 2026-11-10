@@ -3,7 +3,7 @@
 import {useState} from 'react';
 import {CalendarDays,CheckCircle2,Dumbbell,ArrowRight} from 'lucide-react';
 import {trainingDays,type TrainingData,type WorkoutLog,type WorkoutDraft} from './training-model';
-import {dailySessions,planForDate,upcomingTrainingWeek,weekdayOf} from './training-calendar-model';
+import {clubForDate,dailySessions,planForDate,upcomingTrainingWeek} from './training-calendar-model';
 import WorkoutSession from './workout-session';
 import {makeDraft} from './workout-progress';
 import {ExerciseExplanation,useExerciseCatalog} from './exercise-explanation';
@@ -20,8 +20,7 @@ export default function DailyTraining({data,date,disabled,compact,resting,previe
   const catalog=useExerciseCatalog();
   const sessions=dailySessions(data,date);
   const plan=planForDate(data,date);
-  const weekday=weekdayOf(date);
-  const technical=plan?.config.sparringDays.includes(weekday)?'Sparring':plan?.config.technicalDays.includes(weekday)?'Boxeo técnico':null;
+  const club=clubForDate(plan,date),technical=club==='sparring'?'Sparring':club==='technique'?'Boxeo técnico':null;
   const pending=sessions.filter(s=>!s.saved&&(!resting||s.draft));
   const active=sessions.find(s=>s.key===selected);
   const logs=data.logs.filter(l=>l.date===date);

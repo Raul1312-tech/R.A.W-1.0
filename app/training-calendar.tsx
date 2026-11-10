@@ -4,7 +4,7 @@ import {useState} from 'react';
 import LateralCarousel from './lateral-carousel';
 import {ArrowDown,ArrowUp,Plus,Save,Trash2,CalendarDays,ArrowUpRight} from 'lucide-react';
 import {trainingDays,type Exercise,type TrainingPlan,type TrainingSession} from './training-model';
-import {monthDates,weekdayOf,sessionsForDate,editCalendarDay,monthlyLoadWarnings} from './training-calendar-model';
+import {clubForDate,monthDates,weekdayOf,sessionsForDate,editCalendarDay,monthlyLoadWarnings} from './training-calendar-model';
 import {ExerciseExplanation,useExerciseCatalog} from './exercise-explanation';
 import {exerciseCategory,exerciseFromRecord} from './exercise-options';
 
@@ -31,14 +31,14 @@ export default function TrainingCalendar({plan,month,today,disabled,onSave,onTod
     <div className="month-grid" aria-label="Calendario de entrenamiento">
       {trainingDays.map(day=><div className="month-weekday" key={day} title={day}>{day.slice(0,3)}</div>)}
       {Array.from({length:weekdayOf(dates[0])},(_,i)=><div className="month-empty" key={'empty'+i}/>)}
-      {dates.map(date=>{const daySessions=sessionsForDate(plan,date);const wd=weekdayOf(date);const physical=daySessions.some(s=>s.kind==='lift'),running=daySessions.some(s=>s.kind==='conditioning');return <button type="button" key={date} className={'month-cell '+(date===selected?'selected ':'')+(date===today?'is-today':'')} aria-label={`${dateLabel(date)}${physical?' · físico':''}${running?' · carrera':''}`} aria-pressed={selected===date} disabled={edited!==null} onClick={()=>{setSelected(date);setError('')}}><b>{Number(date.slice(-2))}</b><span className="month-activities">{physical&&<i className="physical">Físico</i>}{running&&<i className="running">Carrera</i>}{plan.config.technicalDays.includes(wd)&&<i className="technical">Boxeo</i>}{plan.config.sparringDays.includes(wd)&&<i className="sparring">Sparring</i>}</span>{plan.overrides?.some(o=>o.date===date)&&<small className="month-edit-dot" title="Día personalizado">•</small>}</button>})}
+      {dates.map(date=>{const daySessions=sessionsForDate(plan,date);const club=clubForDate(plan,date);const physical=daySessions.some(s=>s.kind==='lift'),running=daySessions.some(s=>s.kind==='conditioning');return <button type="button" key={date} className={'month-cell '+(date===selected?'selected ':'')+(date===today?'is-today':'')} aria-label={`${dateLabel(date)}${physical?' · físico':''}${running?' · carrera':''}${club?' · '+(club==='sparring'?'sparring':'boxeo'):''}`} aria-pressed={selected===date} disabled={edited!==null} onClick={()=>{setSelected(date);setError('')}}><b>{Number(date.slice(-2))}</b><span className="month-activities">{physical&&<i className="physical">Físico</i>}{running&&<i className="running">Carrera</i>}{club==='technique'&&<i className="technical">Boxeo</i>}{club==='sparring'&&<i className="sparring">Sparring</i>}</span>{plan.overrides?.some(o=>o.date===date)&&<small className="month-edit-dot" title="Día personalizado">•</small>}</button>})}
     </div>
     <p className="muted month-hint">Toca una fecha para desplegar su cadena de ejercicios. • indica una fecha personalizada.</p>
     {loadWarnings.length>0&&<details className="routine-context"><summary>Carga del calendario · avisos sin bloqueo</summary>{loadWarnings.map(w=><p key={w}>{w}</p>)}</details>}
     <section className="card calendar-day" aria-label="Detalle del día planificado">
       <div className="card-title"><div><span className="eyebrow">PLANIFICACIÓN / {selected}</span><h2>{dateLabel(selected)}</h2></div>{edited===null?<button className="button outline" disabled={disabled} onClick={()=>{setEdited(structuredClone(sessions));setScope('date')}}>Editar este día</button>:<span className="pill">Cambios pendientes</span>}</div>
-      {(plan.config.technicalDays.includes(weekday)||plan.config.sparringDays.includes(weekday))&&<p className="notice">También tienes {plan.config.sparringDays.includes(weekday)?'sparring':'boxeo técnico'}. Su contenido lo dirige tu entrenador; revisa la carga total del día.</p>}
-      {sessions.length>0&&plan.config.sparringDays.includes((weekday+1)%7)&&<p className="notice">Víspera de sparring: no es recomendable acumular una sesión exigente. Puedes mantenerla y ajustar la carga.</p>}
+      {clubForDate(plan,selected)&&<p className="notice">También tienes {clubForDate(plan,selected)==='sparring'?'sparring':'boxeo técnico'}. Su contenido lo dirige tu entrenador; revisa la carga total del día.</p>}
+      {sessions.length>0&&clubForDate(plan,new Date(Date.parse(selected+'T12:00:00Z')+86400000).toISOString().slice(0,10))==='sparring'&&<p className="notice">Víspera de sparring: no es recomendable acumular una sesión exigente. Puedes mantenerla y ajustar la carga.</p>}
       {sessions.length===0&&<p className="calendar-rest">Sin físico ni carrera previstos para esta fecha. Puedes añadir una sesión al editar el día.</p>}
       {sessions.map((session,si)=><section className="calendar-session" key={session.kind}>
         <header><span className={'pill '+(session.kind==='conditioning'?'running':'')}>{session.kind==='conditioning'?'CARRERA':'FÍSICO'}</span><h3>{session.title}</h3><p>{session.minutes} min previstos · {session.exercises.reduce((n,e)=>n+e.sets,0)} series / intervalos</p></header>

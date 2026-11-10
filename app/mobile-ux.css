@@ -259,6 +259,9 @@
     padding: 13px 12px calc(var(--raw-nav-height) + 10px + env(safe-area-inset-bottom));
   }
   .raw-today-grid { grid-template-columns: 1fr; gap: 13px; }
+  .raw-app .form-grid { grid-template-columns: minmax(0,1fr); }
+  .raw-app .field { min-width: 0; }
+  .raw-app .field :is(input,select,textarea) { min-width: 0; max-width: 100%; }
   .raw-today-intro p { margin-top: 4px; }
   .raw-app .section-head { gap: 8px; }
   .raw-app .section-head h1 { font-size: 2.25rem; }

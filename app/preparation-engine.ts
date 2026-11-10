@@ -5,6 +5,7 @@ import {previewNutritionSituation} from './nutrition-situations-model.ts';
 import {clubForDate,dailySessions,editCalendarDay,planForDate} from './training-calendar-model.ts';
 import {baseConditioning,type TrainingPlan} from './training-model.ts';
 import {foodPreferenceIds,type FoodPreferences,type Readiness} from './preparation-preferences.ts';
+import type {Supplement} from './preparation-schema.ts';
 import {competitionPhase} from './competition-phase.ts';
 
 export const addDays=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
@@ -26,6 +27,17 @@ export function daySettings(p:Profile,date:string){
  return {id:'coordinated',name:'Alimentación según tu carga',mealCount,
   times:mealTimes(mealCount,(!schedule||schedule==='variable')&&weekend?'weekend':schedule??'regular',p.onboarding?.completed?.answers.nutrition),
   training:'usual' as const,supplements:supplementChoices(p,date)};
+}
+export function savePlannedSupplement(p:Profile,s:Supplement,date:string):Profile{
+ const next={...p,preparation:{...p.preparation,supplements:[...(p.preparation?.supplements??[]),s]}};
+ const old=p.days[date],nutrition=old?.nutrition;
+ if(!old||old.complete||old.competition||!old.foodPlan||nutrition&&nutrition.situationId!=='coordinated'&&!nutrition.situationId.startsWith('quick-'))return next;
+ const base=daySettings(next,date),count=old.foodPlan.meals.length;
+ const day=previewNutritionSituation(next,{...base,...nutrition,id:nutrition?.situationId??base.id,mealCount:count,
+  times:nutrition?.times??mealTimes(count,p.athlete?.schedule??'regular',p.onboarding?.completed?.answers.nutrition),
+  supplements:[...(nutrition?.supplements??base.supplements.filter(x=>x.id!==s.id)),...base.supplements.filter(x=>x.id===s.id)],
+ },date,p.plans.at(-1)?.seed??0);
+ return {...next,days:{...next.days,[date]:day}};
 }
 export function withCoordinatedDay(p:Profile,date:string,sourcePlan?:Plan):Profile{
  const old=p.days[date];

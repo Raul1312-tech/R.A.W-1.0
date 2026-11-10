@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyDay,foodById,generatePlan,newProfile,total} from '../app/model.ts';
-import {applyDayChange,saveFoodPreferences,swapPendingIngredient,withCoordinatedDay} from '../app/preparation-engine.ts';
+import {applyDayChange,saveFoodPreferences,savePlannedSupplement,swapPendingIngredient,withCoordinatedDay} from '../app/preparation-engine.ts';
 import {foodDayView,recordMeal} from '../app/daily-food-model.ts';
 import {toggleSupplement} from '../app/preparation-model.ts';
 import {clubForDate,dailySessions,planForDate} from '../app/training-calendar-model.ts';
@@ -80,4 +80,12 @@ test('competition replans by dates and protects recorded intake and supplement t
  assert.equal(dailySessions(next.workouts,'2026-11-14').length,0);
  assert.equal(competitionStatus(next,date).context.daysToWeigh,5);
  assert.equal(roundtrip(next).preparation.competition.rounds,3);
+});
+
+test('adding a supplement updates a coordinated day after eating out was planned',()=>{
+ const p=athlete(),outside=applyDayChange(p,date,date,'outside',2);
+ const next=roundtrip(savePlannedSupplement(outside,whey,date));
+ assert.equal(next.days[date].supplementForecast.w.k,120);
+ assert.deepEqual(next.days[date].nutrition.outsideMeals,[{slot:2,size:'normal'}]);
+ assert.ok(next.days[date].foodPlan.meals.some(m=>m.items.length===0));
 });

@@ -44,3 +44,15 @@
 .onboarding-review li { display:grid; gap:4px; padding:9px 0; border-bottom:1px solid #d6e2d7 }
 .onboarding-review p { margin:5px 0 10px }
 .raw-onboarding .raw-setup-actions { margin-top:18px }
+
+.onboarding-question { min-width:0; scroll-margin-block:100px }
+.raw-onboarding .onboarding-invalid { padding:10px; border:1px solid #bd3443; border-radius:12px; background:#fff5f5; margin-block:6px }
+.raw-onboarding .onboarding-invalid .field { margin:0 }
+.raw-onboarding .onboarding-invalid input:not([type=checkbox]),.raw-onboarding .onboarding-invalid .raw-select-trigger { border-color:#bd3443; box-shadow:0 0 0 1px #bd344318 }
+.raw-onboarding .onboarding-field-error { display:block; color:#a51d2d; font-size:13px; font-weight:600; margin:6px 0 2px }
+.onboarding-goal { padding:16px; border:1px solid #b8d9c5; border-radius:12px; background:linear-gradient(120deg,#e6f3e9,#f6faf3); color:#22563a; line-height:1.6 }
+.onboarding-loading { display:grid; justify-items:center; gap:16px; text-align:center; padding:48px 16px; min-height:250px }
+.onboarding-loading>svg { width:38px; height:38px; color:#006847; animation:onboarding-spin 1s linear infinite }
+.onboarding-spinner { animation:onboarding-spin 1s linear infinite }
+@keyframes onboarding-spin { to { transform:rotate(360deg) } }
+@media(prefers-reduced-motion:reduce) { .onboarding-loading>svg,.onboarding-spinner { animation:none } }

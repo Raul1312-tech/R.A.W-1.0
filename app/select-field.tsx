@@ -8,9 +8,10 @@ type Props={
   children:ReactNode;label?:ReactNode;hint?:ReactNode;className?:string;'aria-label'?:string;
   value?:string|number;defaultValue?:string|number;name?:string;required?:boolean;disabled?:boolean;hidden?:boolean;
   onValueChange?:(value:string)=>void;
+  'aria-invalid'?:boolean;'aria-describedby'?:string;
 };
 
-export default function SelectField({children,label,hint,className,'aria-label':ariaLabel,value,defaultValue,name,required,disabled,hidden,onValueChange}:Props){
+export default function SelectField({children,label,hint,className,'aria-label':ariaLabel,'aria-invalid':externalInvalid,'aria-describedby':describedBy,value,defaultValue,name,required,disabled,hidden,onValueChange}:Props){
   const id=useId();
   const trigger=useRef<HTMLButtonElement>(null);
   const native=useRef<HTMLSelectElement>(null);
@@ -101,8 +102,8 @@ export default function SelectField({children,label,hint,className,'aria-label':
     {label&&(hidden?<span className="raw-select-label">{label}</span>:<label className="raw-select-label" htmlFor={id}>{label}</label>)}
     {!hidden&&<>
       <button ref={trigger} id={id} type="button" className="raw-select-trigger" disabled={disabled} aria-label={ariaLabel} aria-haspopup="dialog"
-        aria-expanded={open} aria-controls={id+'-picker'} aria-invalid={invalid||undefined}
-        aria-describedby={[id+'-value',hint&&id+'-hint',invalid&&id+'-error'].filter(Boolean).join(' ')}
+        aria-expanded={open} aria-controls={id+'-picker'} aria-invalid={externalInvalid||invalid||undefined}
+        aria-describedby={[id+'-value',hint&&id+'-hint',invalid&&id+'-error',describedBy].filter(Boolean).join(' ')}
         onClick={show} onKeyDown={event=>{
           if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();show()}
         }}>

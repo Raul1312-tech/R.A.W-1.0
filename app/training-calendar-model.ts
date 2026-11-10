@@ -91,3 +91,14 @@ export function dailySessions(data:TrainingData,date:string):DailySession[]{
   }
   return [...chosen.values()].sort((a,b)=>sessionSlot(a.session).localeCompare(sessionSlot(b.session)));
 }
+
+/** The coming seven dates use the same overrides and pinned sessions as the daily view. */
+export function upcomingTrainingWeek(data:TrainingData,date:string){
+  const start=Date.parse(date+'T12:00:00Z');
+  return Array.from({length:7},(_,index)=>{
+    const date=new Date(start+index*86400000).toISOString().slice(0,10);
+    const plan=planForDate(data,date),day=weekdayOf(date);
+    const club=plan?.config.sparringDays.includes(day)?'Sparring':plan?.config.technicalDays.includes(day)?'Boxeo técnico':undefined;
+    return {date,day,planned:!!plan,club,sessions:dailySessions(data,date)};
+  });
+}

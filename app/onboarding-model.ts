@@ -1,4 +1,4 @@
-import {choices,emptyAnswers,stepProblem,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema.ts';
+import {choices,emptyAnswers,selectedEquipment,stepProblem,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema.ts';
 import {saveProfileSetup} from './profile-setup-model.ts';
 import type {Profile} from './model.ts';
 import {competitionSchema,type Competition} from './preparation-schema.ts';
@@ -73,9 +73,10 @@ function trainingFor(a:OnboardingAnswers,competition?:Competition):TrainingConfi
   const available=slots.filter(slot=>!restDays.includes(slot.day)&&(!boxing||!coachPhysicalDays.includes(slot.day)));
   const learning=a.strength.confidence!=='confident'||a.strength.frequency==='none'||a.strength.frequency==='occasional'||a.muscle.goal==='return';
   const level=learning?'beginner':'intermediate';
+  const equipment=selectedEquipment(a.strength.equipment);
   const settings:TrainingConfig={
     ...defaultTrainingConfig(),sport:boxing?'boxing':'hypertrophy',level,
-    phase:a.recovery.state==='low'?'deload':'base',equipment:a.strength.equipment!,
+    phase:a.recovery.state==='low'?'deload':'base',equipment:equipment.includes('gym')?'gym':equipment.includes('dumbbells')?'dumbbells':'bodyweight',
     days:available.map(slot=>slot.day),duration:45,sessionLimits:available.map(({day,minutes})=>({day,minutes})),
     technicalDays:boxing?technicalDays:[],sparringDays:boxing?sparringDays:[],
     limitation:a.recovery.limitation!=='none',competition,
@@ -98,6 +99,11 @@ function trainingFor(a:OnboardingAnswers,competition?:Competition):TrainingConfi
 }
 
 export function prepareOnboarding(profile:Profile,answers:OnboardingAnswers,today:string):Profile{
+  answers={...answers,strength:{...answers.strength,equipment:selectedEquipment(answers.strength.equipment)}};
+  if(answers.basics.sport==='boxing'){
+    const {goalWeight,success,...basics}=answers.basics;
+    answers={...answers,basics:{...basics,goal:answers.competition.status==='confirmed'||answers.competition.status==='possible'?'competition':'performance'}};
+  }
   for(let step=0;step<8;step++){
     const problem=stepProblem(answers,step);
     if(problem)throw new Error(problem);

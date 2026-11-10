@@ -32,7 +32,7 @@ export const choices={
   strengthFrequency:{none:'Ningún día',occasional:'Algún día suelto',oneTwo:'Uno o dos días por semana',threePlus:'Tres o más días por semana'},
   strengthPractice:{none:'Estoy empezando de cero',circuit:'Circuitos del club',bodyweight:'Ejercicios con mi peso',weights:'Máquinas, mancuernas o barra'},
   confidence:{guided:'Quiero aprender desde cero',some:'Conozco algunos movimientos',confident:'Hago los movimientos básicos con confianza'},
-  equipment:{gym:'Gimnasio con máquinas y pesas',dumbbells:'Mancuernas y espacio libre',bodyweight:'Mi peso corporal y espacio libre'},
+  equipment:{gym:'Máquinas y pesas del gimnasio',dumbbells:'Mancuernas',bodyweight:'Mi peso corporal y espacio libre'},
   exercisePattern:{squat:'Sentadilla o levantarte de una silla',hinge:'Levantar un peso del suelo',push:'Empujar con los brazos',pull:'Remar o tirar hacia ti',core:'Estabilizar el tronco'},
   runningFrequency:{none:'Ninguna',occasional:'Alguna vez',weekly:'Una vez por semana',often:'Varias veces por semana'},
   runningMode:{walk:'Caminé',walkRun:'Alterné caminar y trotar',steady:'Troté seguido',fast:'Hice tramos rápidos'},
@@ -94,7 +94,8 @@ const boxing=z.object({
 }).strict();
 const strength=z.object({
   frequency:option(choices.strengthFrequency),practice:option(choices.strengthPractice),confidence:option(choices.confidence),
-  equipment:option(choices.equipment),patterns:unique(option(choices.exercisePattern),5).optional(),
+  // Keep accepting scalar selections from already saved v1 profiles and drafts.
+  equipment:z.union([option(choices.equipment),unique(option(choices.equipment),3)]),patterns:unique(option(choices.exercisePattern),5).optional(),
   recent:z.object({exerciseId:z.string().min(1).max(100),kg:z.number().finite().min(0).max(500).optional(),reps:z.number().int().min(1).max(100).optional(),effort:option(choices.runningEffort).optional()}).strict().optional(),
 }).strict();
 const muscle=z.object({
@@ -125,42 +126,81 @@ export const emptyAnswers=():OnboardingAnswers=>({basics:{},nutrition:{},food:{}
 export const draftSchema=z.object({step:z.number().int().min(0).max(7),answers:answersSchema}).strict();
 export type OnboardingDraft=z.infer<typeof draftSchema>;
 
-export function stepProblem(a:OnboardingAnswers,step:number):string|null{
+export function selectedEquipment(value:OnboardingAnswers['strength']['equipment']){
+  return value===undefined?[]:Array.isArray(value)?value:[value];
+}
+
+/** Field paths are shared by persisted validation and accessible inline feedback. */
+export function stepIssues(a:OnboardingAnswers,step:number):Record<string,string>{
+  const errors:Record<string,string>={};
+  function check(schema:z.ZodTypeAny,section:keyof OnboardingAnswers,value:unknown=a[section]){
+    const result=schema.safeParse(value);
+    if(result.success)return;
+    for(const issue of result.error.issues){
+      const path=[section,...issue.path].join('.');
+      errors[path]=issue.code==='too_small'?'Revisa el valor mínimo permitido.':issue.code==='too_big'?'Revisa el valor máximo permitido.':'Completa esta respuesta para continuar.';
+    }
+  }
+  function equipment(){
+    if(!selectedEquipment(a.strength.equipment).length)errors['strength.equipment']='Marca al menos una opción de material.';
+  }
   switch(step){
     case 0:
-      if(!basics.safeParse(a.basics).success)return 'Completa el deporte, tus datos y tu objetivo.';
-      if(a.basics.sport==='strength'&&a.basics.goal==='competition')return 'Elige un objetivo de musculación.';
-      if(a.basics.goal==='gain'&&a.basics.goalWeight!==undefined&&a.basics.goalWeight<a.basics.weight!)return 'Revisa el peso objetivo. Puedes dejarlo en blanco.';
-      return null;
+      check(a.basics.sport!=='strength'?basics.omit({goal:true,goalWeight:true,success:true}):basics,'basics',
+        a.basics.sport!=='strength'?(({goal,goalWeight,success,...rest})=>rest)(a.basics):a.basics);
+      if(a.basics.sport==='strength'&&a.basics.goal==='competition')errors['basics.goal']='Elige un objetivo de musculación.';
+      if(a.basics.sport==='strength'&&a.basics.goal==='gain'&&a.basics.goalWeight!==undefined&&a.basics.goalWeight<a.basics.weight!)errors['basics.goalWeight']='El peso objetivo debe ser igual o superior al actual. Puedes dejarlo en blanco.';
+      break;
     case 1:
-      return !nutrition.safeParse(a.nutrition).success||a.nutrition.difficultMeal!=='none'&&!a.nutrition.mealBarrier
-        ?'Elige tus horarios, el número de comidas y qué comida te cuesta resolver.':null;
+      check(nutrition,'nutrition');
+      if(a.nutrition.difficultMeal&&a.nutrition.difficultMeal!=='none'&&!a.nutrition.mealBarrier)errors['nutrition.mealBarrier']='Indica qué te dificulta resolver esta comida.';
+      break;
     case 2:
-      if(!food.safeParse(a.food).success)return 'Revisa tus restricciones y elige cómo te encaja comer y cocinar.';
-      return new Set([...a.food.allergies!,...a.food.intolerances!]).size>20?'Puedes indicar hasta 20 alergias o intolerancias.':null;
+      check(food,'food');
+      // These arrays are initialized together by the restrictions confirmation.
+      for(const key of ['allergies','intolerances','excluded','preferred']){
+        if(errors['food.'+key]&&a.food[key as keyof typeof a.food]===undefined){
+          delete errors['food.'+key];errors['food.reviewedRestrictions']='Revisa y confirma tus restricciones alimentarias.';
+        }
+      }
+      if(new Set([...(a.food.allergies??[]),...(a.food.intolerances??[])]).size>20)errors['food.allergies']='Puedes indicar hasta 20 alergias o intolerancias en total.';
+      break;
     case 3:
-      if(!competition.safeParse(a.competition).success)return 'Indica si tienes una competición prevista.';
-      if(a.competition.status==='none')return null;
-      if(a.competition.categoryStatus==='confirmed'&&a.competition.category===undefined)return 'Indica el peso de la categoría confirmada.';
+      if(a.basics.sport==='strength')break;
+      check(competition,'competition');
+      if(a.competition.status==='none')break;
+      if(a.competition.categoryStatus==='confirmed'&&a.competition.category===undefined)errors['competition.category']='Indica el peso de la categoría confirmada.';
       if(a.competition.weighDate&&a.competition.fightDate&&
         (a.competition.weighDate>a.competition.fightDate||a.competition.weighDate===a.competition.fightDate&&
-        a.competition.weighTime&&a.competition.fightTime&&a.competition.weighTime>a.competition.fightTime))return 'El pesaje debe ser anterior al combate.';
-      return null;
+        a.competition.weighTime&&a.competition.fightTime&&a.competition.weighTime>a.competition.fightTime))errors['competition.weighDate']='El pesaje debe ser anterior al combate. Revisa sus fechas y horas.';
+      break;
     case 4:
-      return (a.basics.sport==='boxing'?boxing.safeParse(a.boxing).success:muscle.safeParse(a.muscle).success&&!!a.strength.frequency)?null:'Completa tu punto de partida.';
+      if(a.basics.sport==='boxing')check(boxing,'boxing');
+      else {check(muscle,'muscle');check(strength.pick({frequency:true}),'strength',{frequency:a.strength.frequency})}
+      break;
     case 5:
-      if(a.basics.sport==='boxing')return strength.safeParse(a.strength).success?null:'Indica tu experiencia con el físico y qué material tienes.';
-      if(!a.strength.equipment)return 'Elige el material disponible.';
-      return availability.safeParse(a.availability).success?null:'Elige tu disponibilidad.';
+      if(a.basics.sport==='boxing')check(strength,'strength');
+      else check(availability,'availability');
+      equipment();
+      break;
     case 6:
-      return (a.basics.sport==='boxing'?running.safeParse(a.running).success:strength.safeParse(a.strength).success)?null:'Completa tu experiencia actual.';
+      if(a.basics.sport==='boxing')check(running,'running');
+      else {check(strength,'strength');equipment()}
+      break;
     case 7:
-      if(!availability.safeParse(a.availability).success||!recovery.safeParse(a.recovery).success)return 'Completa tu disponibilidad, recuperación y seguimiento.';
-      if(a.availability.slots!.some(slot=>a.availability.restDays!.includes(slot.day)))return 'Un día de descanso no puede tener un hueco de entreno.';
-      if(a.basics.sport==='boxing'&&a.availability.mode==='manual'&&a.availability.slots!.some(slot=>slot.kind==='auto'))return 'Elige físico o carrera para cada hueco.';
-      return null;
-    default:return 'Paso de onboarding no válido.';
+      check(availability,'availability');check(recovery,'recovery');
+      if(a.availability.slots?.some(slot=>a.availability.restDays?.includes(slot.day)))errors['availability.slots']='Un día de descanso no puede tener un hueco de entreno.';
+      if(a.basics.sport==='boxing'&&a.availability.mode==='manual')a.availability.slots?.forEach((slot,index)=>{
+        if(slot.kind==='auto')errors[`availability.slots.${index}.kind`]='Elige físico o carrera para este día.';
+      });
+      break;
+    default:errors.step='Paso de onboarding no válido.';
   }
+  return errors;
+}
+
+export function stepProblem(a:OnboardingAnswers,step:number):string|null{
+  return Object.values(stepIssues(a,step))[0]??null;
 }
 
 export const onboardingSchema=z.object({

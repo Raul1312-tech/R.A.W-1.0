@@ -1,26 +1,53 @@
 'use client';
+
 import {useState} from 'react';
 import {Plus,Trash2,ArrowLeftRight,Check} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {total,type Food,type Item} from './model';
 import {MenuMacros} from './weekly-menu';
-const FoodGrid=dynamic(()=>import('./food-grid'),{loading:()=><p role="status">Abriendo alimentos…</p>});
+import {foodPortions} from './food-portions';
 
-export default function MealEditor({initial,savedFoods=[],disabled,onSave,onCancel,saveLabel='Añadir al registro'}:{initial:Item[];savedFoods?:Food[];disabled:boolean;onSave:(items:Item[])=>void;onCancel:()=>void;saveLabel?:string}){
-  const [items,setItems]=useState(()=>structuredClone(initial)),[replacing,setReplacing]=useState<number|'add'|null>(null),[error,setError]=useState('');
-  function choose(food:Food){setItems(current=>replacing==='add'?[...current,{food,grams:100}]:current.map((it,i)=>i===replacing?{...it,food}:it));setReplacing(null)}
-  return <div className="meal-ingredient-editor">
-    <p className="muted">Cambia un alimento o su cantidad. Al registrar, se revisan las comidas pendientes de este día.</p>
-    {items.map((it,i)=><div className="editable-ingredient" key={i}>
-      <div><b>{it.food.name}</b><small>{it.food.unit} · {Math.round(it.food.k*it.grams/100)||0} kcal</small></div>
-      <label className="ingredient-grams"><input aria-label={'Cantidad de '+it.food.name} type="number" min={.1} max={3000} step={.1} value={Number.isFinite(it.grams)&&it.grams?it.grams:''} disabled={disabled} onChange={e=>setItems(items.map((x,j)=>i===j?{...x,grams:Number(e.target.value)}:x))}/><span>{it.food.unit.includes('ml')?'ml':'g'}</span></label>
-      <div className="ingredient-actions"><button type="button" className="text-button" disabled={disabled} aria-label={'Cambiar '+it.food.name} onClick={()=>setReplacing(i)}><ArrowLeftRight size={15}/> Cambiar alimento</button><button type="button" className="icon-button" disabled={disabled} aria-label={'Quitar '+it.food.name} onClick={()=>{setItems(items.filter((_,j)=>i!==j));setReplacing(null)}}><Trash2 size={16}/></button></div>
-      {replacing===i&&<div className="ingredient-picker"><h4>Sustituir {it.food.name}</h4><FoodGrid picker onPick={choose} savedFoods={savedFoods} disabled={disabled} onSave={()=>{}} onCancel={()=>setReplacing(null)}/></div>}
-    </div>)}
-    <button type="button" className="button outline" disabled={disabled||items.length>=20} onClick={()=>setReplacing('add')}><Plus size={16}/> Añadir ingrediente</button>
-    {replacing==='add'&&<div className="ingredient-picker"><FoodGrid picker onPick={choose} savedFoods={savedFoods} disabled={disabled} onSave={()=>{}} onCancel={()=>setReplacing(null)}/></div>}
-    <div className="meal-editor-total" aria-live="polite"><span className="eyebrow">TOTAL DE TU COMIDA</span><MenuMacros m={total(items)}/></div>
+const FoodGrid=dynamic(()=>import('./food-grid'),{loading:()=><p role="status">Abriendo alimentos…</p>});
+const portionSizes=[{label:'Pequeña',factor:.5},{label:'Habitual',factor:1},{label:'Grande',factor:1.5}];
+
+export default function MealEditor({initial,savedFoods=[],disabled,onSave,onCancel,saveLabel='Añadir al registro'}:{
+  initial:Item[];savedFoods?:Food[];disabled:boolean;onSave:(items:Item[])=>void;onCancel:()=>void;saveLabel?:string;
+}){
+  const [items,setItems]=useState(()=>structuredClone(initial));
+  const [replacing,setReplacing]=useState<number|'add'|null>(initial.length?null:'add');
+  const [error,setError]=useState('');
+  function choose(food:Food){
+    setItems(current=>replacing==='add'?[...current,{food,grams:foodPortions[food.id]?.[0]??100}]:current.map((it,i)=>i===replacing?{...it,food}:it));
+    setReplacing(null);
+  }
+  function amount(index:number,grams:number){
+    setItems(current=>current.map((it,i)=>i===index?{...it,grams}:it));
+  }
+  const picker=replacing!==null&&<FoodGrid key={replacing} picker onPick={choose} savedFoods={savedFoods} disabled={disabled} onSave={()=>{}} onCancel={()=>setReplacing(null)}/>;
+  return <div className="meal-ingredient-editor raw-ingredient-editor">
+    {items.map((it,i)=>{
+      const unit=it.food.unit.includes('ml')?'ml':'g',usual=foodPortions[it.food.id]?.[0]??100;
+      return <section className="raw-ingredient" key={i}>
+        <div><h3>{it.food.name}</h3><p>{it.grams} {unit} · {Math.round(it.food.k*it.grams/100)} kcal</p></div>
+        <div className="raw-portions" role="group" aria-label={'Ración de '+it.food.name}>{portionSizes.map(({label,factor})=><button type="button" className="button outline" aria-pressed={it.grams===usual*factor} disabled={disabled} key={label} onClick={()=>amount(i,usual*factor)}>{label}</button>)}</div>
+        <details className="raw-disclosure"><summary>Cantidad exacta</summary><label className="field">Cantidad de {it.food.name} · {unit}<input type="number" inputMode="decimal" min={.1} max={3000} step={.1} value={it.grams||''} disabled={disabled} onChange={e=>amount(i,Number(e.target.value))}/></label><p>{it.food.unit}</p>
+          {it.food.id.startsWith('off-')&&<label className="field">La etiqueta indica valores por<select value={unit} onChange={e=>{
+            const unit=e.target.value;
+            setItems(current=>current.map((row,j)=>j===i?{...row,food:{...row.food,unit:'por 100 '+unit+' según ficha; comprueba el envase'}}:row));
+          }}><option value="g">100 g</option><option value="ml">100 ml</option></select></label>}
+        </details>
+        <div className="raw-actions"><button type="button" className="text-button" disabled={disabled} onClick={()=>setReplacing(i)}><ArrowLeftRight size={16}/> Cambiar alimento</button><button type="button" className="icon-button" disabled={disabled} aria-label={'Quitar '+it.food.name} onClick={()=>{setItems(items.filter((_,j)=>i!==j));setReplacing(null)}}><Trash2 size={17}/></button></div>
+        {replacing===i&&picker}
+      </section>;
+    })}
+    {replacing==='add'?picker:<button type="button" className="button outline" disabled={disabled||items.length>=20} onClick={()=>setReplacing('add')}><Plus size={17}/> Añadir alimento</button>}
     {error&&<p role="alert" className="notice error">{error}</p>}
-    <div className="button-row"><button type="button" className="button orange" disabled={disabled||!items.length||items.some(it=>!Number.isFinite(it.grams)||it.grams<.1||it.grams>3000)} onClick={()=>{try{onSave(items)}catch(e){setError(e instanceof Error?e.message:'Revisa la comida.')}}}><Check size={17}/>{saveLabel}</button><button type="button" className="text-button" onClick={onCancel}>Cancelar</button></div>
+    <div className="raw-editor-footer">
+      {items.length>0&&<div aria-live="polite"><MenuMacros m={total(items)}/></div>}
+      <button type="button" className="button orange" disabled={disabled||!items.length||items.some(it=>!Number.isFinite(it.grams)||it.grams<.1||it.grams>3000)} onClick={()=>{
+        try{onSave(items)}catch(e){setError(e instanceof Error?e.message:'Revisa la comida.')}
+      }}><Check size={17}/>{saveLabel}</button>
+      <button type="button" className="text-button" onClick={onCancel}>Cancelar</button>
+    </div>
   </div>;
 }

@@ -1,49 +1,116 @@
 'use client';
-import {mealSlots} from './meal-layout';
-import {outsideMealEstimate} from './nutrition-estimates';
-import {saveFavorite,useFavorite} from './preparation-model';
+
 import {useEffect,useRef,useState} from 'react';
-import LateralCarousel from './lateral-carousel';
-import {nextRemaining} from './carousel-model';
-import {Check,Utensils,Undo2,ArrowRight,RefreshCw} from 'lucide-react';
+import {ArrowRight,Check,RefreshCw,Undo2,X} from 'lucide-react';
+import dynamic from 'next/dynamic';
+import {mealSlots,mealTimes} from './meal-layout';
+import {saveFavorite,useFavorite} from './preparation-model';
+import {outsideMealEstimate} from './nutrition-estimates';
 import {total,type Day,type Plan,type Profile} from './model';
 import {displayMeal,foodDayView,recordMeal,undoMeal,refreshDailyMeal} from './daily-food-model';
-import dynamic from 'next/dynamic';
 import {previousFoods} from './food-search';
 import {MenuMacros} from './weekly-menu';
+
 const MealEditor=dynamic(()=>import('./meal-editor'),{loading:()=><p role="status">Abriendo alimentos…</p>});
 
-export default function DailyMeals({day,plan,date,profile,disabled,onChange,onMenu,onProfile}:{day:Day;plan?:Plan;date:string;profile:Profile;disabled:boolean;onChange:(day:Day)=>void;onMenu:()=>void;onProfile:(p:Profile)=>void}){
-  const [editor,setEditor]=useState<number|null>(null);const [message,setMessage]=useState('');const [error,setError]=useState('');
-  const [active,setActive]=useState<string>();const [leaving,setLeaving]=useState<number|null>(null);const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
-  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
-  const view=foodDayView(day,plan,date);
-  function run(action:()=>Day,text:string,slot?:number){try{if(leaving!==null)return;const next=action();onChange(next);setEditor(null);setError('');setMessage(text);if(slot!==undefined&&view){setLeaving(slot);const ids=view.meals.map((_,i)=>String(i));const remaining=ids.filter(id=>!next.foodPlan?.records.some(r=>String(r.slot)===id));const following=nextRemaining(ids,String(slot),remaining);timer.current=setTimeout(()=>{setActive(following);setLeaving(null)},280)}}catch(e){setError(e instanceof Error?e.message:'No se pudo registrar.')}}
-  if(!view)return <section className="card" id="daily-food-log"><h2>Tu dieta, lista para marcar.</h2><p>Genera un menú compatible desde Mi alimentación para verlo aquí.</p><button className="button outline" onClick={onMenu}>Ver mi alimentación <ArrowRight size={16}/></button></section>;
-  const {snapshot,meals,adjustments}=view;
-  function mealCard(slot:number){const meal=meals[slot];
-      const record=snapshot.records.find(r=>r.slot===slot),label=displayMeal(snapshot.labels[slot]);const actual=day.items.filter(it=>record?.itemIds.includes(it.id));
-      const outside=!record&&!meal.items.length?outsideMealEstimate(day,slot):undefined;
-      const adjusted=adjustments.some(a=>a.slot===slot);const compatible=meal.items.every(it=>!profile.excluded.includes(it.food.id)&&!it.food.allergens.some(a=>profile.allergens.includes(a)));
-      const description=outside?<div className="outside-meal-reserve"><span className="eyebrow">RESERVA ESTIMADA · SIN REGISTRAR</span><MenuMacros m={outside}/><p>Hemos reservado esta toma fuera de casa y adaptado las demás. Registra lo que comas y su cantidad aproximada para afinar el resto del día.</p></div>:<><MenuMacros m={total(record?actual:meal.items)}/><ul className="ingredients">{(record?actual:meal.items).map((it,i)=><li key={i}><div><b>{it.food.name}</b><small>{it.food.unit}</small></div><strong>{it.grams} {it.food.unit.includes('ml')?'ml':'g'}</strong></li>)}</ul>{!record&&<details className="meal-prep"><summary>Cómo prepararlo</summary><p>{meal.prep??'Prepara cada alimento en el estado indicado.'}</p></details>}</>;
-      return <article key={slot} className={'daily-meal-card '+(record?'is-recorded':'')+(leaving===slot?' meal-exit':'')}>
-        <header><span className="daily-meal-number">{record?<Check size={22}/>:String(slot+1).padStart(2,'0')}</span><div><span className="eyebrow">{label}{adjusted&&!record?' · CANTIDADES AJUSTADAS':''}</span>{day.nutrition&&<small className="meal-scheduled-time">{day.nutrition.times[slot]}</small>}<h3>{record?.status==='skipped'?'No realizada':record?.status==='alternative'?'Tu comida registrada':meal.name}</h3></div>{record&&<span className="meal-state">{record.status==='planned'?'Como estaba previsto':record.status==='skipped'?'Sin alimentos registrados':'Con cambios'}</span>}</header>
-        {editor===slot?<MealEditor initial={record?actual:meal.items} savedFoods={previousFoods(profile)} disabled={disabled||leaving!==null} onCancel={()=>setEditor(null)} onSave={items=>run(()=>recordMeal(day,plan,date,slot,'alternative',items),'Comida guardada. He revisado las cantidades pendientes.',slot)}/>:<>
-          {record?<details className="meal-recorded-details"><summary>Ver lo registrado</summary>{description}</details>:description}
-          {!compatible&&!record&&<p className="notice">Este plato guardado no encaja con tus exclusiones actuales. Registra una alternativa o revisa tu menú.</p>}
-          {!record&&!outside&&<button className="button outline" disabled={disabled||leaving!==null} aria-label={'Actualizar '+label.toLowerCase()+' de este día'} onClick={()=>run(()=>refreshDailyMeal(day,plan,date,slot,profile),'Nueva opción para '+label.toLowerCase()+', solo para este día.')}><RefreshCw size={17}/> Actualizar esta comida</button>}<div className="meal-favorites"><button className="text-button" disabled={disabled||record?.status==='skipped'||!meal.items.length&&!actual.length} onClick={()=>{try{onProfile(saveFavorite(profile,record?{name:record.status==='alternative'?'Mi '+label.toLowerCase():meal.name,items:actual}:meal,slot,snapshot.meals.length));setMessage('Comida guardada. Puedes fijarla como habitual en Mi alimentación.')}catch(e){setError((e as Error).message)}}}>Guardar comida</button>{!record&&<label>Usar guardada <select aria-label={'Comida guardada para '+label} value="" disabled={disabled||leaving!==null} onChange={e=>{if(e.target.value)run(()=>useFavorite(day,plan,date,profile,e.target.value,slot),'Comida guardada aplicada a este día.')}}><option value="">Elegir un plato…</option>{(profile.preparation?.favorites??[]).filter(f=>f.slot===mealSlots(snapshot.meals.length)[slot]).map(f=><option key={f.id} value={f.id}>{f.meal.name}</option>)}</select></label>}</div><div className="daily-meal-actions">{record?<><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>setEditor(slot)}>Editar lo que he comido</button><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>run(()=>undoMeal({...day,foodPlan:snapshot},slot),'Registro deshecho. Se han recalculado las comidas pendientes.')}><Undo2 size={15}/> Deshacer</button></>:<><button className="button orange" disabled={disabled||leaving!==null||!compatible} onClick={()=>outside?setEditor(slot):run(()=>recordMeal(day,plan,date,slot,'planned'),label+' registrada.',slot)}><Check size={20}/>{outside?'Registrar comida fuera':'Lo he comido'}</button><button className="button outline" disabled={disabled||leaving!==null} onClick={()=>setEditor(slot)}><Utensils size={17}/>{outside?'Elegir alimentos o plato':'Cambiar ingredientes o cantidades'}</button><button className="text-button" disabled={disabled||leaving!==null} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'skipped'),label+' marcada como no realizada.',slot)}>No he hecho esta comida</button></>}</div>
-        </>}
-      </article>;
-  }
-  return <section className="daily-meals" id="daily-food-log" aria-label="Registro fácil de comidas">
-    <div className="section-head"><div><span className="eyebrow">MI DÍA / ALIMENTACIÓN</span><h2>Tu dieta. Un toque por comida.</h2><p>¿Has comido lo previsto? Marca y sigue. Si has cambiado el plato, registra lo que has comido.</p></div><span className="meal-progress-pill">{snapshot.records.length}/{meals.length} comidas registradas</span></div>
-    <div className="meal-adjustment-control"><label className="checkbox"><input type="checkbox" checked={snapshot.autoAdjust} disabled={disabled||leaving!==null} onChange={e=>onChange({...day,foodPlan:{...snapshot,autoAdjust:e.target.checked}})}/> Ajustar automáticamente las comidas pendientes</label><p>Cambios suaves en cantidades, hasta un 20 %. Se mantiene la composición de los platos. No se elimina ninguna comida ni se traslada nada a mañana.</p></div>
-    {adjustments.length>0&&<div className="meal-adjustment-note" role="status"><b>He ajustado las cantidades que quedan por delante.</b><p>Solo para {date}. Lo ya registrado se mantiene.</p><details><summary>Ver qué ha cambiado</summary>{adjustments.map((a,i)=><p key={i}>{displayMeal(snapshot.labels[a.slot])} · {a.name}: <s>{a.before} g</s> → <b>{a.after} g</b></p>)}</details></div>}
-    {view.finished&&<p className="notice">Última comida registrada. No se ajustan comidas anteriores ni se compensa mañana.</p>}
-    {message&&<p className="meal-status" role="status"><Check size={16}/>{message}</p>}{error&&<p className="notice error" role="alert">{error}</p>}
-    <LateralCarousel label="Comidas pendientes" slides={meals.flatMap((_,slot)=>snapshot.records.some(r=>r.slot===slot)&&leaving!==slot?[]:[{id:String(slot),label:displayMeal(snapshot.labels[slot]),content:mealCard(slot)}])} activeId={active} onActiveChange={setActive} disabled={leaving!==null} empty={<div className="meal-all-done"><Check size={30}/><h3>Tu día de comidas está registrado.</h3><p>Puedes revisar o corregir cualquier comida justo debajo.</p></div>}/>
-    {snapshot.records.length>0&&<details className="meal-history"><summary>Registradas · {snapshot.records.length} de {meals.length} · revisar / deshacer</summary><LateralCarousel label="Comidas registradas" slides={snapshot.records.map(r=>({id:String(r.slot),label:displayMeal(snapshot.labels[r.slot]),content:mealCard(r.slot)}))}/></details>}
+type Props={
+  day:Day; plan?:Plan; date:string; profile:Profile; disabled:boolean; compact?:boolean;
+  onChange:(day:Day)=>void; onMenu:()=>void; onProfile:(profile:Profile)=>void;
+};
 
-    <details className="meal-projection-details"><summary>Ver resumen de calorías y macros del día</summary><div className="meal-projection card"><div><span className="eyebrow">REGISTRADO HASTA AHORA</span><MenuMacros m={view.recorded}/></div><div><span className="eyebrow">SI COMPLETAS LO PENDIENTE</span><MenuMacros m={view.projected}/></div><p>Referencia del día: {Math.round(day.target.k)} kcal · {Math.round(day.target.p)} g proteína. Proyección aproximada; no exige acertar cada cifra. Los ajustes tienen un límite, así que puede quedar diferencia.</p></div></details>
+export default function DailyMeals({day,plan,date,profile,disabled,compact,onChange,onMenu,onProfile}:Props){
+  const [editor,setEditor]=useState<{slot:number;usePlan:boolean}|null>(null);
+  const [feedback,setFeedback]=useState<{message:string;undoSlot?:number}|null>(null);
+  const [error,setError]=useState('');
+  const dialog=useRef<HTMLDialogElement>(null);
+  useEffect(()=>{
+    const element=dialog.current;
+    if(editor&&element&&!element.open)element.showModal();
+  },[editor]);
+
+  const view=foodDayView(day,plan,date);
+  function run(action:()=>Day,message:string,undoSlot?:number){
+    try{
+      onChange(action());
+      dialog.current?.close();
+      setEditor(null);
+      setError('');
+      setFeedback({message,undoSlot});
+    }catch(e){setError(e instanceof Error?e.message:'No se pudo registrar la comida.')}
+  }
+
+  if(!view)return <section className="card raw-empty"><h2>Tu plan de comidas</h2><p>Completa tu perfil para preparar un menú.</p><button className="button orange" onClick={onMenu}>Revisar mi perfil <ArrowRight size={16}/></button></section>;
+  const {snapshot,meals,adjustments}=view;
+  const records=snapshot.records;
+  const schedule=profile.athlete?.schedule;
+  const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+  const times=day.nutrition?.times??mealTimes(meals.length,(!schedule||schedule==='variable')&&(weekday===0||weekday===6)?'weekend':schedule??'regular');
+  const next=meals.findIndex((_,slot)=>!records.some(r=>r.slot===slot));
+  const actual=(slot:number)=>day.items.filter(it=>records.find(r=>r.slot===slot)?.itemIds.includes(it.id));
+  const undo=(slot:number)=>run(()=>undoMeal({...day,foodPlan:snapshot},slot),'Comida deshecha.');
+  function closeEditor(){
+    dialog.current?.close();
+    setEditor(null);
+    setError('');
+  }
+
+  return <section className={'raw-meals '+(compact?'raw-meals-compact':'')} aria-label={compact?'Próxima comida':'Comidas del día'}>
+    <div className="raw-section-label"><h2>{compact?'Próxima comida':'Tus comidas'}</h2><span>{records.length} de {meals.length} registradas</span></div>
+    {feedback&&<div className="raw-feedback"><span role="status"><Check size={16}/>{feedback.message}</span>{feedback.undoSlot!==undefined&&<button className="text-button" disabled={disabled} onClick={()=>undo(feedback.undoSlot!)}><Undo2 size={16}/> Deshacer</button>}</div>}
+    {error&&!editor&&<p className="notice error" role="alert">{error}</p>}
+    {compact&&next<0&&<div className="card raw-empty"><h3>Comidas del día registradas</h3><button className="text-button" onClick={onMenu}>Revisar comidas <ArrowRight size={16}/></button></div>}
+    {meals.map((meal,slot)=>{
+      if(compact&&slot!==next)return null;
+      const record=records.find(r=>r.slot===slot);
+      const label=displayMeal(snapshot.labels[slot]);
+      const items=record?actual(slot):meal.items;
+      const outside=!record&&!meal.items.length?outsideMealEstimate(day,slot):undefined;
+      const compatible=meal.items.every(it=>!profile.excluded.includes(it.food.id)&&!it.food.allergens.some(a=>profile.allergens.includes(a)));
+      const favorites=(profile.preparation?.favorites??[]).filter(f=>f.slot===mealSlots(meals.length)[slot]);
+      return <article className={'card raw-meal '+(slot===next?'raw-meal-next':'')} key={slot}>
+        <header><span className="raw-meal-time">{times[slot]}</span><span>{label}</span><small>{record?.status==='skipped'?'Omitida':record?'Registrada':'Pendiente'}</small></header>
+        <h3>{record?.status==='skipped'?'Comida omitida':record?.status==='alternative'?items.map(it=>it.food.name).slice(0,3).join(', ')||'Comida registrada':outside?'Comida fuera':meal.name}</h3>
+        {!record&&!compatible&&<p className="notice">Este plato incluye alimentos que has excluido. Elige otra opción.</p>}
+        <div className="raw-actions">
+          {record?<><button className="button outline" disabled={disabled} onClick={()=>setEditor({slot,usePlan:false})}>Editar registro</button><button className="text-button" disabled={disabled} onClick={()=>undo(slot)}>Deshacer</button></>:<>
+            <button className={'button '+(slot===next?'orange':'outline')} disabled={disabled||(!outside&&(!compatible||!meal.items.length))} onClick={()=>outside?setEditor({slot,usePlan:false}):run(()=>recordMeal(day,plan,date,slot,'planned'),label+' registrada.',slot)}><Check size={18}/>{outside?'Registrar comida fuera':'Lo he comido'}</button>
+            {!outside&&<button className="text-button" disabled={disabled} onClick={()=>setEditor({slot,usePlan:false})}>Comí otra cosa</button>}
+          </>}
+        </div>
+        <details className="raw-disclosure">
+          <summary>{record?'Ver ingredientes registrados':outside?'Ver reserva estimada':'Ver ingredientes y opciones'}</summary>
+          {outside?<><MenuMacros m={outside}/><p>La app ha reservado esta comida y ajustado el resto del día.</p></>:<>
+            <ul className="ingredients">{items.map((it,i)=><li key={i}><span>{it.food.name} <small>{it.food.unit}</small></span><b>{it.grams} {it.food.unit.includes('ml')?'ml':'g'}</b></li>)}</ul>
+            {!!items.length&&<MenuMacros m={total(items)}/>}
+            {!record&&meal.prep&&<p>{meal.prep}</p>}
+          </>}
+          {!record&&!outside&&<div className="raw-actions"><button className="text-button" disabled={disabled} onClick={()=>setEditor({slot,usePlan:true})}>Cambiar ingredientes o cantidades</button><button className="text-button" disabled={disabled} onClick={()=>run(()=>refreshDailyMeal(day,plan,date,slot,profile),'Nueva propuesta para '+label.toLowerCase()+'.')}><RefreshCw size={15}/> Proponer otro plato</button></div>}
+          {!!items.length&&<button className="text-button" disabled={disabled} onClick={()=>{
+            try{onProfile(saveFavorite(profile,record?.status==='alternative'?{name:'Mi '+label.toLowerCase(),items}:meal,slot,meals.length));setFeedback({message:'Guardada en Comidas habituales.'});setError('')}
+            catch(e){setError((e as Error).message)}
+          }}>Guardar comida</button>}
+          {!record&&favorites.length>0&&<label className="field">Usar una comida guardada<select value="" disabled={disabled} onChange={e=>{
+            const id=e.target.value;
+            if(id)run(()=>useFavorite(day,plan,date,profile,id,slot),'Comida guardada aplicada.');
+          }}><option value="">Elegir plato</option>{favorites.map(f=><option key={f.id} value={f.id}>{f.meal.name}</option>)}</select></label>}
+          {!record&&<button className="text-button" disabled={disabled} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'skipped'),label+' omitida.',slot)}>No he hecho esta comida</button>}
+        </details>
+      </article>;
+    })}
+    {!compact&&<details className="raw-disclosure card">
+      <summary>Ver ajustes y resumen nutricional</summary>
+      <label className="checkbox"><input type="checkbox" checked={snapshot.autoAdjust} disabled={disabled} onChange={e=>onChange({...day,foodPlan:{...snapshot,autoAdjust:e.target.checked}})}/> Ajustar automáticamente las comidas pendientes</label>
+      {!!adjustments.length&&<ul>{adjustments.map((a,i)=><li key={i}>{displayMeal(snapshot.labels[a.slot])} · {a.name}: {a.before} → {a.after} g</li>)}</ul>}
+      <p>Registrado</p><MenuMacros m={view.recorded}/>
+      <p>Proyección al completar el día</p><MenuMacros m={view.projected}/>
+    </details>}
+    {editor&&<dialog ref={dialog} className="raw-dialog" aria-labelledby="raw-meal-editor-title" onCancel={e=>{e.preventDefault();closeEditor()}}>
+      <header><div><span className="eyebrow">{displayMeal(snapshot.labels[editor.slot])}</span><h2 id="raw-meal-editor-title">{records.some(r=>r.slot===editor.slot)?'Editar comida':'¿Qué has comido?'}</h2></div><button className="icon-button" aria-label="Cerrar" onClick={closeEditor}><X size={22}/></button></header>
+      {error&&<p className="notice error" role="alert">{error}</p>}
+      {!editor.usePlan&&!records.some(r=>r.slot===editor.slot)&&meals[editor.slot].items.length>0&&<button type="button" className="text-button" onClick={()=>setEditor({...editor,usePlan:true})}>Partir del plato previsto</button>}
+      <MealEditor key={editor.slot+':'+editor.usePlan} initial={editor.usePlan?meals[editor.slot].items:actual(editor.slot)} savedFoods={previousFoods(profile)} disabled={disabled}
+        onCancel={closeEditor} saveLabel="Guardar comida"
+        onSave={items=>run(()=>recordMeal(day,plan,date,editor.slot,'alternative',items),snapshot.autoAdjust?'Comida registrada. Hemos revisado las cantidades pendientes.':'Comida registrada.',editor.slot)}/>
+    </dialog>}
   </section>;
 }

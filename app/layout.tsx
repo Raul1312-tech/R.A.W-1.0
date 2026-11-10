@@ -13,3 +13,4 @@ export default function Layout({children}:{children:React.ReactNode}){return <ht
 import './learning-journal.css';
 
 import './rise-brand.css';
+import './mobile-ux.css';

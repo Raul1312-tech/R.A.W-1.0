@@ -58,7 +58,10 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
 export function applyNutritionSituation(p:Profile,id:string,date:string):Profile{
   const s=p.preparation?.situations?.find(x=>x.id===id);
   if(!s)throw Error('Guarda primero la situación.');
-  const day=previewNutritionSituation(p,s,date);
+  return applyNutritionSettings(p,s,date);
+}
+export function applyNutritionSettings(p:Profile,settings:NutritionSituation,date:string):Profile{
+  const day=previewNutritionSituation(p,settings,date);
   return validate({...p,days:{...p.days,[date]:day}});
 }
 export function clearNutritionSituation(p:Profile,date:string,reference:Plan|undefined):Profile{

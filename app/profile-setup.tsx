@@ -1,4 +1,5 @@
 'use client';
+import SelectField from './select-field';
 import './profile-setup.css';
 import {useRef,useState,type ReactNode} from 'react';
 import {Check,Save,ArrowRight,UserRound,Utensils,Flag,ShieldCheck} from 'lucide-react';
@@ -75,22 +76,22 @@ export default function ProfileSetup({profile:p,disabled,demo,onSave}:{profile:P
         <Section number="01" hidden={guided&&step!==0} title="Sobre ti" description="Con estos datos estimamos lo que necesitas para tu objetivo." icon={<UserRound size={20}/>}>
           <div className="form-grid">
             <Field label="Nombre"><input name="name" autoComplete="given-name" maxLength={60} defaultValue={p.name} required/></Field>
-            <Field label="Deporte principal"><select name="sport" value={sport} required onChange={e=>setSport(e.target.value as typeof sport)}><option value="" disabled>Elige tu deporte</option>{Object.entries(sportOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></Field>
+            <SelectField label="Deporte principal" name="sport" value={sport} required onValueChange={selection=>setSport(selection as typeof sport)}><option value="" disabled>Elige tu deporte</option>{Object.entries(sportOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</SelectField>
             {sport==='other'&&<Field label="¿Qué deporte practicas?"><input name="otherSport" value={otherSport} onChange={e=>setOtherSport(e.target.value)} maxLength={80} required/></Field>}
-            <Field label="Tu experiencia deportiva"><select name="level" value={level} onChange={e=>setLevel(e.target.value as Athlete['level'])}>{Object.entries(levelOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></Field>
+            <SelectField label="Tu experiencia deportiva" name="level" value={level} onValueChange={selection=>setLevel(selection as Athlete['level'])}>{Object.entries(levelOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</SelectField>
             <Field label="Edad · años"><input name="age" type="number" min={18} max={90} step={1} defaultValue={p.age} required/></Field>
-            <Field label="Sexo para la estimación de energía" hint="Se utiliza en el cálculo inicial de tus necesidades."><select name="sex" defaultValue={p.sex}><option value="male">Masculino</option><option value="female">Femenino</option></select></Field>
+            <SelectField label="Sexo para la estimación de energía" hint="Se utiliza en el cálculo inicial de tus necesidades." name="sex" defaultValue={p.sex}><option value="male">Masculino</option><option value="female">Femenino</option></SelectField>
             <Field label="Altura · cm"><input name="height" type="number" min={120} max={230} step="0.1" defaultValue={p.height} required/></Field>
             <Field label="Peso actual · kg"><input name="weight" type="number" min={30} max={250} step="0.1" value={weight} onChange={e=>setWeight(e.target.value)} required/></Field>
-            <Field label="¿Qué quieres conseguir?"><select name="goalType" value={goal} onChange={e=>setGoal(e.target.value as Athlete['goal'])}>{Object.entries(goalOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></Field>
+            <SelectField label="¿Qué quieres conseguir?" name="goalType" value={goal} onValueChange={selection=>setGoal(selection as Athlete['goal'])}>{Object.entries(goalOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</SelectField>
             {goal==='gain'&&<Field label="Peso objetivo habitual · kg" hint="Un objetivo a medio plazo, distinto de una categoría de competición."><input name="goal" type="number" min={Number(weight)||30} max={250} step="0.1" defaultValue={Math.max(p.goal,p.weight)} required/></Field>}
           </div>
         </Section>
         <Section number="02" hidden={guided&&step!==1} title="Tu día" description="Elige cuántas veces te gustaría comer y cómo es un día habitual." icon={<Utensils size={20}/>}>
           <div className="setup-meal-options" role="group" aria-label="Comidas al día">{[3,4,5,6].map(count=><button key={count} type="button" aria-pressed={mealCount===count} onClick={()=>setMealCount(count)}><b>{count}</b><span>comidas al día</span>{mealCount===count&&<Check size={16}/>}</button>)}</div>
           <div className="form-grid">
-            <Field label="Tu horario habitual"><select name="schedule" value={schedule} onChange={e=>setSchedule(e.target.value as Athlete['schedule'])}>{Object.entries(scheduleOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></Field>
-            <Field label="Tu actividad habitual" hint="Cuenta tanto el movimiento diario como el entrenamiento; lo afinaremos con tu evolución."><select name="activity" defaultValue={p.activity}><option value={1.2}>Paso la mayor parte del día sentado</option><option value={1.4}>Me muevo algo durante el día</option><option value={1.6}>Tengo un día activo</option><option value={1.8}>Tengo un día muy activo</option><option value={2}>Trabajo físico y mucha actividad</option></select></Field>
+            <SelectField label="Tu horario habitual" name="schedule" value={schedule} onValueChange={selection=>setSchedule(selection as Athlete['schedule'])}>{Object.entries(scheduleOptions).map(([value,label])=><option key={value} value={value}>{label}</option>)}</SelectField>
+            <SelectField label="Tu actividad habitual" hint="Cuenta tanto el movimiento diario como el entrenamiento; lo afinaremos con tu evolución." name="activity" defaultValue={p.activity}><option value={1.2}>Paso la mayor parte del día sentado</option><option value={1.4}>Me muevo algo durante el día</option><option value={1.6}>Tengo un día activo</option><option value={1.8}>Tengo un día muy activo</option><option value={2}>Trabajo físico y mucha actividad</option></SelectField>
           </div>
           <details className="raw-disclosure"><summary>Bebidas y presupuesto</summary><div className="form-grid">
             <Field label="Bebidas que te propones tomar · ml al día"><input name="waterGoal" type="number" min={500} max={5000} step={100} defaultValue={p.waterGoal} required/></Field>

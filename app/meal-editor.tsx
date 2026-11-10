@@ -1,4 +1,5 @@
 'use client';
+import SelectField from './select-field';
 
 import {useState} from 'react';
 import {Plus,Trash2,ArrowLeftRight,Check} from 'lucide-react';
@@ -31,10 +32,10 @@ export default function MealEditor({initial,savedFoods=[],disabled,onSave,onCanc
         <div><h3>{it.food.name}</h3><p>{it.grams} {unit} · {Math.round(it.food.k*it.grams/100)} kcal</p></div>
         <div className="raw-portions" role="group" aria-label={'Ración de '+it.food.name}>{portionSizes.map(({label,factor})=><button type="button" className="button outline" aria-pressed={it.grams===usual*factor} disabled={disabled} key={label} onClick={()=>amount(i,usual*factor)}>{label}</button>)}</div>
         <details className="raw-disclosure"><summary>Cantidad exacta</summary><label className="field">Cantidad de {it.food.name} · {unit}<input type="number" inputMode="decimal" min={.1} max={3000} step={.1} value={it.grams||''} disabled={disabled} onChange={e=>amount(i,Number(e.target.value))}/></label><p>{it.food.unit}</p>
-          {it.food.id.startsWith('off-')&&<label className="field">La etiqueta indica valores por<select value={unit} onChange={e=>{
-            const unit=e.target.value;
+          {it.food.id.startsWith('off-')&&<SelectField label="La etiqueta indica valores por" value={unit} onValueChange={selection=>{
+            const unit=selection;
             setItems(current=>current.map((row,j)=>j===i?{...row,food:{...row.food,unit:'por 100 '+unit+' según ficha; comprueba el envase'}}:row));
-          }}><option value="g">100 g</option><option value="ml">100 ml</option></select></label>}
+          }}><option value="g">100 g</option><option value="ml">100 ml</option></SelectField>}
         </details>
         <div className="raw-actions"><button type="button" className="text-button" disabled={disabled} onClick={()=>setReplacing(i)}><ArrowLeftRight size={16}/> Cambiar alimento</button><button type="button" className="icon-button" disabled={disabled} aria-label={'Quitar '+it.food.name} onClick={()=>{setItems(items.filter((_,j)=>i!==j));setReplacing(null)}}><Trash2 size={17}/></button></div>
         {replacing===i&&picker}

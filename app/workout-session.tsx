@@ -1,4 +1,5 @@
 'use client';
+import SelectField from './select-field';
 
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Check,Play,Pause,Undo2,ArrowRight} from 'lucide-react';
@@ -74,7 +75,7 @@ export default function WorkoutSession({plan,session,date,saved,draft:stored,onD
       <h3>¿Cómo de exigente ha sido?</h3>
       <div className="raw-portions" role="group" aria-label="Esfuerzo de la sesión">{[{label:'Suave',rpe:3},{label:'Moderada',rpe:5},{label:'Dura',rpe:8}].map(({label,rpe})=><button className="button outline" type="button" aria-pressed={draft.rpe===rpe} disabled={disabled} key={rpe} onClick={()=>update({...latest.current,rpe})}>{label}</button>)}</div>
       <details className="raw-disclosure" open={elapsed===0||undefined}><summary>Ajustar duración y esfuerzo exactos</summary>
-        <label className="field">Esfuerzo del 1 al 10<select value={draft.rpe??''} disabled={disabled} onChange={e=>update({...latest.current,rpe:Number(e.target.value)||null})}><option value="">Elige un valor</option>{Array.from({length:10},(_,i)=><option key={i}>{i+1}</option>)}</select></label>
+        <SelectField label="Esfuerzo del 1 al 10" value={draft.rpe??''} disabled={disabled} onValueChange={selection=>update({...latest.current,rpe:Number(selection)||null})}><option value="">Elige un valor</option>{Array.from({length:10},(_,i)=><option key={i}>{i+1}</option>)}</SelectField>
         <label className="field">Duración real en minutos<input type="number" inputMode="numeric" min={1} max={240} defaultValue={elapsed>0?minutes:''} disabled={disabled} onChange={e=>{
           const value=Number(e.target.value);
           if(Number.isInteger(value)&&value>=1&&value<=240)update({...latest.current,elapsedMs:value*60000,runningSince:null});

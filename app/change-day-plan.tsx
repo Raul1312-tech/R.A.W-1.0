@@ -1,4 +1,5 @@
 'use client';
+import SelectField from './select-field';
 
 import {useState} from 'react';
 import {CalendarDays,Check} from 'lucide-react';
@@ -54,8 +55,8 @@ export default function ChangeDayPlan({profile,date,disabled,onChange}:{
       <button className="button outline" aria-pressed={choice==='rest'} disabled={disabled} onClick={()=>{setChoice('rest');setError('');setMessage('')}}>Hoy descanso</button>
     </div>
     {choice==='outside'&&slot!==undefined&&<div className="form-grid">
-      <label className="field">¿Qué comida harás fuera?<select value={slot} onChange={e=>setSlot(Number(e.target.value))}>{slots.map(slot=><option key={slot} value={slot}>{mealLabels[slot]}</option>)}</select></label>
-      <label className="field">¿Qué tamaño tendrá?<select value={size} onChange={e=>setSize(e.target.value as typeof size)}><option value="normal">Ración habitual</option><option value="large">Más abundante</option></select></label>
+      <SelectField label="¿Qué comida harás fuera?" value={slot} onValueChange={selection=>setSlot(Number(selection))}>{slots.map(slot=><option key={slot} value={slot}>{mealLabels[slot]}</option>)}</SelectField>
+      <SelectField label="¿Qué tamaño tendrá?" value={size} onValueChange={selection=>setSize(selection as typeof size)}><option value="normal">Ración habitual</option><option value="large">Más abundante</option></SelectField>
     </div>}
     {result?.day&&<section className="raw-plan-preview" aria-label="Vista previa del cambio">
       <h3>Así quedaría tu día</h3>

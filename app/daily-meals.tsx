@@ -1,4 +1,5 @@
 'use client';
+import SelectField from './select-field';
 
 import {useEffect,useRef,useState} from 'react';
 import {ArrowRight,Check,ChevronDown,PencilLine,RefreshCw,Undo2,X} from 'lucide-react';
@@ -89,10 +90,10 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
             try{onProfile(saveFavorite(profile,record?.status==='alternative'?{name:'Mi '+label.toLowerCase(),items}:meal,slot,meals.length));setFeedback({message:'Guardada en Comidas habituales.'});setError('')}
             catch(e){setError((e as Error).message)}
           }}>Guardar comida</button>}
-          {!record&&favorites.length>0&&<label className="field">Usar una comida guardada<select value="" disabled={disabled} onChange={e=>{
-            const id=e.target.value;
+          {!record&&favorites.length>0&&<SelectField label="Usar una comida guardada" value="" disabled={disabled} onValueChange={selection=>{
+            const id=selection;
             if(id)run(()=>useFavorite(day,plan,date,profile,id,slot),'Comida guardada aplicada.');
-          }}><option value="">Elegir plato</option>{favorites.map(f=><option key={f.id} value={f.id}>{f.meal.name}</option>)}</select></label>}
+          }}><option value="">Elegir plato</option>{favorites.map(f=><option key={f.id} value={f.id}>{f.meal.name}</option>)}</SelectField>}
           {!record&&<button className="text-button" disabled={disabled} onClick={()=>run(()=>recordMeal(day,plan,date,slot,'skipped'),label+' omitida.',slot)}>No he hecho esta comida</button>}
         </details>
       </article>;

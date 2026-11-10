@@ -1,0 +1,182 @@
+.raw-select-field { position: relative; min-width: 0; }
+.raw-select-field > .raw-select-label {
+  color: #355343;
+  font-size: .82rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.raw-shell .raw-select-field > .raw-native-select {
+  position: absolute;
+  inset: 0 auto auto 0;
+  inline-size: 1px;
+  block-size: 1px;
+  min-inline-size: 0;
+  min-block-size: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.raw-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 12px;
+  border: 1px solid #a8c4b0;
+  border-radius: 11px;
+  background: linear-gradient(#fff, #f1f7f1);
+  box-shadow: var(--raw-button-shadow);
+  color: #214332;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 650;
+  text-align: left;
+}
+.raw-select-trigger span { min-width: 0; overflow-wrap: anywhere; }
+.raw-select-trigger svg, .raw-select-option svg { flex: none; color: #176348; }
+.raw-select-trigger[aria-expanded="true"] {
+  background: #e9f4eb;
+  border-color: #2f8060;
+  box-shadow: 0 0 0 3px #27865e22;
+}
+.raw-select-trigger[aria-expanded="true"] svg { rotate: 180deg; }
+.raw-select-trigger[aria-invalid="true"] { border-color: #ad3535; }
+:root body .raw-select-field > .raw-select-error { margin: 0; color: #942f34; }
+
+.raw-select-picker {
+  position: fixed;
+  inset: var(--select-top, auto) auto var(--select-bottom, auto) var(--select-left, 0);
+  width: var(--select-width, 248px);
+  max-height: min(29rem, var(--select-height, 29rem));
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #a8c8b2;
+  border-radius: 15px;
+  background: linear-gradient(150deg, #f1f7ef, #fff 60%);
+  color: #183e2c;
+  box-shadow: 0 6px 14px #183e2c1a, 0 18px 48px #163b2833;
+}
+.raw-select-picker::backdrop { background: #102a1c14; }
+.raw-select-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+.raw-select-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 9px 8px 14px;
+  border-bottom: 1px solid #d9e7da;
+}
+:root body .raw-select-panel h2 {
+  margin: 0;
+  color: #234634;
+  font-size: 1rem;
+  font-weight: 760;
+  overflow-wrap: anywhere;
+}
+.raw-select-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #2b5540;
+}
+.raw-select-options {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  gap: 3px;
+  padding: 7px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 7px;
+}
+.raw-select-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #223d2e;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 550;
+  text-align: left;
+}
+.raw-select-option span { overflow-wrap: anywhere; }
+.raw-select-option[aria-selected="true"] {
+  border-color: #bed9c5;
+  background: linear-gradient(#eaf5eb, #deefe3);
+  color: #0b5337;
+  font-weight: 750;
+}
+.raw-select-option:disabled { opacity: .58; }
+:root body .raw-select-picker :is(.raw-select-option,.raw-select-close):focus-visible {
+  outline: 2px solid #197553;
+  outline-offset: -2px;
+}
+@media (hover: hover) {
+  .raw-select-trigger:hover:not(:disabled) { border-color: #52866b; }
+  .raw-select-close:hover, .raw-select-option:hover:not(:disabled) { background-color: #e9f3eb; }
+}
+
+:root body .raw-shell :where(details) { border-radius: 12px; }
+:root body .raw-shell details:not(.raw-meal > details) > summary {
+  position: relative;
+  min-height: 44px;
+  align-content: center;
+  padding-inline-end: 24px;
+  cursor: pointer;
+  list-style: none;
+}
+.raw-shell details > summary::-webkit-details-marker { display: none; }
+.raw-shell details:not(.raw-meal > details) > summary::after {
+  position: absolute;
+  top: calc(50% - 5px);
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  rotate: 45deg;
+  content: '';
+}
+.raw-shell details[open]:not(.raw-meal > details) > summary::after {
+  top: calc(50% - 1px);
+  rotate: 225deg;
+}
+.raw-app details.raw-disclosure.card[open] { border-color: #a8c7af; }
+:root body .raw-shell details.raw-disclosure[open] > summary { color: #15583e; }
+:root body .raw-shell .raw-competition details.raw-disclosure[open] > summary { color: inherit; }
+.raw-select-field.food-category-select > .raw-select-trigger { width: auto; flex: 1; max-width: 285px; }
+.raw-select-field.food-basis-label > .raw-select-trigger { width: auto; min-width: 82px; }
+@media (max-width: 760px) {
+  .raw-select-picker {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: min(76dvh, 34rem);
+    border-radius: 18px 18px 0 0;
+  }
+  .raw-select-picker::backdrop { background: #102a1c70; }
+  .raw-select-panel > header { padding: 10px 10px 10px 16px; }
+  .raw-select-options { padding: 8px 10px max(10px, env(safe-area-inset-bottom)); }
+  .raw-select-option { min-height: 48px; padding-inline: 12px; }
+}

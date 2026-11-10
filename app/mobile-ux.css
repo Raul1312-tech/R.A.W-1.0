@@ -4,16 +4,31 @@
   --raw-dark: #182a23;
   --raw-soft: #eaf3ed;
   --raw-muted: #4c6658;
-  --raw-border: #d4e1d6;
+  --raw-border: #d0ddd2;
+  --raw-surface: linear-gradient(155deg, #fff 42%, #f8faf5);
+  --raw-card-shadow: 0 1px 2px #152d1d0b, 0 6px 18px -10px #152d1d38;
+  --raw-button-shadow: inset 0 1px #ffffffd9, 0 2px 3px #123a2212;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at 12% 0%, #dcebe3, transparent 34rem),
+    linear-gradient(155deg, #f8f6ef, #edf2eb);
   --raw-nav-height: 68px;
 }
 :root body .raw-header.header {
   min-height: 70px;
   padding-top: 9px;
   padding-bottom: 9px;
+  background: linear-gradient(112deg, #151b17, #21382d 72%, #192720);
+  border-bottom-color: #597764;
+  box-shadow: 0 4px 18px #14271c26;
+}
+:root body .raw-header .profile-btn > span {
+  background: linear-gradient(155deg, #365c48, #213b30);
+  border-color: #709581;
+  border-radius: 11px;
+  box-shadow: inset 0 1px #ffffff24, 0 2px 6px #0004;
 }
 .raw-demo {
-  background: #ecf2ec;
+  background: #f5f8f1;
   border-bottom: 1px solid var(--raw-border);
   color: var(--raw-muted);
   font-size: .76rem;
@@ -31,7 +46,7 @@
 .raw-app > :where(section, article, div, details) { min-width: 0; }
 .raw-app [hidden] { display: none !important; }
 .raw-app :where(button, summary, a, input, select, textarea):focus-visible {
-  outline: 3px solid #268864;
+  outline: 3px solid #197553;
   outline-offset: 3px;
 }
 .raw-app .button, .raw-app .text-button, .raw-app .icon-button {
@@ -39,13 +54,61 @@
 }
 .raw-app .icon-button { min-width: 44px; }
 .raw-app :where(button, summary) { touch-action: manipulation; }
-.raw-app button[aria-pressed="true"].outline {
-  background: var(--raw-soft);
+:root body .raw-shell .button {
+  border-radius: 11px;
+  letter-spacing: 0;
+}
+:root body .raw-shell .button.orange {
+  background: linear-gradient(165deg, #0b7955, #005139);
+  border-color: #00563a;
+  color: #fff;
+  box-shadow: inset 0 1px #ffffff35, 0 2px 0 #00432e, 0 4px 8px #0051392b;
+}
+:root body .raw-shell .button.outline {
+  background: linear-gradient(#fff, #eff6f0);
+  border-color: #a7c0ad;
+  color: #214332;
+  box-shadow: var(--raw-button-shadow);
+}
+:root body .raw-shell .button.soft {
+  background: linear-gradient(#f3f8f3, #e2efe5);
+  border-color: #b8cdbd;
+  color: #214b36;
+  box-shadow: var(--raw-button-shadow);
+}
+:root body .raw-shell .button[aria-pressed="true"].outline {
+  background: linear-gradient(#e9f5eb, #cee6d5);
   border-color: var(--raw-green);
-  color: var(--raw-green);
+  color: #00553b;
+  box-shadow: inset 0 1px 3px #00442d26;
+}
+:root body .raw-shell .button:disabled { box-shadow: none; }
+:root body .raw-shell .button:active:not(:disabled) {
+  translate: 0 1px;
+  box-shadow: inset 0 2px 4px #1036223d;
+}
+@media (hover: hover) {
+  :root body .raw-shell .button.orange:hover:not(:disabled) {
+    background: linear-gradient(165deg, #127e59, #00523a);
+  }
+  :root body .raw-shell .button:is(.outline,.soft):hover:not(:disabled):not([aria-pressed="true"]) {
+    border-color: #6d9b7c;
+    background: linear-gradient(#fff, #e3f1e6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root body .raw-shell .button { transition: none; }
+  :root body .raw-shell .button:active:not(:disabled) { translate: none; }
 }
 .raw-app :where(h1, h2, h3, p, summary, .field) { overflow-wrap: anywhere; }
-.raw-app .card { border-radius: 13px; }
+:root body .raw-app .card {
+  border-radius: 17px;
+  border-color: var(--raw-border);
+  box-shadow: var(--raw-card-shadow);
+}
+:root body .raw-app :is(.raw-meal,.raw-workout-card,.raw-empty,.raw-workout,.raw-disclosure.card) {
+  background: var(--raw-surface);
+}
 .raw-app .section-head { margin: 0; }
 .raw-today-intro h1, .raw-page-heading h1 {
   font-size: clamp(2.35rem, 7vw, 3.6rem);
@@ -79,10 +142,11 @@
 }
 .raw-section-label > span { color: var(--raw-muted); font-size: .8rem; text-align: right; }
 .raw-meal.card, .raw-workout-card.card, .raw-empty.card { padding: 14px 16px; }
-.raw-meal-next.card {
-  background: linear-gradient(135deg,#e9f3ed,#fff 95%);
-  border: 1px solid #a8c9b5;
+:root body .raw-app .raw-meal-next.card {
+  background: radial-gradient(ellipse at 0 0, #e0f0e5, transparent 72%), var(--raw-surface);
+  border-color: #a3c7af;
   border-left: 4px solid var(--raw-green);
+  box-shadow: 0 2px 4px #154a2712, 0 10px 24px -14px #0a4b33a8;
 }
 .raw-meal header {
   justify-content: flex-start;
@@ -91,13 +155,42 @@
   font-weight: 700;
 }
 .raw-meal header small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   margin-left: auto;
-  padding: 3px 8px;
-  border-radius: 5px;
-  background: #eef1eb;
+  padding: 3px 9px;
+  border: 1px solid #e1d3b3;
+  border-radius: 20px;
+  background: #f8f0dd;
+  color: #654820;
   font-size: .73rem;
 }
-.raw-meal-time { color: var(--raw-green); font-variant-numeric: tabular-nums; }
+.raw-meal header small::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+}
+.raw-meal[data-status="recorded"] header small {
+  background: #e3f3e8;
+  border-color: #b9d7c3;
+  color: #175b3d;
+}
+.raw-meal[data-status="skipped"] header small {
+  background: #eff1ed;
+  border-color: #d6dbd4;
+  color: #516056;
+}
+.raw-meal-time {
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: #e5f1e8;
+  color: #075b40;
+  font-variant-numeric: tabular-nums;
+}
 .raw-meal h3, .raw-workout-card h3, .raw-empty h3 {
   margin: 7px 0;
   font-size: 1.22rem;
@@ -111,8 +204,14 @@
   gap: 6px 12px;
 }
 .raw-meal .raw-actions { margin-top: 10px; }
-.raw-meal .raw-actions .button { flex: 1 0 138px; }
-.raw-meal .raw-actions .text-button { flex: 1 0 114px; justify-content: center; }
+.raw-meal > .raw-meal-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: 8px;
+}
+.raw-meal-actions :is(.button,.text-button) { width: 100%; justify-content: center; }
+.raw-meal-actions .button { padding-inline: 8px; gap: 7px; font-size: .84rem; }
+.raw-meal-actions svg { flex: none; }
 .raw-disclosure > summary {
   min-height: 44px;
   cursor: pointer;
@@ -123,7 +222,27 @@
 .raw-disclosure.card { padding: 0 16px; }
 .raw-disclosure[open].card { padding-bottom: 14px; }
 .raw-disclosure[open] > summary { margin-bottom: 6px; }
-:root body .raw-app .raw-meal .raw-disclosure > summary { padding: 0; background: transparent; border: 0; }
+:root body .raw-app .raw-meal > .raw-disclosure {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+:root body .raw-app .raw-meal > .raw-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #d5e2d6;
+  border-radius: 10px;
+  background: linear-gradient(#f8fbf7, #edf4ec);
+  color: #2e543f;
+  list-style: none;
+}
+.raw-meal > .raw-disclosure > summary::-webkit-details-marker { display: none; }
+.raw-meal > .raw-disclosure > summary svg { flex: none; margin: 0; }
+.raw-meal > .raw-disclosure[open] > summary svg { rotate: 180deg; }
 .raw-meal .raw-disclosure .field { margin-top: 12px; }
 .raw-meal .ingredients li { gap: 12px; }
 .raw-meal .ingredients li b:last-child { white-space: nowrap; }
@@ -135,7 +254,8 @@
   padding: 2px 12px;
   min-height: 44px;
   border-radius: 8px;
-  background: var(--raw-soft);
+  background: linear-gradient(145deg, #eff8ef, #e2f0e5);
+  border: 1px solid #bfd9c7;
   color: var(--raw-dark);
 }
 .raw-feedback > span { display: inline-flex; align-items: center; gap: 7px; }
@@ -181,7 +301,8 @@
   border: 1px solid var(--raw-border);
   border-radius: 14px;
   color: var(--raw-dark);
-  background: #fff;
+  background: linear-gradient(155deg, #f3f8f3, #fff 55%);
+  box-shadow: 0 16px 54px #102d2159;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -254,6 +375,17 @@
     line-height: 1.1;
   }
   :root body .raw-header nav.raw-nav button span::after { content: none; }
+  :root body .raw-header nav.raw-nav {
+    background: linear-gradient(#fffffff7, #f5f8f3fa);
+    border-top-color: #c4d7c9;
+    box-shadow: 0 -6px 20px #203d281a;
+  }
+  :root body .raw-header nav.raw-nav button { border-radius: 12px; }
+  :root body .raw-header nav.raw-nav button[aria-current="page"] {
+    background: linear-gradient(#f1f8f2, #dceee2);
+    color: #005a3e;
+    box-shadow: inset 0 1px #fff, inset 0 -2px #287355, 0 1px 4px #123a221a;
+  }
   .raw-app {
     gap: 13px;
     padding: 13px 12px calc(var(--raw-nav-height) + 10px + env(safe-area-inset-bottom));

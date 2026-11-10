@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect,useRef,useState} from 'react';
-import {ArrowRight,Check,RefreshCw,Undo2,X} from 'lucide-react';
+import {ArrowRight,Check,ChevronDown,PencilLine,RefreshCw,Undo2,X} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {mealSlots,mealTimes} from './meal-layout';
 import {saveFavorite,useFavorite} from './preparation-model';
@@ -67,18 +67,18 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
       const outside=!record&&!meal.items.length?outsideMealEstimate(day,slot):undefined;
       const compatible=meal.items.every(it=>!profile.excluded.includes(it.food.id)&&!it.food.allergens.some(a=>profile.allergens.includes(a)));
       const favorites=(profile.preparation?.favorites??[]).filter(f=>f.slot===mealSlots(meals.length)[slot]);
-      return <article className={'card raw-meal '+(slot===next?'raw-meal-next':'')} key={slot}>
+      return <article className={'card raw-meal '+(slot===next?'raw-meal-next':'')} data-status={record?.status==='skipped'?'skipped':record?'recorded':'pending'} key={slot}>
         <header><span className="raw-meal-time">{times[slot]}</span><span>{label}</span><small>{record?.status==='skipped'?'Omitida':record?'Registrada':'Pendiente'}</small></header>
         <h3>{record?.status==='skipped'?'Comida omitida':record?.status==='alternative'?items.map(it=>it.food.name).slice(0,3).join(', ')||'Comida registrada':outside?'Comida fuera':meal.name}</h3>
         {!record&&!compatible&&<p className="notice">Este plato incluye alimentos que has excluido. Elige otra opción.</p>}
-        <div className="raw-actions">
+        <div className="raw-actions raw-meal-actions">
           {record?<><button className="button outline" disabled={disabled} onClick={()=>setEditor({slot,usePlan:false})}>Editar registro</button><button className="text-button" disabled={disabled} onClick={()=>undo(slot)}>Deshacer</button></>:<>
             <button className={'button '+(slot===next?'orange':'outline')} disabled={disabled||(!outside&&(!compatible||!meal.items.length))} onClick={()=>outside?setEditor({slot,usePlan:false}):run(()=>recordMeal(day,plan,date,slot,'planned'),label+' registrada.',slot)}><Check size={18}/>{outside?'Registrar comida fuera':'Lo he comido'}</button>
-            {!outside&&<button className="text-button" disabled={disabled} onClick={()=>setEditor({slot,usePlan:false})}>Comí otra cosa</button>}
+            {!outside&&<button className="button soft" disabled={disabled} onClick={()=>setEditor({slot,usePlan:false})}><PencilLine size={16} aria-hidden="true"/> Comí otra cosa</button>}
           </>}
         </div>
         <details className="raw-disclosure">
-          <summary>{record?'Ver ingredientes registrados':outside?'Ver reserva estimada':'Ver ingredientes y opciones'}</summary>
+          <summary>{record?'Ver ingredientes registrados':outside?'Ver reserva estimada':'Ver ingredientes y opciones'}<ChevronDown size={16} aria-hidden="true"/></summary>
           {outside?<><MenuMacros m={outside}/><p>La app ha reservado esta comida y ajustado el resto del día.</p></>:<>
             <ul className="ingredients">{items.map((it,i)=><li key={i}><span>{it.food.name} <small>{it.food.unit}</small></span><b>{it.grams} {it.food.unit.includes('ml')?'ml':'g'}</b></li>)}</ul>
             {!!items.length&&<MenuMacros m={total(items)}/>}

@@ -102,3 +102,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .demo-banner{display:flex;flex-wrap:wrap;gap:8px 24px;padding:14px 28px;background:#eaf2ec;border-bottom:1px solid #bed3c3;color:#28573d;font-size:12px;line-height:1.6}.demo-banner strong{font-size:10px;letter-spacing:1px;white-space:nowrap}.demo-banner span{flex:1;min-width:240px}.auth-card .demo-login-note{font-size:11px;margin-top:9px}.auth-card a.full{text-decoration:none;display:flex;align-items:center;gap:12px}
 
 @media(max-width:760px){.today-grid>.daily{display:none}}
+
+.photo-pose-guide {margin:18px 0;max-width:720px}
+.photo-pose-guide img {width:100%;display:block;border-radius:14px}
+.photo-pose-guide>div {display:grid;grid-template-columns:repeat(3,1fr);text-align:center;font-weight:700;padding:8px}
+@media(max-width:760px){.raw-app .raw-nav {grid-template-columns:repeat(5,minmax(0,1fr))}.raw-app .raw-nav button{min-width:0;padding-inline:3px;font-size:11px}}

@@ -1,6 +1,8 @@
 import {z} from 'zod';
 import {athleteSchema} from './athlete-schema.ts';
 import {generatePlan,targets,type Profile} from './model.ts';
+import {previewNutritionSituation} from './nutrition-situations-model.ts';
+import {mealTimes,mealSlots} from './meal-layout.ts';
 import {applyRepeats} from './preparation-model.ts';
 import {stateSchema} from './validation.ts';
 
@@ -32,7 +34,25 @@ export function saveProfileSetup(profile:Profile,input:unknown,today:string):Pro
     if(!plan)throw new Error('No podemos generar un menú con esta combinación de comidas, objetivo y exclusiones. Revisa el perfil; tus datos anteriores siguen guardados.');
     next={...next,plans:[...profile.plans,plan].slice(-36)};
     const target=targets(next);
-    next.days=Object.fromEntries(Object.entries(profile.days).map(([date,day])=>[date,date>=today&&!hasFoodHistory(day)&&!day.nutrition?{...day,target,foodPlan:undefined}:day]));
+    next.days=Object.fromEntries(Object.entries(profile.days).map(([date,day])=>{
+      if(date<today)return [date,day];
+      const oldCount=day.foodPlan?.meals.length??day.nutrition?.mealCount??profile.mealCount??5;
+      const ordinary=!day.nutrition||['coordinated','profile-meal-count','sparring-week'].includes(day.nutrition.situationId)||day.nutrition.situationId.startsWith('quick-');
+      if(oldCount!==next.mealCount&&ordinary&&!day.competition){
+        const settings=day.nutrition,slots=mealSlots(next.mealCount!);
+        const outsideMeals=[...new Map((settings?.outsideMeals??[]).map(outside=>{
+          const slot=slots.reduce((best,slot)=>Math.abs(slot-outside.slot)<Math.abs(best-outside.slot)?slot:best,slots[0]);
+          return [slot,{...outside,slot}];
+        })).values()];
+        const updated=previewNutritionSituation({...next,days:{...next.days,[date]:day}},{
+          id:settings?.situationId??'profile-meal-count',name:settings?.name??'Nuevo reparto de comidas',
+          mealCount:next.mealCount!,times:mealTimes(next.mealCount!,next.athlete?.schedule??'regular',next.onboarding?.completed?.answers.nutrition),
+          training:settings?.training??'usual',supplements:settings?.supplements??[],outsideMeals,
+        },date,plan.seed);
+        return [date,updated];
+      }
+      return [date,!hasFoodHistory(day)&&!day.nutrition?{...day,target,foodPlan:undefined}:day];
+    }));
     if(next.preparation?.monthlyMenus)next.preparation={...next.preparation,monthlyMenus:next.preparation.monthlyMenus.map(month=>({...month,created:month.days.some(day=>day.date>=today&&!hasFoodHistory(profile.days[day.date]))?new Date().toISOString():month.created,days:month.days.map(day=>{
       if(day.date<today||hasFoodHistory(profile.days[day.date]))return day;
       const weekday=(new Date(day.date+'T12:00:00Z').getUTCDay()+6)%7;

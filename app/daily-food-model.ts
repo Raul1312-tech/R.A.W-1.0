@@ -37,7 +37,7 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   const done=new Set(snapshot.records.map(r=>r.slot));
   const cursor=Math.max(-1,...snapshot.records.map(r=>r.slot));
   const pending=meals.map((_,i)=>i).filter(i=>!done.has(i));
-  const eligible=pending.filter(i=>i>cursor);
+  const eligible=pending;
   const recorded=total(day.items);
   const projected=()=>{
     const actual=total([...day.items,...pending.flatMap(i=>meals[i].items)]);
@@ -50,7 +50,7 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   const denominators=[Math.max(500,day.target.k),Math.max(30,day.target.p),Math.max(50,day.target.c),Math.max(20,day.target.f)];
   const weights=[1.5,1,.7,.7];
   const score=(macro:Macro)=>keys.reduce((n,k,i)=>n+weights[i]*((macro[k]-day.target[k])/denominators[i])**2,0);
-  if(snapshot.autoAdjust&&hasAlternatives&&eligible.length&&cursor<meals.length-1){
+  if(snapshot.autoAdjust&&hasAlternatives&&eligible.length){
     const vars=eligible.flatMap(slot=>meals[slot].items.flatMap((it,index)=>fixedFoods.has(it.food.id)?[]:[{slot,index,grams:it.grams,scale:1,a:keys.map((k,i)=>it.food[k]*it.grams/100/denominators[i])}]));
     const residual=keys.map((k,i)=>(day.target[k]-baseline[k])/denominators[i]);const regularization=.003;
     for(let pass=0;pass<50;pass++)for(const v of vars){
@@ -63,7 +63,7 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
     if(score(projected())>=score(baseline)-.00001)for(const slot of eligible)meals[slot]=structuredClone(snapshot.meals[slot]);
   }
   const adjustments=pending.flatMap(slot=>meals[slot].items.flatMap((it,i)=>it.grams!==snapshot.meals[slot].items[i].grams?[{slot,name:it.food.name,before:snapshot.meals[slot].items[i].grams,after:it.grams}]:[]));
-  return {snapshot,meals,recorded,projected:projected(),adjustments,pending,cursor,finished:cursor===meals.length-1};
+  return {snapshot,meals,recorded,projected:projected(),adjustments,pending,cursor,finished:pending.length===0};
 }
 export function recordMeal(day:Day,plan:Plan|undefined,date:string,slot:number,status:MealRecord['status'],items?:Item[]):Day{
   const view=foodDayView(day,plan,date);if(!view||!view.meals[slot])throw new Error('No hay una comida prevista para este día.');

@@ -364,7 +364,7 @@
   }
   :root body .raw-header .rise-logo { width: 106px; }
   :root body .raw-header nav.raw-nav {
-    grid-template-columns: repeat(4,minmax(0,1fr));
+    grid-template-columns: repeat(5,minmax(0,1fr));
     gap: 4px;
     min-height: var(--raw-nav-height);
     padding: 5px 8px max(5px,env(safe-area-inset-bottom));

@@ -12,7 +12,7 @@ const settings={
   trainingMinutes:z.number().int().min(15).max(240).optional(),
   trainingIntensity:z.enum(['light','moderate','hard']).optional(),
   outsideMeals:z.array(z.object({slot:z.number().int().min(0).max(5),size:z.enum(['normal','large'])})).max(6).optional(),
-  supplements:z.array(z.object({id:z.string().min(1).max(100),amount:z.number().finite().min(.1).max(200),timing:z.enum(['breakfast','postworkout','evening'])})).max(12),
+  supplements:z.array(z.object({id:z.string().min(1).max(100),amount:z.number().finite().min(.1).max(1000),timing:z.enum(['breakfast','during','postworkout','evening'])})).max(12),
 };
 const validTimes=(s:{mealCount:number;times:string[]})=>s.times.length===s.mealCount&&s.times.every((t,i)=>!i||t>s.times[i-1]);
 const uniqueSupplements=(s:{supplements:{id:string}[]})=>new Set(s.supplements.map(x=>x.id)).size===s.supplements.length;

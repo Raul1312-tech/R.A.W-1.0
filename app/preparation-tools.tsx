@@ -19,8 +19,8 @@ const formLabels={
 function dated<T>(values:Record<string,T>|undefined,date:string,value:T){
  return Object.fromEntries(Object.entries({...values,[date]:value}).sort(([a],[b])=>a.localeCompare(b)).slice(-90));
 }
-type Props={profile:Profile;date:string;disabled:boolean;onChange:(p:Profile)=>void};
-export function DayPreparation({profile:p,date,disabled,onChange}:Props){
+type Props={profile:Profile;date:string;disabled:boolean;onChange:(p:Profile)=>void;feelings?:boolean};
+export function DayPreparation({profile:p,date,disabled,onChange,feelings=false}:Props){
  const today=dateKey(),previous=p.preparation?.readiness?.[date],advice=previous&&readinessAdvice(previous);
  const data=p.workouts??{plans:[],logs:[]},plan=planForDate(data,date),pending=dailySessions(data,date).some(s=>!s.pinned);
  const day=p.days[date],slots=mealSlots(day?.nutrition?.mealCount??day?.foodPlan?.meals.length??p.mealCount??5).filter((_,index)=>!day?.foodPlan?.records.some(r=>r.slot===index));
@@ -28,12 +28,12 @@ export function DayPreparation({profile:p,date,disabled,onChange}:Props){
  function act(action:Parameters<typeof applyDayChange>[3],arg?:number|string){
   try{onChange(applyDayChange(p,date,today,action,arg));setMessage('Plan de la fecha actualizado. Revisa tus comidas y tu entreno.')}catch(e){setMessage((e as Error).message)}
  }
- return <details className="card raw-disclosure"><summary>Cómo me encuentro y cambios de hoy</summary>
- {date===today&&<form onSubmit={e=>{e.preventDefault();const values=Object.fromEntries(new FormData(e.currentTarget)) as Readiness;
+ return <details className="card raw-disclosure" open={feelings||undefined}><summary>{feelings?'Sensaciones y cansancio del día':'Cambios para esta fecha'}</summary>
+ {feelings&&date<=today&&<form onSubmit={e=>{e.preventDefault();const values=Object.fromEntries(new FormData(e.currentTarget)) as Readiness;
   onChange({...p,preparation:{...p.preparation,readiness:dated(p.preparation?.readiness,date,values)}});setMessage('Chequeo guardado.')}}>
  <div className="form-grid">{(['sleep','fatigue','pain','motivation'] as const).map((key,i)=><SelectField key={key} required name={key} label={['Sueño','Cansancio','Molestias','Ganas de entrenar'][i]} defaultValue={previous?.[key]??''} disabled={disabled}><option value="">Elige una opción</option>{Object.entries(formLabels[key]).map(([v,label])=><option key={v} value={v}>{label}</option>)}</SelectField>)}</div>
  <button className="button outline" disabled={disabled}>Guardar chequeo</button></form>}
- {advice&&<p><strong>{advice.label}.</strong> {advice.reason}</p>}
+ {feelings&&advice&&<p><strong>{advice.label}.</strong> {advice.reason}</p>}
  {date>=today&&<><div className="raw-actions"><button className="button outline" disabled={disabled||!plan} onClick={()=>act('rest')}>Hoy no entreno</button>
  <button className="button outline" disabled={disabled||!pending||advice?.action==='review'} onClick={()=>act('shorten')}>Solo tengo 25 minutos</button></div>
  {slots.length>0&&!day?.complete&&<SelectField label="Comida que haré fuera" disabled={disabled} value="" onValueChange={v=>{if(v!=='')act('outside',Number(v))}}><option value="">Elige la comida</option>{slots.map(slot=><option key={slot} value={slot}>{mealLabels[slot]}</option>)}</SelectField>}

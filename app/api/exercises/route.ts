@@ -1,4 +1,4 @@
-import {exerciseCatalog,exerciseRecordSchema} from '../../exercise-catalog';
+import {exerciseCatalog,exerciseRecordSchema,mergeExerciseCatalog} from '../../exercise-catalog';
 import {configured,credentials} from '../../../lib/supabase/config';
 
 /** Non-personal shared content only. No cookies, service-role key or writes. */
@@ -12,7 +12,7 @@ export async function GET(){
         const rows:unknown=await response.json();
         if(Array.isArray(rows)){
           const valid=rows.flatMap(row=>{const result=exerciseRecordSchema.safeParse(row?.data);return result.success?[result.data]:[];});
-          if(valid.length){const merged=new Map(exerciseCatalog.map(r=>[r.id,r]));for(const record of valid)merged.set(record.id,record);records=[...merged.values()];source='database';}
+          if(valid.length){records=mergeExerciseCatalog(valid);source='database';}
         }
       }
     }catch{/* The versioned snapshot keeps exercise instructions available offline. */}

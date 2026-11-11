@@ -5,7 +5,7 @@ import {exerciseCatalog,exerciseRecordSchema,findExerciseRecord} from '../app/ex
 import {generateTrainingPlan,defaultTrainingConfig} from '../app/training-model.ts';
 
 test('every catalog record has unique identity, complete guide and a persistent image asset',()=>{
-  assert.equal(exerciseCatalog.length,60);
+  assert.equal(exerciseCatalog.length,119);
   assert.equal(new Set(exerciseCatalog.map(r=>r.id)).size,exerciseCatalog.length);
   const names=exerciseCatalog.flatMap(r=>[r.name,...r.aliases].map(n=>n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
   assert.equal(new Set(names).size,names.length);

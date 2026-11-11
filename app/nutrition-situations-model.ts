@@ -20,7 +20,7 @@ function checkSupplements(p:Profile,s:NutritionSituation){
     const supplement=p.preparation?.supplements?.find(x=>x.id===chosen.id);
     if(!supplement)throw Error('Un suplemento ya no está en tu plan. Edita y guarda esta situación.');
     if(supplement.allergens.some(a=>p.allergens.includes(a)))throw Error('Un suplemento elegido entra en conflicto con tus alérgenos. Revisa esta situación.');
-    if(chosen.amount*(supplement.unit==='capsules'?supplement.gramsPerUnit:1)>200)throw Error('Revisa la cantidad de los suplementos: máximo 200 g por toma.');
+    if(supplement.unit!=='ml'&&chosen.amount*(supplement.unit==='capsules'?supplement.gramsPerUnit:1)>200)throw Error('Revisa la cantidad de los suplementos: máximo 200 g por toma.');
   }
 }
 /** Builds a dated plan, retaining every actual food item and recorded meal. */
@@ -29,11 +29,10 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)throw Error('Selecciona una fecha válida.');
   checkSupplements(p,situation);
   const day=p.days[date]??emptyDay(p),old=foodSnapshot(day,planForFoodDate(p,p.plans.at(-1),date),date);
-  const required=(old?.records??[]).map(r=>mealSlots(old!.meals.length)[r.slot]);
-  const count=[2,3,4,5,6].find(n=>n>=situation.mealCount&&required.every(slot=>mealSlots(n).includes(slot)))!;
+  const count=situation.mealCount;
   const target=situationEnergy(p,situation,date).target;
   const profile={...p,mealCount:count,preparation:{...p.preparation,energyTarget:target.k}};
-  const supplements=situation.supplements.map(s=>situation.training==='rest'&&s.timing==='postworkout'?{...s,timing:'breakfast' as const}:s);
+  const supplements=situation.supplements.filter(chosen=>situation.training!=='rest'||p.preparation?.supplements?.find(s=>s.id===chosen.id)?.kind!=='sportsDrink').map(s=>situation.training==='rest'&&s.timing==='postworkout'?{...s,timing:'breakfast' as const}:s);
   const portions=supplements.map(chosen=>{
     const s=p.preparation!.supplements!.find(x=>x.id===chosen.id)!;
     return {food:{...s,k:s.kind==='creatine'?0:s.k,p:s.kind==='creatine'?0:s.p,c:s.kind==='creatine'?0:s.c,f:s.kind==='creatine'?0:s.f},grams:chosen.amount*(s.unit==='capsules'?s.gramsPerUnit:1)};
@@ -50,13 +49,30 @@ export function previewNutritionSituation(p:Profile,input:unknown,date:string,se
   const plan:Plan={...generated,id:'situation-'+situation.id,meals:generated.week![weekday].meals,week:undefined};
   const snapshot=foodSnapshot({...day,foodPlan:undefined,items:[]},plan,date)!;
   if(!situation.supplements.length&&!(situation.id.startsWith('competition-')))snapshot.meals=applyRepeats(p,snapshot.meals);
-  for(const record of old?.records??[]){const slot=mealSlots(count).indexOf(mealSlots(old!.meals.length)[record.slot]);snapshot.meals[slot]=structuredClone(old!.meals[record.slot]);snapshot.records.push({...structuredClone(record),slot})}
+  const replannedMeals=structuredClone(snapshot.meals);
+  const itemSlots=new Map<string,number>();
+  for(const record of old?.records??[]){
+    const identity=mealSlots(old!.meals.length)[record.slot],slots=mealSlots(count);
+    let slot=slots.indexOf(identity);
+    if(slot<0)slot=slots.reduce((best,value,index)=>Math.abs(value-identity)<Math.abs(slots[best]-identity)?index:best,0);
+    const existing=snapshot.records.find(r=>r.slot===slot);
+    if(existing){
+      existing.itemIds.push(...record.itemIds);
+      existing.status=existing.status==='skipped'&&record.status==='skipped'?'skipped':'alternative';
+      snapshot.meals[slot]=replannedMeals[slot];
+    }else{
+      snapshot.meals[slot]=structuredClone(old!.meals[record.slot]);
+      snapshot.records.push({...structuredClone(record),slot});
+    }
+    for(const id of record.itemIds)itemSlots.set(id,slot);
+  }
+  const items=day.items.map(item=>itemSlots.has(item.id)?{...item,meal:snapshot.labels[itemSlots.get(item.id)!]}:item);
   snapshot.meals=snapshot.meals.map((meal,slot)=>situation.outsideMeals?.some(outside=>outside.slot===mealSlots(count)[slot])&&!snapshot.records.some(r=>r.slot===slot)?{name:mealLabelsFor(count)[slot]+' fuera · pendiente de registrar',items:[]}:meal);
   const {id,...settings}=situation;
   const toMinutes=(t:string)=>Number(t.slice(0,2))*60+Number(t.slice(3));
   const start=toMinutes(situation.times[0]),end=toMinutes(situation.times.at(-1)!);
   const times=count===situation.mealCount?situation.times:Array.from({length:count},(_,i)=>{const minute=Math.round(start+(end-start)*i/(count-1));return String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0')});
-  return {...day,target,supplementForecast,complete:snapshot.records.length===count,foodPlan:snapshot,nutrition:{situationId:id,...structuredClone(settings),mealCount:count,times,energyTarget:target.k,supplements}};
+  return {...day,items,target,supplementForecast,complete:snapshot.records.length===count,foodPlan:snapshot,nutrition:{situationId:id,...structuredClone(settings),mealCount:count,times,energyTarget:target.k,supplements}};
 }
 export function applyNutritionSituation(p:Profile,id:string,date:string):Profile{
   const s=p.preparation?.situations?.find(x=>x.id===id);

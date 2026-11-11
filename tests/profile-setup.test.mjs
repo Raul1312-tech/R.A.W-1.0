@@ -47,7 +47,7 @@ test('three to six meals produce complete, balanced weeks and survive saving, lo
   }
 });
 
-test('changing meal count refreshes only pending dates, preserving old records and stable dinner favorites',()=>{
+test('changing meal count rebuilds the current distribution while preserving food records, past dates and dinner favorites',()=>{
   let p={...newProfile('Atleta'),confirmed:true};const plan=generatePlan(p,1);p.plans=[plan];
   p=saveFavorite(p,plan.meals[4],4);p.preparation.favorites[0].repeat=true;
   p=freezeMonth(p,plan,'2026-11');
@@ -57,14 +57,14 @@ test('changing meal count refreshes only pending dates, preserving old records a
   const before=structuredClone(p);
   const next=saveProfileSetup(p,input(p,3),date);
   assert.deepEqual(p,before);assert.deepEqual(next.plans[0],plan);
-  assert.deepEqual(next.days[date],before.days[date]);assert.deepEqual(next.days['2026-11-05'],before.days['2026-11-05']);
-  assert.equal(next.days['2026-11-07'].water,500);assert.equal(next.days['2026-11-07'].foodPlan,undefined);
+  assert.equal(next.days[date].foodPlan.meals.length,3);assert.deepEqual(next.days[date].items,before.days[date].items);assert.deepEqual(next.days['2026-11-05'],before.days['2026-11-05']);
+  assert.equal(next.days['2026-11-07'].water,500);assert.equal(next.days['2026-11-07'].foodPlan.meals.length,3);
   const old=next.preparation.monthlyMenus[0].days.find(day=>day.date===date);
   assert.equal(old.meals.length,5);
   const pending=planForFoodDate(next,next.plans.at(-1),'2026-11-07');assert.equal(pending.meals.length,3);
   assert.deepEqual(pending.meals[2],p.preparation.favorites[0].meal);
   const changed=refreshDailyMeal(next.days[date],next.plans.at(-1),date,1,next);
-  assert.equal(changed.foodPlan.meals.length,5);assert.deepEqual(changed.items,p.days[date].items);
+  assert.equal(changed.foodPlan.meals.length,3);assert.deepEqual(changed.items,p.days[date].items);
   for(const count of [3,4,6]){
     const chosen={...next,mealCount:count};const current=generatePlan(chosen,3);
     const repeated=applyRepeats(chosen,current.meals);const dinner=mealSlots(count).indexOf(4);

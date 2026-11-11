@@ -179,7 +179,7 @@ export function upgradeWeeklyState(state:State):State{
  const profiles=state.profiles.map(p=>{const last=p.plans.at(-1);if(!p.confirmed||last?.week)return p;const next=generatePlan(p,(last?.seed??0)+1,last);if(!next)return p;changed=true;return {...p,plans:[...p.plans,next].slice(-36)}});
  return changed?{...state,profiles}:state;
 }
-export function newProfile(name='Nuevo perfil'):Profile{return {id:crypto.randomUUID(),name,age:30,sex:'male',height:175,weight:70,goal:75,activity:1.6,surplus:300,waterGoal:2000,confirmed:false,allergens:[],excluded:[],health:'Pendiente de confirmar.',training:'Frecuencia y duración pendientes de confirmar.',budget:'Pendiente.',plans:[],days:{}}}
+export function newProfile(name='Nuevo perfil'):Profile{return {id:crypto.randomUUID(),name,age:30,sex:'male',height:175,weight:70,goal:75,activity:1.6,surplus:300,waterGoal:2500,confirmed:false,allergens:[],excluded:[],health:'Pendiente de confirmar.',training:'Frecuencia y duración pendientes de confirmar.',budget:'Pendiente.',plans:[],days:{}}}
 export function initialState():State{const p=newProfile();return {profiles:[p],active:p.id}}
 export function emptyDay(p:Profile):Day{return {items:[],water:0,weight:null,steps:null,minutes:0,training:'',sleep:null,notes:'',complete:false,target:targets(p)}}
 export const dateKey=(d=new Date())=>new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).format(d);

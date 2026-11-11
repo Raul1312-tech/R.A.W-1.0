@@ -21,7 +21,7 @@ export function coachContext(p:Profile,date:string){
  const sleep=records.filter(([,v])=>v.sleep!==null).map(([,v])=>v.sleep!);
  const poorSleep=sleep.filter(v=>v<6).length;
  const logs=data.logs.filter(l=>l.date>=from&&l.date<=date);
- const hard=logs.filter(l=>l.rpe>=8).length;
+ const hard=logs.filter(l=>l.rpe>=8).length+Object.entries(p.preparation?.clubRecords??{}).filter(([dt,r])=>dt>=from&&dt<=date&&r.rpe>=8).length;
  const priorEvent=p.preparation?.coach?.events.findLast(e=>e.date===date);
  const facts:CoachFact[]=[];
  const add=(f:CoachFact)=>facts.push(f);

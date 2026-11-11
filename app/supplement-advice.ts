@@ -7,6 +7,7 @@ export function supplementAdvice(p:Profile,date:string,day:Day,s:Pick<Supplement
  if(recent)return 'Has registrado mala tolerancia. Revisa el producto con tu equipo antes de repetirlo.';
  const c=p.preparation?.competition,phase=c?competitionPhase(c,date):undefined;
  if(phase?.active&&phase.daysToWeigh<=7)return 'Pesaje próximo: revisa este producto y su horario con tu equipo. Evita estrenar suplementos en competición.';
+ if(s.kind==='sportsDrink')return 'Bebida con hidratos y electrolitos prevista alrededor de una sesión larga. Revisa la etiqueta, la tolerancia y la cantidad real tomada.';
  if(s.kind==='protein'){
   const mealPlan=day.foodPlan?.meals;
   const protein=mealPlan?total(mealPlan.flatMap(m=>m.items)).p:undefined;

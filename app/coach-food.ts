@@ -14,7 +14,7 @@ export function coachFoodProposal(p:Profile,date:string){
  // Do not reinterpret skipped meals as a deficit to compensate.
  if(view.snapshot.records.some(r=>r.status==='skipped'))return null;
  const meals=structuredClone(view.meals),target=day.target;
- const eligible=view.pending.filter(s=>s>view.cursor);
+ const eligible=view.pending;
  const baseline=view.projected;
  // A balanced menu is not a problem to optimise away: avoid gram-level busywork.
  if(Math.abs(baseline.k-target.k)<=target.k*.05&&Math.abs(baseline.p-target.p)<=Math.max(10,target.p*.1))return null;

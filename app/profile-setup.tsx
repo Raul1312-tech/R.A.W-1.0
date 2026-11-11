@@ -94,7 +94,7 @@ export default function ProfileSetup({profile:p,disabled,demo,onSave}:{profile:P
             <SelectField label="Tu actividad habitual" hint="Cuenta tanto el movimiento diario como el entrenamiento; lo afinaremos con tu evolución." name="activity" defaultValue={p.activity}><option value={1.2}>Paso la mayor parte del día sentado</option><option value={1.4}>Me muevo algo durante el día</option><option value={1.6}>Tengo un día activo</option><option value={1.8}>Tengo un día muy activo</option><option value={2}>Trabajo físico y mucha actividad</option></SelectField>
           </div>
           <details className="raw-disclosure"><summary>Bebidas y presupuesto</summary><div className="form-grid">
-            <Field label="Bebidas que te propones tomar · ml al día"><input name="waterGoal" type="number" min={500} max={5000} step={100} defaultValue={p.waterGoal} required/></Field>
+            <input name="waterGoal" type="hidden" value={p.waterGoal}/><p>La referencia de bebidas se calcula según tu peso y actividad. Puedes revisarla en Registro diario → Hidratación.</p>
             <Field label="Presupuesto para comida (opcional)" hint="Indica cantidad y periodo, por ejemplo: 60 € por semana."><input name="budget" maxLength={200} placeholder="Tu presupuesto y cada cuánto compras" defaultValue={p.budget==='Pendiente.'?'':p.budget}/></Field>
           </div></details>
         </Section>

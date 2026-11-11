@@ -9,13 +9,13 @@ import {makeDraft} from './workout-progress';
 import {ExerciseExplanation,useExerciseCatalog} from './exercise-explanation';
 
 type Props={
-  data:TrainingData; date:string; disabled:boolean; compact?:boolean; resting?:boolean; previewOnly?:boolean;
+  data:TrainingData; date:string; disabled:boolean; compact?:boolean; clubRecorded?:boolean; resting?:boolean; previewOnly?:boolean;
   onChange:(data:TrainingData)=>void; onLog:(log:WorkoutLog)=>void;
   onPlan:()=>void; onOpen?:()=>void; onActivity?:()=>void;
   onDate?:(date:string)=>void;
 };
 
-export default function DailyTraining({data,date,disabled,compact,resting,previewOnly,onChange,onLog,onPlan,onOpen,onActivity,onDate}:Props){
+export default function DailyTraining({data,date,disabled,compact,clubRecorded,resting,previewOnly,onChange,onLog,onPlan,onOpen,onActivity,onDate}:Props){
   const [selected,setSelected]=useState<string|null>(null);
   const catalog=useExerciseCatalog();
   const sessions=dailySessions(data,date);
@@ -59,7 +59,7 @@ export default function DailyTraining({data,date,disabled,compact,resting,previe
       <Dumbbell size={22}/><h3>{resting?'Hoy descansas':!plan?'Aún no tienes una rutina':technical??(sessions.length?'Entreno completado':'Día sin físico ni carrera')}</h3>
       {!compact&&plan&&<p>{resting?'El descanso está aplicado a esta fecha.':technical?'Esta sesión la dirige tu entrenador en el club. El físico y la carrera se organizan en los días de tu plan.':'No tienes sesiones de físico ni carrera pendientes en esta fecha.'}</p>}
       {!plan&&!resting&&<button className="button outline" onClick={onPlan}>Crear mi rutina <ArrowRight size={16}/></button>}
-      {technical&&!resting&&onActivity&&!previewOnly&&<button className="button outline" disabled={disabled} onClick={onActivity}>Registrar sesión de {technical==='Sparring'?'sparring':'boxeo'}</button>}
+      {technical&&!resting&&onActivity&&!previewOnly&&<button className="button outline" disabled={disabled} onClick={onActivity}>{clubRecorded?'Revisar':'Registrar'} sesión de {technical==='Sparring'?'sparring':'boxeo'}</button>}
     </article>}
     {(compact?pending.slice(0,1):sessions).map(entry=>{
       const {session,key,draft,saved}=entry;
@@ -70,7 +70,7 @@ export default function DailyTraining({data,date,disabled,compact,resting,previe
         {!hiddenByRest&&<button className={'button '+(compact||saved?'outline':'orange')} disabled={disabled} onClick={()=>compact?onOpen?.():open(entry)}>{compact?'Ir al entreno':previewOnly?'Ver sesión':saved?'Revisar sesión':draft?'Continuar sesión':'Empezar sesión'} <ArrowRight size={16}/></button>}
       </article>;
     })}
-    {!compact&&sessions.length>0&&technical&&!resting&&<p className="notice">{technical} previsto. Acuerda el trabajo con tu entrenador. {onActivity&&!previewOnly&&<button className="text-button" disabled={disabled} onClick={onActivity}>Registrar sesión de boxeo</button>}</p>}
+    {!compact&&sessions.length>0&&technical&&!resting&&<p className="notice">{technical} previsto. Acuerda el trabajo con tu entrenador. {onActivity&&!previewOnly&&<button className="text-button" disabled={disabled} onClick={onActivity}>{clubRecorded?'Revisar sesión de boxeo':'Registrar sesión de boxeo'}</button>}</p>}
     {!compact&&plan&&<article className="card raw-training-overview">
       <h3>Tu semana de entrenamiento</h3>
       {upcoming&&<p>Próximo entreno · <strong>{trainingDays[upcoming.day]}</strong>: {upcoming.sessions.filter(session=>!session.saved).map(({session})=>session.title).join(' y ')}.</p>}

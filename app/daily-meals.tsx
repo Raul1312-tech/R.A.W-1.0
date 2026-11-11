@@ -8,8 +8,9 @@ import {mealSlots,mealTimes} from './meal-layout';
 import {saveFavorite,useFavorite} from './preparation-model';
 import {outsideMealEstimate} from './nutrition-estimates';
 import {MealSupplements} from './personal-nutrition';
+import {FoodPreferencesButton} from './food-preferences-editor';
 import {alternatives,foodAllowed,swapPendingIngredient} from './preparation-engine';
-import {total,type Day,type Plan,type Profile} from './model';
+import {foodById,total,type Day,type Plan,type Profile} from './model';
 import {displayMeal,foodDayView,recordMeal,undoMeal,refreshDailyMeal} from './daily-food-model';
 import {previousFoods} from './food-search';
 import {MenuMacros} from './weekly-menu';
@@ -87,7 +88,8 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
             {!!items.length&&<MenuMacros m={total(items)}/>}
             {!record&&meal.prep&&<p>{meal.prep}</p>}
           </>}
-          {!record&&!outside&&meal.items.map((it,i)=>{const options=alternatives(profile,it.food);return options.length>0&&<SelectField key={it.food.id+':'+i} label={'Sustituir '+it.food.name} value="" disabled={disabled} onValueChange={id=>{if(id)run(()=>swapPendingIngredient(profile,day,plan,date,slot,i,id),'Ingrediente sustituido por una ración equivalente.')}}><option value="">Elegir equivalente</option>{options.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</SelectField>})}
+          {!record&&!outside&&meal.items.map((it,i)=>{const options=alternatives(profile,it.food);return options.length>0&&<SelectField key={it.food.id+':'+i} label={'Sustituir '+it.food.name} value="" disabled={disabled} onValueChange={id=>{if(id)run(()=>swapPendingIngredient(profile,day,plan,date,slot,i,id),'Ingrediente sustituido por una ración equivalente.')}}><option value="">Elegir equivalente</option>{options.map(f=><option key={f.id} value={f.id}>{f.name}{profile.preparation?.foodPreferences?.foods[f.id]==='usual'?' · Habitual':profile.preparation?.foodPreferences?.foods[f.id]==='like'?' · Me gusta':''}</option>)}</SelectField>})}
+          {!record&&!outside&&<FoodPreferencesButton profile={profile} disabled={disabled} onChange={onProfile}/>}
           {!record&&!outside&&<div className="raw-actions"><button className="text-button" disabled={disabled} onClick={()=>setEditor({slot,usePlan:true})}>Cambiar ingredientes o cantidades</button><button className="text-button" disabled={disabled} onClick={()=>run(()=>refreshDailyMeal(day,plan,date,slot,profile),'Nueva propuesta para '+label.toLowerCase()+'.')}><RefreshCw size={15}/> Proponer otro plato</button></div>}
           {!!items.length&&<button className="text-button" disabled={disabled} onClick={()=>{
             try{onProfile(saveFavorite(profile,record?.status==='alternative'?{name:'Mi '+label.toLowerCase(),items}:meal,slot,meals.length));setFeedback({message:'Guardada en Comidas habituales.'});setError('')}
@@ -113,7 +115,7 @@ export default function DailyMeals({day,plan,date,profile,disabled,compact,onCha
       <header><div><span className="eyebrow">{displayMeal(snapshot.labels[editor.slot])}</span><h2 id="raw-meal-editor-title">{records.some(r=>r.slot===editor.slot)?'Editar comida':'¿Qué has comido?'}</h2></div><button className="icon-button" aria-label="Cerrar" onClick={closeEditor}><X size={22}/></button></header>
       {error&&<p className="notice error" role="alert">{error}</p>}
       {!editor.usePlan&&!records.some(r=>r.slot===editor.slot)&&meals[editor.slot].items.length>0&&<button type="button" className="text-button" onClick={()=>setEditor({...editor,usePlan:true})}>Partir del plato previsto</button>}
-      <MealEditor key={editor.slot+':'+editor.usePlan} initial={editor.usePlan?meals[editor.slot].items:actual(editor.slot)} savedFoods={previousFoods(profile)} disabled={disabled}
+      <MealEditor key={editor.slot+':'+editor.usePlan} initial={editor.usePlan?meals[editor.slot].items:actual(editor.slot)} savedFoods={[...Object.keys(profile.preparation?.foodPreferences?.foods??{}).filter(id=>profile.preparation?.foodPreferences?.foods[id]==='usual').map(id=>foodById(id)).filter(Boolean),...previousFoods(profile)]} disabled={disabled}
         onCancel={closeEditor} saveLabel="Guardar comida"
         onSave={items=>run(()=>recordMeal(day,plan,date,editor.slot,'alternative',items),snapshot.autoAdjust?'Comida registrada. Hemos revisado las cantidades pendientes.':'Comida registrada.',editor.slot)}/>
     </dialog>}

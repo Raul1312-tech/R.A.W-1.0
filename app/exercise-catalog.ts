@@ -1,3 +1,5 @@
+import {boxingExpansion} from './boxing-expansion-data.ts';
+import {boxingBaseMetadata} from './boxing-base-metadata.ts';
 import {z} from 'zod';
 import {guides} from './exercise-guides.ts';
 import {movementCatalog} from './movement-catalog.ts';
@@ -6,13 +8,18 @@ export const exerciseRecordSchema=z.object({
   id:z.string().regex(/^[a-z0-9-]+$/),name:z.string().min(1).max(160),aliases:z.array(z.string().max(160)).max(15),
   purpose:z.string().min(1).max(800),steps:z.array(z.string().min(1).max(800)).min(3).max(8),mistake:z.string().min(1).max(800),learn:z.string().min(1).max(800),
   image:z.object({src:z.string().regex(/^\/training\/[a-z0-9-]+\.png$/),tile:z.number().int().min(0),columns:z.number().int().min(1).max(4),rows:z.number().int().min(1).max(3)}).refine(v=>v.tile<v.columns*v.rows),
+  category:z.enum(['Fuerza y potencia','Abdomen','Pliometría','Agilidad de pies','Cuello']).optional(),
+  pattern:z.string().max(60).optional(),
+  equipment:z.array(z.string().max(40)).max(5).optional(),
+  minLevel:z.number().int().min(1).max(3).optional(),
+  impact:z.enum(['low','high']).optional(),
   version:z.number().int().min(1),
 });
 export type ExerciseRecord=z.infer<typeof exerciseRecordSchema>;
 const image=(sheet:string,tile:number,rows=2)=>({src:`/training/${sheet}.png`,tile,columns:4,rows});
 const base=(id:string,name:string,key:string,aliases:string[]=[]):ExerciseRecord=>{const g=guides[key];return {id,name,aliases,purpose:g.purpose,steps:g.steps,mistake:g.mistake,learn:g.learn,image:image('boxing-exercises-v2',g.tile,3),version:1};};
 const entry=(id:string,name:string,sheet:string,tile:number,purpose:string,steps:string[],mistake:string,learn:string,aliases:string[]=[]):ExerciseRecord=>({id,name,aliases,purpose,steps,mistake,learn,image:image(sheet,tile),version:1});
-export const exerciseCatalog:ExerciseRecord[]=[
+const originalCatalog:ExerciseRecord[]=[
   {id:'neck-isometric',name:'Isométricos cervicales con la mano',aliases:[],purpose:'Trabajo cervical de baja carga para controlar la posición de la cabeza. No evita por sí solo una conmoción cerebral.',steps:['Siéntate erguido, cuello neutral y hombros relajados. Coloca la palma sobre la frente.','Presiona suavemente cabeza y mano una contra otra sin mover el cuello. Respira durante la contracción y relaja por completo.','Repite con la mano detrás y a cada lado de la cabeza. Mantén presión moderada, sin tirones ni movimientos al final del recorrido.'],mistake:'Empujar al máximo, contener la respiración o trabajar con dolor, mareo o síntomas tras un golpe.',learn:'Aprende la técnica con un profesional. No uses arnés pesado ni puentes de cuello como sustituto. Si hay lesión o síntomas tras un golpe, no lo realices y busca valoración.',image:{src:'/training/neck-isometrics.png',tile:0,columns:1,rows:1},version:1},
   ...movementCatalog,
   entry('dumbbell-bench','Press de banca con mancuernas','combat-strength',0,'Fuerza de empuje horizontal y control de ambos brazos.',[
@@ -197,7 +204,37 @@ export const exerciseCatalog:ExerciseRecord[]=[
     'Baja despacio y conserva el agarre neutro durante toda la repetición.'
   ],'Balancear las mancuernas o adelantar los hombros para ayudar.','Elige un peso que permita movimiento controlado.'),
 ];
+const legacyEquipment:Record<string,string[]>={
+ 'dumbbell-bench':['dumbbells','bench'],'pull-up':['gym'],'trap-bar-deadlift':['gym','trapBar'],
+ 'kettlebell-swing':['kettlebell'],'landmine-punch':['landmine'],'plate-chop':['gym'],
+ 'medicine-rotation':['medicineBall'],'split-dumbbell':['dumbbells'],'dumbbell-row':['dumbbells'],
+ 'dumbbell-hinge':['dumbbells'],'one-arm-floor-press':['dumbbells'],'goblet-squat':['dumbbells'],
+ 'barbell-hinge':['gym'],'floor-press':['dumbbells'],'lateral-raise':['dumbbells'],'calf-raise':['dumbbells'],
+ 'pallof':['gym'],'box-jump':['box'],'cone-shuffle':['cones']
+};
+const baseMetadata=new Map<string,readonly string[]>(boxingBaseMetadata.map(row=>[row[0],row]));
+const expanded=new Map(boxingExpansion.map(record=>[record.id,record]));
+export const exerciseCatalog:ExerciseRecord[]=[
+  ...originalCatalog.map((record):ExerciseRecord=>{
+    const replacement=expanded.get(record.id);
+    if(replacement)return {...replacement,aliases:[...new Set([...record.aliases,record.name,...replacement.aliases].filter(name=>name!==replacement.name))]};
+    const meta=baseMetadata.get(record.id);
+    if(!meta&&record.id!=='vertical-jump')return record;
+    return {...record,category:(meta?.[1]??'Pliometría') as ExerciseRecord['category'],pattern:meta?.[2]??'vertical',equipment:legacyEquipment[record.id]??['bodyweight'],minLevel:['landing','neck-isometric','bird-dog','dead-bug','split-bodyweight','incline-push','reverse-lunge','boxing-in-out','boxing-pivot'].includes(record.id)?1:2,impact:meta?.[1]==='Pliometría'?'high':'low',version:3};
+  }),
+  ...boxingExpansion.filter(record=>!originalCatalog.some(old=>old.id===record.id)),
+];
+export const boxingExerciseIds=new Set([...boxingBaseMetadata.map(row=>row[0]),...boxingExpansion.map(record=>record.id),'vertical-jump']);
+export const boxingPhysicalCatalog=exerciseCatalog.filter(record=>boxingExerciseIds.has(record.id));
+
 const normalized=(name:string)=>name.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 export function findExerciseRecord(ex:{name:string;catalogId?:string},records:ExerciseRecord[]=exerciseCatalog){
   return records.find(r=>r.id===ex.catalogId)??records.find(r=>[r.name,...r.aliases].some(n=>normalized(n)===normalized(ex.name)))??null;
+}
+
+/** Published remote records can update a guide, never downgrade its local version. */
+export function mergeExerciseCatalog(remote:ExerciseRecord[]){
+ const merged=new Map(exerciseCatalog.map(record=>[record.id,record]));
+ for(const record of remote)if(record.version>=(merged.get(record.id)?.version??0))merged.set(record.id,record);
+ return [...merged.values()];
 }

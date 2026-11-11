@@ -75,7 +75,7 @@ function trainingFor(a:OnboardingAnswers,competition?:Competition):TrainingConfi
   const level=learning?'beginner':'intermediate';
   const equipment=selectedEquipment(a.strength.equipment);
   const settings:TrainingConfig={
-    ...defaultTrainingConfig(),sport:boxing?'boxing':'hypertrophy',level,intensity:learning?'gentle':a.strength.intensity,
+    ...defaultTrainingConfig(),catalogVersion:2,sport:boxing?'boxing':'hypertrophy',level,intensity:learning?'gentle':a.strength.intensity,
     phase:a.recovery.state==='low'?'deload':'base',equipment:equipment.includes('gym')?'gym':equipment.includes('dumbbells')?'dumbbells':'bodyweight',
     days:available.map(slot=>slot.day),duration:45,sessionLimits:available.map(({day,minutes})=>({day,minutes})),
     technicalDays:boxing?technicalDays:[],sparringDays:boxing?sparringDays:[],

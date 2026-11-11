@@ -43,16 +43,16 @@ test('skipping a meal records no consumption and never removes or doubles remain
   for(const a of view.adjustments)assert.ok(a.after<=a.before*1.2&&a.after>=a.before*.8);
   assert.ok(view.projected.k<day.target.k); // The bounded adjustment does not pretend to recover a whole missing meal.
 });
-test('dinner never adjusts previous unrecorded meals or the next day, and disabling adjustment preserves base portions',()=>{
+test('dinner adjusts all still-pending meals of the same date, and disabling adjustment preserves base portions',()=>{
   const {plan,day,date}=setup();const original=JSON.stringify(plan);
   const dinner=recordMeal(day,plan,date,4,'alternative',[food('bread',500),food('olive',100)]);
-  const view=foodDayView(dinner,plan,date);assert.equal(view.adjustments.length,0);assert.equal(view.finished,true);
+  const view=foodDayView(dinner,plan,date);assert.ok(view.adjustments.length>0);assert.ok(view.adjustments.every(a=>a.slot<4));assert.equal(view.finished,false);
   assert.deepEqual(foodDayView(day,plan,'2026-11-04').meals,plan.week[2].meals);assert.equal(JSON.stringify(plan),original);
   const breakfast=recordMeal(day,plan,date,0,'skipped');breakfast.foodPlan.autoAdjust=false;assert.equal(foodDayView(breakfast,plan,date).adjustments.length,0);
 });
 test('earlier unmarked meals are not mistaken for skipped meals and completed later meals stay untouched',()=>{
   const {plan,day,date}=setup();let result=recordMeal(day,plan,date,2,'alternative',[food('rice-cooked',500)]);
-  const v=foodDayView(result,plan,date);assert.ok(v.adjustments.every(a=>a.slot>2));assert.deepEqual(v.meals[0],plan.week[1].meals[0]);
+  const v=foodDayView(result,plan,date);assert.ok(v.adjustments.some(a=>a.slot<2));assert.ok(v.adjustments.every(a=>a.slot!==2));assert.ok(!v.snapshot.records.some(r=>r.slot===0));
   result=recordMeal(result,plan,date,3,'planned');const actual=JSON.stringify(result.items.filter(it=>result.foodPlan.records.find(r=>r.slot===3).itemIds.includes(it.id)));
   result=recordMeal(result,plan,date,2,'alternative',[food('rice-cooked',150)]);
   assert.equal(JSON.stringify(result.items.filter(it=>result.foodPlan.records.find(r=>r.slot===3).itemIds.includes(it.id))),actual);

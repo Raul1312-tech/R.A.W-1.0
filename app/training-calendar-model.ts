@@ -106,3 +106,15 @@ export function upcomingTrainingWeek(data:TrainingData,date:string){
     return {date,day,planned:!!plan,club,sessions:dailySessions(data,date)};
   });
 }
+
+export function refreshBoxingCatalog(data:TrainingData,today:string):TrainingPlan{
+ const old=planForDate(data,today);
+ if(!old||old.config.sport!=='boxing')throw Error('Guarda primero una rutina de boxeo.');
+ const month=today.slice(0,7);
+ const next={...generateTrainingPlan({...old.config,catalogVersion:2}),month};
+ const overrides=monthDates(month).flatMap(date=>{
+  const explicit=old.overrides?.find(o=>o.date===date);
+  return explicit?[structuredClone(explicit)]:date<today?[{date,sessions:structuredClone(sessionsForDate(old,date))}]:[];
+ });
+ return trainingPlanSchema.parse({...next,overrides,clubOverrides:old.clubOverrides});
+}

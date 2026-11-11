@@ -40,11 +40,11 @@ export function monthlyShopping(p:Profile,month:string):Item[]{
 }
 export function toggleSupplement(day:Day,s:Supplement):Day{
  const id='supplement-'+s.id,existing=day.items.some(i=>i.id===id);
- if(existing)return {...day,items:day.items.filter(i=>i.id!==id)};
+ if(existing)return {...day,water:s.unit==='ml'?Math.max(0,day.water-s.amount):day.water,items:day.items.filter(i=>i.id!==id)};
  if(day.items.length>=200)throw new Error('El registro del día está lleno.');
  const grams=s.unit==='capsules'?s.amount*s.gramsPerUnit:s.amount;
- const food={id,name:s.name,unit:'por 100 g de producto',allergens:s.allergens,k:s.kind==='creatine'?0:s.k,p:s.kind==='creatine'?0:s.p,c:s.kind==='creatine'?0:s.c,f:s.kind==='creatine'?0:s.f};
- return {...day,items:[...day.items,{id,meal:s.timing==='postworkout'?'Suplementos · Postentreno':s.timing==='breakfast'?'Suplementos · Desayuno':'Suplementos · Noche',food,grams}]};
+ const food={id,name:s.name,unit:s.unit==='ml'?'por 100 ml de producto':'por 100 g de producto',allergens:s.allergens,k:s.kind==='creatine'?0:s.k,p:s.kind==='creatine'?0:s.p,c:s.kind==='creatine'?0:s.c,f:s.kind==='creatine'?0:s.f};
+ return {...day,water:s.unit==='ml'?Math.min(15000,day.water+s.amount):day.water,items:[...day.items,{id,meal:s.timing==='during'?'Suplementos · Durante el entreno':s.timing==='postworkout'?'Suplementos · Postentreno':s.timing==='breakfast'?'Suplementos · Desayuno':'Suplementos · Noche',food,grams}]};
 }
 export function supplementsForDay(p:Profile,day:Day):Supplement[]{
  return (p.preparation?.supplements??[]).flatMap(s=>{

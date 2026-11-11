@@ -6,6 +6,7 @@ import {clubForDate,dailySessions,editCalendarDay,planForDate} from './training-
 import {baseConditioning,type TrainingPlan} from './training-model.ts';
 import {foodPreferenceIds,type FoodPreferences,type Readiness} from './preparation-preferences.ts';
 import type {Supplement} from './preparation-schema.ts';
+import {situationEnergy} from './nutrition-estimates.ts';
 import {competitionPhase} from './competition-phase.ts';
 
 export const addDays=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
@@ -18,7 +19,8 @@ export function saveFoodPreferences(p:Profile,foodPreferences:FoodPreferences):P
  return {...next,plans:plan?[...p.plans,plan].slice(-36):p.plans};
 }
 export function supplementChoices(p:Profile,date:string){
- return (p.preparation?.supplements??[]).filter(s=>!s.allergens.some(a=>p.allergens.includes(a))&&p.preparation?.supplementFeedback?.[date]?.[s.id]===undefined).map(({id,amount,timing})=>({id,amount,timing}));
+ const active=situationEnergy(p,{training:p.days[date]?.nutrition?.training??'usual'},date).minutes>0;
+ return (p.preparation?.supplements??[]).filter(s=>(s.kind!=='sportsDrink'||active)&&!s.allergens.some(a=>p.allergens.includes(a))&&p.preparation?.supplementFeedback?.[date]?.[s.id]===undefined).map(({id,amount,timing})=>({id,amount,timing}));
 }
 export function daySettings(p:Profile,date:string){
  const mealCount=p.mealCount??5;
@@ -51,7 +53,8 @@ export function withCoordinatedDay(p:Profile,date:string,sourcePlan?:Plan):Profi
 }
 export function alternatives(p:Profile,f:Food){
  const ids=Object.values(foodPreferenceIds).find(ids=>(ids as readonly string[]).includes(f.id));
- return ids?.filter(id=>id!==f.id).map(foodById).filter(food=>foodAllowed(p,food))??[];
+ const rank=(food:Food)=>p.preparation?.foodPreferences?.foods[food.id]==='usual'?0:p.preparation?.foodPreferences?.foods[food.id]==='like'?1:2;
+ return ids?.filter(id=>id!==f.id).map(foodById).filter(food=>foodAllowed(p,food)).sort((a,b)=>rank(a)-rank(b)||a.name.localeCompare(b.name,'es'))??[];
 }
 export function swapPendingIngredient(p:Profile,day:Day,plan:Plan|undefined,date:string,slot:number,index:number,id:string):Day{
  const snapshot=foodSnapshot(day,plan,date),meal=snapshot?.meals[slot],from=meal?.items[index];

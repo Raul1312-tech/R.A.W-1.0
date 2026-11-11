@@ -1,6 +1,6 @@
 import {competitionSchema} from './preparation-schema.ts';
 import {z} from 'zod';
-import {findExerciseRecord} from './exercise-catalog.ts';
+import {boxingPhysicalCatalog,findExerciseRecord} from './exercise-catalog.ts';
 import {movementExercise} from './exercise-options.ts';
 
 export const trainingDays=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
@@ -12,6 +12,9 @@ export const trainingConfigSchema=z.object({
   duration:z.union([z.literal(20),z.literal(30),z.literal(45),z.literal(60),z.literal(75),z.literal(90),z.literal(120)]),equipment:z.enum(['gym','dumbbells','bodyweight']),
   sessionLimits:z.array(z.object({day:whole(0,6),minutes:whole(20,120)})).max(7)
     .refine(slots=>new Set(slots.map(slot=>slot.day)).size===slots.length).optional(),
+  catalogVersion:z.literal(2).optional(),
+  variation:z.number().int().min(0).max(10000).optional(),
+  additionalKit:z.array(z.enum(['bench','box','medicineBall','abWheel','fitball','hurdles','cones','ladder','partner','space'])).max(10).optional(),
   intensity:z.enum(['gentle','steady','experienced']).optional(),
   conditioningMode:z.enum(['walk-run','easy','intervals','mixed']).optional(),
   musclePriority:z.enum(['balanced','legs','back','upper']).optional(),
@@ -294,9 +297,41 @@ export function generateTrainingPlan(raw:TrainingConfig):TrainingPlan{
       if(sessions[day].kind==='lift')extraSessions.push(running);else sessions[day]=running;
     });
   }
+  if(c.sport==='boxing'&&c.catalogVersion===2){
+    const level=c.level==='beginner'?1:c.level==='intermediate'?2:3;
+    const kit=new Set(['bodyweight','space',...(c.additionalKit??[]),...(c.boxingKit??[])]);
+    if(c.equipment==='gym'){kit.add('gym');kit.add('dumbbells');kit.add('bench')}
+    if(c.equipment==='dumbbells')kit.add('dumbbells');
+    if(c.medicineBall)kit.add('medicineBall');
+    const available=boxingPhysicalCatalog.filter(record=>(record.minLevel??1)<=level&&(record.equipment??[]).every(item=>kit.has(item))&&!(c.phase==='deload'&&record.impact==='high'));
+    const groups=[c.priority==='punch'?'Fuerza y potencia':'Agilidad de pies',c.priority==='core'?'Abdomen':c.priority==='footwork'?'Agilidad de pies':'Pliometría','Fuerza y potencia','Fuerza y potencia','Abdomen','Cuello','Fuerza y potencia'];
+    const week=c.variation??Math.floor(Date.now()/(7*86400000))%10000;
+    const selected=new Set<string>();
+    for(const [index,session] of sessions.filter(s=>s.kind==='lift').entries()){
+      const prescription:Exercise[]=[];
+      for(const [position,category] of groups.entries()){
+        const local=new Set(prescription.map(ex=>ex.catalogId));
+        const matching=available.filter(record=>record.category===category&&!local.has(record.id)&&
+          (position===0&&c.priority==='punch'?['rotation','throw'].includes(record.pattern??''):position===2?['squat','hinge','unilateral'].includes(record.pattern??''):
+           position===3?['push','pull'].includes(record.pattern??''):true));
+        const candidates=matching.filter(record=>!selected.has(record.id));
+        const pool=candidates.length?candidates:matching;
+        if(!pool.length)continue;
+        const record=pool[(week+index*3+position)%pool.length];
+        selected.add(record.id);
+        const ex=movementExercise(record.id);
+        const explosive=category==='Fuerza y potencia'&&['rotation','throw'].includes(record.pattern??'');
+        prescription.push({...ex,id:'boxing-'+record.id,sets:category==='Cuello'?1:Math.min(levelSets(c),category==='Pliometría'?3:4),
+          dose:category==='Cuello'?'4–6 movimientos suaves o 5–10 s por dirección':category==='Agilidad de pies'?'15–20 s de precisión':category==='Pliometría'?'3–5 recepciones de calidad':category==='Abdomen'?'6–10 por lado o 20 s de control':explosive?'3–5 con velocidad controlada':'6–8',
+          block:category==='Cuello'||category==='Abdomen'?'core':category==='Agilidad de pies'||category==='Pliometría'||explosive?'power':'strength',
+          rest:category==='Cuello'?'20–30 s':category==='Fuerza y potencia'?'120–180 s':'60–90 s'});
+      }
+      if(prescription.length)session.exercises=prescription;
+    }
+  }
   for(const session of sessions.filter(s=>s.kind==='lift')){
     const limit=c.sessionLimits?.find(slot=>slot.day===session.day)?.minutes;
-    if(limit!==undefined||c.duration<45){
+    if(limit!==undefined||c.duration<45||c.catalogVersion===2){
       session.exercises=fitSession(session.exercises,limit??c.duration);
       continue;
     }

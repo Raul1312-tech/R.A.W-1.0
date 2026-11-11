@@ -92,7 +92,7 @@ test('outside meals reserve energy without invented consumption and recording th
   const view=foodDayView(day,undefined,date),reserve=outsideMealEstimate(day,1);assert.ok(reserve.k>day.target.k*.38);assert.ok(view.adjustments.length>0);
   const actual=[{food:{id:'outside-label',name:'Plato según etiqueta',unit:'según envase',allergens:[],k:190,p:10,c:25,f:6},grams:400}];
   day=recordMeal(day,undefined,date,1,'alternative',actual);const after=foodDayView(day,undefined,date);
-  assert.equal(total(day.items).k,760);assert.equal(day.foodPlan.records.length,1);assert.ok(after.adjustments.every(a=>a.slot>1));
+  assert.equal(total(day.items).k,760);assert.equal(day.foodPlan.records.length,1);assert.ok(after.adjustments.every(a=>a.slot!==1));
   assert.ok(Math.abs(after.projected.k-total([...day.items,...after.pending.flatMap(i=>after.meals[i].items)]).k)<.001);
   assert.equal(roundTrip({...next,days:{[date]:day}}).days[date].items[0].food.id,'outside-label');
 });
@@ -100,7 +100,7 @@ test('outside meals reserve energy without invented consumption and recording th
 test('reducing meal count after an outside lunch retains its slot, food IDs and other dated data',()=>{
   const {p,plan}=setup();const original=recordMeal({...emptyDay(p),water:800,minutes:50},plan,date,2,'planned');p.days[date]=original;
   const next=applyNutritionSituation(saveNutritionSituation(p,situation()),'weekend',date),day=next.days[date];
-  assert.equal(day.foodPlan.meals.length,3);assert.equal(day.nutrition.mealCount,3);assert.deepEqual(day.items,original.items);assert.equal(day.foodPlan.labels[day.foodPlan.records[0].slot],'Comida');assert.deepEqual(day.foodPlan.records[0].itemIds,original.foodPlan.records[0].itemIds);assert.equal(day.water,800);assert.equal(day.minutes,50);
+  assert.equal(day.foodPlan.meals.length,2);assert.equal(day.nutrition.mealCount,2);assert.deepEqual(day.items.map(({meal,...it})=>it),original.items.map(({meal,...it})=>it));assert.equal(day.foodPlan.labels[day.foodPlan.records[0].slot],'Primera comida');assert.deepEqual(day.foodPlan.records[0].itemIds,original.foodPlan.records[0].itemIds);assert.equal(day.water,800);assert.equal(day.minutes,50);
   assert.deepEqual(roundTrip(next).days[date].foodPlan.records,day.foodPlan.records);
 });
 

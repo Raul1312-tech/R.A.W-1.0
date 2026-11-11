@@ -16,7 +16,7 @@ export default function FoodGrid({initial=[],planned,savedFoods=[],onSave,onCanc
   const controller=useRef<AbortController|null>(null);const requestId=useRef(0);
   useEffect(()=>()=>{requestId.current++;controller.current?.abort()},[]);
   const recent=[...savedFoods,...initial.map(it=>it.food)];const recentIds=new Set(recent.map(f=>f.id));const catalog=[...new Map([...foods,...basicCatalog,...foodVariants,...recent].map(f=>[f.id,f])).values()];
-  const visible=findFoods(catalog,query,filter,recentIds);
+  const visible=findFoods(catalog,query,filter,recentIds).sort((a,b)=>Number(recentIds.has(b.id))-Number(recentIds.has(a.id)));
   const remoteVisible=(remote?.foods??[]).filter(f=>filter==='Todos'||filter==='Habituales'&&recentIds.has(f.id)||foodGroup(f)===filter);
   function changeQuery(value:string){requestId.current++;controller.current?.abort();setQuery(value);setFilter('Todos');setLimit(picker?6:24);setRemote(null);setRemoteQuery('');setSearchError('');setBusy(false)}
   async function searchProducts(page=1){

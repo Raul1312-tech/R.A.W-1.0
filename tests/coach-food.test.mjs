@@ -41,11 +41,11 @@ test('balanced menus are left alone and supplement quantities are fixed',()=>{
  const q=fixture();q.preparation.monthlyMenus[0].days.find(d=>d.date===date).meals[0].items.push({food:foodById('whey'),grams:25});
  const proposal=coachFoodProposal(q,date);assert.ok(proposal);assert.equal(proposal.day.foodPlan.meals[0].items.find(i=>i.food.id==='whey').grams,25);
 });
-test('registered meals are immutable, omitted meals and dinner do not trigger compensation',()=>{
+test('registered meals are immutable, skipped meals are not compensated and dinner allows pending adjustments',()=>{
  const p=fixture();p.days[date]=recordMeal(p.days[date],p.plans[0],date,0,'planned');
  const food=coachFoodProposal(p,date);assert.ok(food);assert.ok(food.changes.every(c=>c.slot>0));assert.deepEqual(food.day.items,p.days[date].items);
  p.days[date]=recordMeal(p.days[date],p.plans[0],date,1,'skipped');assert.equal(coachFoodProposal(p,date),null);
- const q=fixture();q.days[date]=recordMeal(q.days[date],q.plans[0],date,4,'planned');assert.equal(coachFoodProposal(q,date),null);
+ const q=fixture();q.days[date]=recordMeal(q.days[date],q.plans[0],date,4,'planned');const afterDinner=coachFoodProposal(q,date);assert.ok(afterDinner);assert.ok(afterDinner.changes.every(c=>c.slot!==4));
 });
 test('coordinated action changes food and training atomically; no calorie target reduction',()=>{
  const p=fixture();p.days[date].sleep=5;p.days['2026-11-08']={...emptyDay(p),sleep:5};p.workouts={plans:[{...generateTrainingPlan(defaultTrainingConfig()),month:'2026-11'}],logs:[]};

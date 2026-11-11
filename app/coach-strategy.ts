@@ -17,7 +17,7 @@ export function strategyProposal(p:Profile,date:string){
  const noisy=[a,b].some(v=>v.length>1&&(Math.max(...v)-Math.min(...v))/mean(v)>.04);
  const currentWeight=b.length?mean(b):p.weight,goal=p.goal,current=targets(p);
  const poorSleep=recent.filter(([d,v])=>d>=shift(date,-6)&&v.sleep!==null&&v.sleep<6).length;
- const hard=data.logs.filter(l=>l.date>=shift(date,-6)&&l.date<=date&&l.rpe>=8).length;
+ const hard=data.logs.filter(l=>l.date>=shift(date,-6)&&l.date<=date&&l.rpe>=8).length+Object.entries(p.preparation?.clubRecords??{}).filter(([dt,r])=>dt>=shift(date,-6)&&dt<=date&&r.rpe>=8).length;
  const readiness=Object.entries(p.preparation?.readiness??{}).filter(([d])=>d>=shift(date,-6)&&d<=date);
  const pain=p.preparation?.readiness?.[date]?.pain==='present';
  const fatigue=poorSleep>=2||hard>=3||readiness.filter(([,r])=>r.fatigue==='high'||r.sleep==='poor').length>=2;

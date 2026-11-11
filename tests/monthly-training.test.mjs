@@ -54,7 +54,7 @@ test('legacy logs and drafts retain their original keys when adopted into a mont
   assert.equal(resolved.find(x=>x.session.kind==='lift').key,d.id);
 });
 test('new library supplies four core, four plyometric and four footwork guides and participates in generation',()=>{
-  const newRecords=exerciseCatalog.filter(r=>r.image.src==='/training/core-footwork.png');assert.equal(newRecords.length,12);
+  const newRecords=exerciseCatalog.filter(r=>['shoulder-tap','short-crunch','bird-dog','crunch-hold','pogo-hop','line-hop','broad-jump','split-jump','cone-shuffle','ladder-two','boxing-in-out','boxing-pivot'].includes(r.id));assert.equal(newRecords.length,12);
   for(const category of ['Abdomen','Pliometría','Agilidad de pies'])assert.equal(newRecords.filter(r=>exerciseCategory(r)===category).length,4);
   const p=monthly();const ids=p.sessions.flatMap(s=>s.exercises.map(e=>e.catalogId));
   for(const id of ['boxing-in-out','cone-shuffle','boxing-pivot','shoulder-tap','short-crunch','bird-dog','broad-jump','line-hop'])assert.ok(ids.includes(id),id);

@@ -160,3 +160,25 @@ test('changing five to three meals updates coordinated snapshots and merges cons
  assert.equal(roundtrip(next).days[date].water,logged.water);
  assert.equal(p.days[date].foodPlan.meals.length,5);
 });
+
+// Regression: the weekly exception must not be vetoed by habitual rest days,
+// and long strength sessions must get the slots that can accommodate them.
+test('weekly sparring automatically uses alternative days and saves without changing the next week',()=>{
+ const p=athlete();
+ const moved=roundtrip(reorganizeSparringWeek(p,date,'2026-11-13','2026-11-12'));
+ assert.equal(clubForDate(planForDate(moved.workouts,'2026-11-13'),'2026-11-13'),'sparring');
+ assert.equal(['2026-11-12','2026-11-14','2026-11-15'].flatMap(d=>dailySessions(moved.workouts,d)).length,2);
+ assert.deepEqual(dailySessions(moved.workouts,'2026-11-19').map(e=>e.session),dailySessions(roundtrip(p).workouts,'2026-11-19').map(e=>e.session));
+ assert.deepEqual(moved.workouts.plans[0].config,p.workouts.plans[0].config);
+});
+
+test('the longest pending session gets a compatible slot instead of failing on the first short day',()=>{
+ const p=athlete();
+ p.workouts.plans[0].config.sessionLimits=[{day:3,minutes:45},{day:5,minutes:60},{day:6,minutes:45}];
+ const moved=roundtrip(reorganizeSparringWeek(p,date,'2026-11-13','2026-11-12',[3,5,6]));
+ assert.equal(dailySessions(moved.workouts,'2026-11-14')[0].session.kind,'lift');
+ assert.equal(['2026-11-12','2026-11-15'].flatMap(d=>dailySessions(moved.workouts,d)).filter(e=>e.session.kind==='conditioning').length,1);
+ const original=JSON.stringify(p);
+ assert.throws(()=>reorganizeSparringWeek(p,date,'2026-11-13','2026-11-12',[3,6]),/60 minutos/);
+ assert.equal(JSON.stringify(p),original);
+});

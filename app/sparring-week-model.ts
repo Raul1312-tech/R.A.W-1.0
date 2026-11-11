@@ -4,6 +4,7 @@ import {clubForDate,dailySessions,editCalendarDay,planForDate,weekdayOf} from '.
 import {generateTrainingPlan,type TrainingSession} from './training-model.ts';
 import {previewNutritionSituation} from './nutrition-situations-model.ts';
 import {competitionPhase} from './competition-phase.ts';
+import {stateSchema} from './validation.ts';
 
 export function reorganizeSparringWeek(p:Profile,week:string,target:string|null,today:string,availableDays?:number[]):Profile{
  const monday=addDays(week,-weekdayOf(week));
@@ -40,21 +41,25 @@ export function reorganizeSparringWeek(p:Profile,week:string,target:string|null,
  }
  for(const date of future)if(!occupied.has(date))update(date,[]);
  const rest=p.onboarding?.completed?.answers.availability.restDays??[];
- const availability=availableDays??p.onboarding?.completed?.answers.availability.slots?.map(slot=>slot.day)??base.config.days;
- const slots=future.filter(date=>availability.includes(weekdayOf(date))&&date!==target&&!occupied.has(date)&&!rest.includes(weekdayOf(date)));
- if(pending.length>slots.length)throw new Error('Faltan huecos para conservar las sesiones. Libera un día antes de aplicar el cambio.');
+ const availability=availableDays??[0,1,2,3,4,5,6];
+ // An explicit selection is an exception for this week, including usual rest days.
+ const slots=future.filter(date=>availability.includes(weekdayOf(date))&&date!==target&&!occupied.has(date));
+ if(pending.length>slots.length)throw new Error(`Faltan huecos: quedan ${pending.length} sesiones y ${slots.length} días disponibles. Marca más días pendientes; el día de sparring y las sesiones ya iniciadas no cuentan como huecos libres.`);
  const assigned=new Set<string>();
- for(const session of pending){
-  const choices=slots.filter(date=>!assigned.has(date)).sort((a,b)=>{
+ const limitFor=(date:string)=>p.onboarding?.completed?.answers.availability.slots?.find(slot=>slot.day===weekdayOf(date))?.minutes??base.config.sessionLimits?.find(slot=>slot.day===weekdayOf(date))?.minutes??120;
+ // Place long sessions first so a short run cannot take the only slot that fits strength.
+ for(const session of [...pending].sort((a,b)=>b.minutes-a.minutes)){
+  const choices=slots.filter(date=>!assigned.has(date)&&session.minutes<=limitFor(date)).sort((a,b)=>{
    const load=(date:string)=>Number(clubForDate(planForDate(next.workouts!,date),date)==='technique')*2+
      Number(target===addDays(date,1))*5+
+     Number(rest.includes(weekdayOf(date)))*4+
+     Number(weekdayOf(date)!==session.day)*3+
      Number([...assigned].some(other=>Math.abs(Date.parse(other)-Date.parse(date))===86400000))*2;
    return load(a)-load(b)||a.localeCompare(b);
   });
   const destination=choices[0];
+  if(!destination)throw new Error(`No hay un hueco de ${session.minutes} minutos para «${session.title}». Marca otro día disponible o amplía su duración en tu rutina. No se ha cambiado ninguna sesión.`);
   assigned.add(destination);
-  const limit=p.onboarding?.completed?.answers.availability.slots?.find(slot=>slot.day===weekdayOf(destination))?.minutes??session.minutes;
-  if(session.minutes>limit)throw new Error('Una sesión no cabe en el tiempo declarado del nuevo día. Ajusta los huecos de la semana.');
   update(destination,[{...session,day:weekdayOf(destination)}]);
  }
  for(const date of future){
@@ -65,5 +70,7 @@ export function reorganizeSparringWeek(p:Profile,week:string,target:string|null,
   next.days={...next.days,[date]:day};
  }
  next.preparation={...next.preparation,sparringWeeks:Object.fromEntries(Object.entries({...next.preparation?.sparringWeeks,[monday]:target}).sort(([a],[b])=>a.localeCompare(b)).slice(-52))};
+ const checked=stateSchema.safeParse({active:next.id,profiles:[next]});
+ if(!checked.success)throw new Error('La propuesta no se puede guardar con la configuración actual. Tu semana anterior se conserva; revisa el perfil y la rutina.');
  return next;
 }

@@ -105,7 +105,7 @@ test('equipment, session duration and phase change the prescription',()=>{
   const short=generateTrainingPlan({...c,duration:45,equipment:'dumbbells'});
   const light=generateTrainingPlan({...c,phase:'deload'});
   assert.ok(short.sessions[0].exercises.length<base.sessions[0].exercises.length);
-  assert.match(short.sessions[0].exercises.find(e=>e.id==='bench').name,/suelo/);
+  assert.ok(short.sessions[0].exercises.some(e=>e.catalogId==='dumbbell-bench'||e.catalogId==='floor-press'));
   assert.ok(light.sessions[0].exercises[0].sets<base.sessions[0].exercises[0].sets);
   const box=generateTrainingPlan({...c,sport:'boxing',days:[0,1,3,5],medicineBall:true});
   assert.ok(box.sessions[0].exercises.some(ex=>ex.name.includes('balón')));

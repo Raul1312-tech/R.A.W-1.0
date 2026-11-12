@@ -1,7 +1,7 @@
 import type {TrainingPlan,TrainingSession,WorkoutDraft,WorkoutLog} from './training-model.ts';
 
 export function makeDraft(id:string,session:TrainingSession,saved?:WorkoutLog):WorkoutDraft{
-  return {id,checked:Object.fromEntries(session.exercises.map(ex=>[ex.id,saved?.entries.find(e=>e.exerciseId===ex.id)?.setIndexes??Array.from({length:Math.min(ex.sets,saved?.entries.find(e=>e.exerciseId===ex.id)?.sets??0)},(_,i)=>i)])),elapsedMs:(saved?.minutes??0)*60000,runningSince:null,rpe:saved?.rpe??null};
+  return {id,measurements:Object.fromEntries((saved?.entries??[]).filter(e=>e.measures).map(e=>[e.exerciseId,e.measures!])),checked:Object.fromEntries(session.exercises.map(ex=>[ex.id,saved?.entries.find(e=>e.exerciseId===ex.id)?.setIndexes??Array.from({length:Math.min(ex.sets,saved?.entries.find(e=>e.exerciseId===ex.id)?.sets??0)},(_,i)=>i)])),elapsedMs:(saved?.minutes??0)*60000,runningSince:null,rpe:saved?.rpe??null};
 }
 export function toggleSet(draft:WorkoutDraft,session:TrainingSession,exerciseId:string,index:number):WorkoutDraft{
   const ex=session.exercises.find(e=>e.id===exerciseId);
@@ -27,6 +27,9 @@ export function finishWorkout(plan:TrainingPlan,session:TrainingSession,date:str
   const minutes=Math.min(240,Math.max(1,Math.round(elapsedWorkout(draft,now)/60000)));
   return {id:draft.id,planId:plan.id,day:session.day,date,session:structuredClone(session),title:session.title,sport:plan.config.sport,minutes,rpe:draft.rpe,notes:saved?.notes??'',entries:session.exercises.map(ex=>{
     const old=saved?.entries.find(e=>e.exerciseId===ex.id);const sets=completedSets(draft,ex);
-    return {exerciseId:ex.id,name:ex.name,prescribed:`${ex.sets} × ${ex.dose} · ${ex.effort}${ex.plannedKg!=null?` · previstos ${ex.plannedKg} kg`:''}`.slice(0,300),sets,setIndexes:(draft.checked[ex.id]??[]).filter(i=>i>=0&&i<ex.sets),actual:old&&old.sets===sets?old.actual:'Series confirmadas · repeticiones no anotadas',kg:old?.kg??null};
+    const measures=(draft.measurements?.[ex.id]??[]).filter(m=>(draft.checked[ex.id]??[]).includes(m.index));
+    const measured=measures.filter(m=>m.reps!==null||m.kg!==null||m.rir!==null);
+    const actual=measured.length?measured.map(m=>`S${m.index+1}: ${m.reps??'—'} reps · ${m.kg??'—'} kg · RIR ${m.rir??'—'}`).join(' / ').slice(0,100):old&&old.sets===sets?old.actual:'Series confirmadas · repeticiones no anotadas';
+    return {measures,exerciseId:ex.id,name:ex.name,prescribed:`${ex.sets} × ${ex.dose} · ${ex.effort}${ex.plannedKg!=null?` · previstos ${ex.plannedKg} kg`:''}`.slice(0,300),sets,setIndexes:(draft.checked[ex.id]??[]).filter(i=>i>=0&&i<ex.sets),actual,kg:old?.kg??null};
   })};
 }

@@ -1,4 +1,7 @@
 'use client';
+import {gymLibrary} from './hypertrophy-model';
+import {findExerciseRecord} from './exercise-catalog';
+import GymSetFields from './gym-set-fields';
 import SelectField from './select-field';
 
 import {useEffect,useRef,useState,type ReactNode} from 'react';
@@ -7,8 +10,8 @@ import type {Exercise,TrainingPlan,TrainingSession,WorkoutDraft,WorkoutLog} from
 import {workoutKey} from './training-model';
 import {makeDraft,toggleSet,elapsedWorkout,completedSets,nextSet,finishWorkout} from './workout-progress';
 
-export default function WorkoutSession({plan,session,date,saved,draft:stored,onDraft,onSave,disabled,explain}:{
-  plan:TrainingPlan;session:TrainingSession;date:string;saved?:WorkoutLog;draft?:WorkoutDraft;
+export default function WorkoutSession({plan,session,date,saved,draft:stored,onDraft,onSave,disabled,explain,logs=[],onReplace}:{
+  onReplace?:(exerciseId:string,catalogId:string)=>void;logs?:WorkoutLog[];plan:TrainingPlan;session:TrainingSession;date:string;saved?:WorkoutLog;draft?:WorkoutDraft;
   onDraft:(draft:WorkoutDraft)=>void;onSave:(log:WorkoutLog)=>void;disabled:boolean;explain:(exercise:Exercise)=>ReactNode;
 }){
   const [draft,setDraft]=useState(()=>stored??makeDraft(workoutKey(plan.id,session,date),session,saved));
@@ -43,7 +46,7 @@ export default function WorkoutSession({plan,session,date,saved,draft:stored,onD
 
   function mark(ex:Exercise,index:number){
     const value=toggleSet(latest.current,session,ex.id,index);
-    update(value);
+    update(plan.config.sport==='hypertrophy'?{...value,restUntil:Date.now()+(ex.block==='core'?90:Number(ex.rest.match(/\d+/)?.[0])||120)*1000}:value);
     setLastSet({id:ex.id,index});
     setExerciseId(ex.group?nextSet(session,value)?.exerciseId:ex.id);
   }
@@ -90,12 +93,15 @@ export default function WorkoutSession({plan,session,date,saved,draft:stored,onD
         <h3>{exercise.name}</h3>
         <p><b>{exercise.sets} × {exercise.dose}</b> · {exercise.effort}</p>
         <p>{exercise.plannedKg!=null&&<>{exercise.plannedKg} kg previstos · </>}Descanso {exercise.rest}</p>
+        {plan.config.sport==='hypertrophy'&&index!==undefined&&<GymSetFields exercise={exercise} index={index} draft={draft} logs={logs} date={date} onChange={update}/>}
+        {plan.config.sport==='hypertrophy'&&draft.restUntil&&draft.restUntil>now&&<p role="timer">Descanso: {Math.ceil((draft.restUntil-now)/1000)} s <button className="text-button" onClick={()=>update({...draft,restUntil:null})}>Terminar descanso</button></p>}
         <p className="raw-series-count">{index===undefined?'Ejercicio completado':(exercise.block==='interval'?'Intervalo ':'Serie ')+(index+1)+' de '+exercise.sets}</p>
         <div className="raw-actions raw-session-actions">
           {index!==undefined&&<button className="button orange" disabled={disabled} onClick={()=>mark(exercise,index)}><Check size={19}/> Serie hecha</button>}
           <button className={'button '+(index===undefined?'orange':'outline')} disabled={index!==undefined&&!exercises.some(ex=>ex!==exercise&&completedSets(draft,ex)<ex.sets)} onClick={advance}>{done===total?'Terminar sesión':'Siguiente ejercicio'} <ArrowRight size={16}/></button>
         </div>
         {lastSet&&<button className="text-button" disabled={disabled} onClick={()=>{update(toggleSet(latest.current,session,lastSet.id,lastSet.index));setExerciseId(lastSet.id);setLastSet(null)}}><Undo2 size={16}/> Deshacer última serie</button>}
+        {plan.config.sport==='hypertrophy'&&onReplace&&completedSets(draft,exercise)===0&&!saved&&<details className="raw-disclosure"><summary>Máquina ocupada · cambiar este ejercicio</summary><p>Solo cambia esta sesión. El historial de cada ejercicio mantiene su propia carga.</p>{gymLibrary.filter(m=>m.pattern===gymLibrary.find(old=>old.id===exercise.catalogId)?.pattern&&m.id!==exercise.catalogId&&!exercises.some(e=>e.catalogId===m.id)&&!plan.config.excludedExercises?.includes(m.id)&&(plan.config.equipment==='gym'||m.kit===plan.config.equipment||m.kit==='bodyweight')).map(m=><button className="button outline" key={m.id} disabled={disabled} onClick={()=>{try{onReplace(exercise.id,m.id);setExerciseId('gym-'+m.id)}catch(e){setError((e as Error).message)}}}>{findExerciseRecord({catalogId:m.id,name:''})?.name}</button>)}</details>}
         <details className="raw-disclosure"><summary>Técnica, alternativa y calentamiento</summary><p>{exercise.cue}</p><p>{exercise.alternative}</p><p>{session.warmup}</p>{explain(exercise)}</details>
       </article>}
       <details className="raw-disclosure"><summary>Ver todos los ejercicios y corregir series</summary>{exercises.map(ex=><details key={ex.id}><summary>{ex.name} · {completedSets(draft,ex)}/{ex.sets}</summary><div className="raw-actions">{Array.from({length:ex.sets},(_,i)=><button key={i} className="button outline" disabled={disabled} aria-pressed={draft.checked[ex.id]?.includes(i)??false} onClick={()=>{update(toggleSet(latest.current,session,ex.id,i));setLastSet(null)}}>Serie {i+1}</button>)}</div></details>)}</details>

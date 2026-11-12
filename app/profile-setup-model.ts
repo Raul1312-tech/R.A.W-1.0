@@ -17,17 +17,18 @@ export const profileSetupSchema=z.object({
 export const hasFoodHistory=(day:Profile['days'][string]|undefined)=>!!day&&(day.items.length>0||!!day.foodPlan?.records.length||day.complete);
 
 /** Apply a reviewed setup atomically; recorded meals and past targets stay intact. */
-export function saveProfileSetup(profile:Profile,input:unknown,today:string):Profile{
+export function saveProfileSetup(profile:Profile,input:unknown,today:string,reviewedModalityChange=false):Profile{
   const fields=profileSetupSchema.parse(input);
-  const weightGoal=fields.athlete.competitionWeight;
+  if(profile.athlete&&profile.athlete.sport!==fields.athlete.sport&&!reviewedModalityChange)throw new Error('Para cambiar de modalidad, pulsa Revisar onboarding y acepta la nueva propuesta. Tu rutina actual se conserva.');
+  const weightGoal=fields.athlete.sport==='strength'?{mode:'none' as const}:fields.athlete.competitionWeight;
   let competition=profile.preparation?.competition;
   if(weightGoal.mode==='none')competition=undefined;
   else if(competition)competition={...competition,weight:weightGoal.weight};
   const athlete={...fields.athlete,competitionWeight:weightGoal.mode==='target'&&competition?{...weightGoal,date:new Date(competition.weighIn).toLocaleDateString('en-CA')}:weightGoal};
-  let next:Profile={...profile,...fields,athlete,surplus:fields.athlete.goal==='gain'?300:0,
+  let next:Profile={...profile,...fields,athlete,surplus:fields.athlete.goal==='gain'?(fields.athlete.sport==='strength'?Math.round(Math.min(250,Math.max(100,(10*fields.weight+6.25*fields.height-5*fields.age+(fields.sex==='male'?5:-161))*fields.activity*.05))/25)*25:300):0,
     goal:fields.athlete.goal==='gain'?fields.goal:fields.weight,
     preparation:profile.preparation||competition?{...profile.preparation,competition}:undefined,
-    workouts:profile.workouts?{...profile.workouts,plans:profile.workouts.plans.map(plan=>({...plan,config:{...plan.config,competition}}))}:undefined};
+    workouts:profile.workouts?{...profile.workouts,plans:profile.workouts.plans.map(plan=>fields.athlete.sport==='strength'?plan:({...plan,config:{...plan.config,competition}}))}:undefined};
   if(fields.confirmed){
     const previous=profile.plans.at(-1);
     const plan=generatePlan(next,(previous?.seed??0)+1,previous);

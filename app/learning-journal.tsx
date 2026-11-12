@@ -1,10 +1,11 @@
 'use client';
 import {useEffect,useState,type ReactNode} from 'react';
+import HypertrophyLearn from './hypertrophy-learn';
 import Image from 'next/image';
 import {ArrowLeft,ArrowRight,Check,ChevronDown,Search} from 'lucide-react';
 import {filterLearning,learnArticles,learnCategories} from './learn-articles';
 
-export default function LearningJournal({profileId,children}:{profileId:string;children:ReactNode}){
+export default function LearningJournal({profileId,children,gym=false}:{profileId:string;children:ReactNode;gym?:boolean}){
  const [query,setQuery]=useState(''),[category,setCategory]=useState('Todos'),[page,setPage]=useState(0);
  const [read,setRead]=useState<string[]>([]),[storageMessage,setStorageMessage]=useState('');
  const key='raw-learning-read-v1-'+profileId;
@@ -12,6 +13,7 @@ export default function LearningJournal({profileId,children}:{profileId:string;c
  const filtered=filterLearning(query,category),pages=Math.max(1,Math.ceil(filtered.length/6)),current=Math.min(page,pages-1),shown=filtered.slice(current*6,current*6+6);
  function mark(id:string){const next=read.includes(id)?read.filter(v=>v!==id):[...read,id];setRead(next);try{localStorage.setItem(key,JSON.stringify(next));setStorageMessage('')}catch{setStorageMessage('Tu navegador no permite guardar la lectura. Se conservará mientras estés aquí.')}}
  function changePage(next:number){setPage(next);document.getElementById('learning-library')?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}
+ if(gym)return <><HypertrophyLearn/><details className="card"><summary>Herramientas: etiquetas, macros e hidratación</summary>{children}</details></>;
  return <div className="learning-journal">
   <header className="journal-hero"><div><span className="eyebrow">RISE JOURNAL · EDICIÓN 01</span><h1>Entrenas duro.<br/><em>Entiende cómo mejorar.</em></h1><p>Qué comer, cómo entrenar y cuándo recuperar. Respuestas claras a las preguntas que te llevas del gimnasio.</p><div className="journal-manifesto"><span>01 · Aprende</span><span>02 · Prueba</span><span>03 · Revisa</span></div><a className="journal-start" href="#learning-library">Explorar las entradas <ArrowRight size={18}/></a></div><figure><Image src="/learn/sparring-photo.webp" alt="Escena de sparring supervisado en un gimnasio de boxeo, generada con IA" width={1536} height={1024} sizes="(max-width: 760px) 100vw, 50vw"/><figcaption>Lee una idea. Llévala a tu próxima sesión.</figcaption></figure></header>
   <aside className="journal-week"><span className="eyebrow">UN DETALLE MEJOR. CADA SEMANA.</span><p>Elige un detalle. Practícalo con intención. Registra qué cambia. La constancia convierte una mejora pequeña en parte de tu forma de entrenar.</p><span className="journal-read" title="Se guarda en este navegador, por perfil">{read.length} de {learnArticles.length} lecturas marcadas</span></aside>

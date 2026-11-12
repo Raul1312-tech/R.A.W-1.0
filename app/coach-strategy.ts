@@ -8,7 +8,7 @@ import {competitionPhase} from './competition-phase.ts';
 const shift=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const mean=(v:number[])=>v.reduce((a,b)=>a+b,0)/v.length;
 export function strategyProposal(p:Profile,date:string){
- const data=p.workouts??{plans:[],logs:[]},plan=planForDate(data,date),competition=p.preparation?.competition??plan?.config.competition;
+ const data=p.workouts??{plans:[],logs:[]},plan=planForDate(data,date),competition=p.athlete?.sport==='strength'?undefined:p.preparation?.competition??plan?.config.competition;
  const daysToFight=competition?Math.ceil((Date.parse(competition.fight)-Date.parse(date+'T12:00:00Z'))/86400000):null;
  const daysToWeigh=competition?Math.ceil((Date.parse(competition.weighIn)-Date.parse(date+'T12:00:00Z'))/86400000):null;
  const recent=Object.entries(p.days).filter(([d])=>d>=shift(date,-13)&&d<=date);
@@ -20,7 +20,7 @@ export function strategyProposal(p:Profile,date:string){
  const hard=data.logs.filter(l=>l.date>=shift(date,-6)&&l.date<=date&&l.rpe>=8).length+Object.entries(p.preparation?.clubRecords??{}).filter(([dt,r])=>dt>=shift(date,-6)&&dt<=date&&r.rpe>=8).length;
  const readiness=Object.entries(p.preparation?.readiness??{}).filter(([d])=>d>=shift(date,-6)&&d<=date);
  const pain=p.preparation?.readiness?.[date]?.pain==='present';
- const fatigue=poorSleep>=2||hard>=3||readiness.filter(([,r])=>r.fatigue==='high'||r.sleep==='poor').length>=2;
+ const fatigue=poorSleep>=2||(plan?.config.sport!=='hypertrophy'&&hard>=3)||readiness.filter(([,r])=>r.fatigue==='high'||r.sleep==='poor').length>=2;
  const complete=recent.filter(([,d])=>d.complete);
  const adherence=complete.length>=10&&complete.filter(([,d])=>Math.abs(d.target.k-current.k)<=current.k*.05&&Math.abs(total(d.items).k-d.target.k)<=d.target.k*.15).length>=10;
  const cooldown=p.preparation?.coach?.events.some(e=>e.strategy&&e.date>shift(date,-7)&&e.date<=date);
@@ -69,9 +69,22 @@ export function strategyProposal(p:Profile,date:string){
      }
     }
    }
+   if(source.config.sport==='hypertrophy'&&!fatigue&&chosen!=='deload'){
+    for(const session of after)for(const exercise of session.exercises){
+     const top=Number(exercise.dose.match(/\d+[–-](\d+)/)?.[1]);if(!top)continue;
+     const history=data.logs.filter(l=>l.sport==='hypertrophy'&&l.date<=date).sort((a,b)=>b.date.localeCompare(a.date)).flatMap(l=>l.entries.filter(e=>e.exerciseId===exercise.id)).slice(0,2);
+     const ready=history.length===2&&history.every(entry=>entry.measures&&entry.measures.length>=exercise.sets&&entry.measures.every(m=>m.reps!==null&&m.reps>=top&&m.rir!==null&&m.rir>=Number(exercise.effort.match(/^[234]/)?.[0]??2)&&m.kg!==null));
+     const kg=history[0]?.measures?.[0]?.kg;
+     if(ready&&kg!=null&&history.every(entry=>entry.measures!.every(m=>m.kg===kg))){
+      const proposed=kg+(source.config.loadIncrement??2.5);
+      if(proposed<=500&&proposed-kg<=Math.max(.25,kg*.1)&&!(exercise.plannedKg!=null&&exercise.plannedKg>=proposed))exercise.plannedKg=proposed;
+     }
+    }
+   }
    if(JSON.stringify(before)!==JSON.stringify(after))training.push({date:dt,before,after});
   }
  }
+ if(training.some(d=>d.after.some(s=>s.exercises.some(e=>e.plannedKg!=null))))reasons.push('Las cargas propuestas se muestran por ejercicio. En gimnasio solo se sugiere subir tras dos registros con todas las series en el extremo alto del rango y margen suficiente; nunca se guardan como peso levantado.');
  if(training.length)reasons.push(`Rediseño de ${training.length} fechas futuras: fase ${phase==='deload'?'de descarga / puesta a punto':phase==='build'?'de desarrollo':'de base'}, respetando deporte, nivel, material y días seleccionados.`);
  const profileForFood={...p,preparation:{...p.preparation,energyTarget:newEnergy}};
  const menu=newEnergy!==current.k?generatePlan(profileForFood,Number(date.replaceAll('-',''))%100001,p.plans.at(-1)):null;

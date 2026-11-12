@@ -12,7 +12,7 @@ import {stateSchema} from '../app/validation.ts';
 import {strategyProposal} from '../app/coach-strategy.ts';
 const today='2026-11-06';
 const event={fight:'2026-11-15T20:00:00+01:00',weighIn:'2026-11-14T10:00:00+01:00',weight:67,taper:true,notes:'Revisar con mi equipo',timeZone:'Europe/Madrid'};
-function setup(){const p={...newProfile('Synthetic'),confirmed:true,preparation:{competition:structuredClone(event)}};p.plans=[generatePlan(p,3)];p.workouts={plans:[generateTrainingPlan({...defaultTrainingConfig(),level:'advanced',days:[0,1,2,3,4,5,6]})],logs:[]};return p}
+function setup(){const p={...newProfile('Synthetic'),confirmed:true,preparation:{competition:structuredClone(event)}};p.plans=[generatePlan(p,3)];p.workouts={plans:[generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',level:'advanced',physicalDays:[0,1,2,3,4,5,6],runningDays:[]})],logs:[]};return p}
 
 test('competition phases use the local event dates and actual weigh-in confirmation, including short recovery and past events',()=>{
  assert.equal(competitionPhase(event,'2026-10-15').phase,'camp');assert.equal(competitionPhase(event,today).phase,'taper');assert.equal(competitionPhase(event,'2026-11-07').phase,'fight-week');assert.equal(competitionPhase(event,'2026-11-14').phase,'weigh-in');assert.equal(competitionPhase(event,'2026-11-15').phase,'fight-day');assert.equal(competitionPhase(event,'2026-11-16').phase,'complete');

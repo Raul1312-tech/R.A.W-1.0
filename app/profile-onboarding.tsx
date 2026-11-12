@@ -95,7 +95,7 @@ const toggle=(values:number[],value:number)=>values.includes(value)?values.filte
 
 function Basics({a,update,onSport}:{a:OnboardingAnswers;update:Update;onSport:(sport:'boxing'|'strength')=>void}){
   const b=a.basics;
-  const {competition,...generalGoals}=choices.goal;
+  const {competition,...restGoals}=choices.goal;const generalGoals={...restGoals,performance:'Recomposición · mejorar músculo manteniendo el peso'};
   const sportValidation=useQuestion('basics.sport'),nameValidation=useQuestion('basics.name');
   return <>
     <Question field="basics.sport"><fieldset {...sportValidation} className="onboarding-multi"><legend>¿Qué deporte quieres preparar?</legend><div className="onboarding-sports">

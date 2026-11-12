@@ -1,2 +1,2 @@
-/** Shared vector lockup. The artwork stays sharp at every screen size. */
-export default function Brand({onLight=false}:{onLight?:boolean}){return <img className="rise-logo" src={onLight?'/brand/rise-boxing-ink.svg':'/brand/rise-boxing.svg'} width="176" height="66" alt="RISE Boxing"/>}
+import type {Modality} from './modality';
+export default function Brand({onLight=false,modality='boxing'}:{onLight?:boolean;modality?:Modality|null}){return modality==='boxing'?<img className="rise-logo" src={onLight?'/brand/rise-boxing-ink.svg':'/brand/rise-boxing.svg'} width="176" height="66" alt="RISE Boxing"/>:<span className="rise-gym-brand"><b>RISE</b><small>{modality==='hypertrophy'?'HIPERTROFIA':'ELIGE TU CAMINO'}</small></span>}

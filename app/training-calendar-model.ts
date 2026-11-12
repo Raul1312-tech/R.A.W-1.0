@@ -13,6 +13,7 @@ export function planForDate(data:TrainingData,date:string){
   return monthly??(data.plans.some(p=>p.month)?undefined:data.plans.at(-1));
 }
 export function clubForDate(plan:TrainingPlan|undefined,date:string){
+  if(plan?.config.sport!=='boxing')return undefined;
   const override=plan?.clubOverrides?.[date],day=weekdayOf(date);
   return override==='none'?undefined:override??(plan?.config.sparringDays.includes(day)?'sparring':plan?.config.technicalDays.includes(day)?'technique':undefined);
 }
@@ -20,7 +21,7 @@ export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
   const sessions=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
-  const c=plan.config.competition,phase=c?competitionPhase(c,date):undefined;
+  const c=plan.config.sport==='boxing'?plan.config.competition:undefined,phase=c?competitionPhase(c,date):undefined;
   if(!c?.taper||!phase?.active||phase.daysToFight>14)return sessions;
   if(phase.daysToFight<=2||phase.phase==='weigh-in'||phase.phase==='recovery')return [];
   const lastWeek=phase.daysToWeigh<=7,minutes=lastWeek?30:45,sets=lastWeek?2:3;
@@ -67,7 +68,7 @@ export function monthlyLoadWarnings(plan:TrainingPlan,month:string){
     week.physical+=Number(physical);week.running+=Number(running);week.busy+=Number(physical||running||!!clubForDate(plan,date));week.overlap||=physical&&running;weeks.set(key,week);
   }
   const values=[...weeks.values()],warnings:string[]=[];
-  if(values.some(w=>w.physical>3))warnings.push('Hay semanas con más de tres días de físico. Revisa volumen, intensidad y recuperación antes de añadir carga. Puedes mantenerlos.');
+  if(plan.config.sport==='boxing'&&values.some(w=>w.physical>3))warnings.push('Hay semanas con más de tres días de físico. Revisa volumen, intensidad y recuperación antes de añadir carga. Puedes mantenerlos.');
   if(values.some(w=>w.running>2))warnings.push('Hay semanas con más de dos días de carrera. Acumular tantas sesiones por series no es lo recomendable por carga y desgaste; ajusta la intensidad. Tu selección se permite.');
   if(values.some(w=>w.busy===7))warnings.push('Hay semanas sin un día libre de entrenamiento. No es lo recomendable por fatiga y desgaste. Puedes guardar el calendario, pero conviene revisar la recuperación.');
   if(values.some(w=>w.overlap))warnings.push('Físico y carrera coinciden en algunas fechas. Son sesiones independientes; considera también el trabajo de boxeo al valorar la carga total.');

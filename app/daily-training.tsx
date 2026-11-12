@@ -1,5 +1,7 @@
 'use client';
 
+import {gymSubstitute} from './gym-actions';
+import {editCalendarDay} from './training-calendar-model';
 import {useState} from 'react';
 import {CalendarDays,CheckCircle2,Dumbbell,ArrowRight} from 'lucide-react';
 import {trainingDays,type TrainingData,type WorkoutLog,type WorkoutDraft} from './training-model';
@@ -20,6 +22,7 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
   const catalog=useExerciseCatalog();
   const sessions=dailySessions(data,date);
   const plan=planForDate(data,date);
+  const gym=plan?.config.sport==='hypertrophy';
   const club=clubForDate(plan,date),technical=club==='sparring'?'Sparring':club==='technique'?'Boxeo técnico':null;
   const pending=sessions.filter(s=>!s.saved&&(!resting||s.draft));
   const active=sessions.find(s=>s.key===selected);
@@ -45,8 +48,14 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
       {active.session.exercises.map(exercise=><section key={exercise.id}><h3>{exercise.name}</h3><p>{exercise.sets} × {exercise.dose} · Descanso: {exercise.rest}</p>
         <ExerciseExplanation exercise={exercise} catalog={catalog}/></section>)}
       <p className="muted">Podrás registrar esta sesión cuando llegue su fecha.</p>
-    </article>:<WorkoutSession key={active.key} plan={active.plan} session={active.session} date={date} saved={active.saved} draft={active.draft}
-      disabled={disabled} onDraft={persist} onSave={log=>{onLog(log);setSelected(null)}} explain={exercise=><ExerciseExplanation exercise={exercise} catalog={catalog}/>}/>
+    </article>:<WorkoutSession logs={data.logs} key={active.key} plan={active.plan} session={active.session} date={date} saved={active.saved} draft={active.draft}
+      disabled={disabled} onReplace={(exerciseId,catalogId)=>{
+       if(active.saved||active.draft?.checked[exerciseId]?.length)throw Error('Conserva los ejercicios ya registrados.');
+       const replacement={...active.session,exercises:active.session.exercises.map(e=>e.id===exerciseId?gymSubstitute(e,catalogId):e)};
+       const changed=editCalendarDay(active.plan,date.slice(0,7),date,[replacement],'date');
+       const drafts=(data.drafts??[]).map(d=>d.id===active.key?{...d,session:replacement}:d);
+       onChange({...data,plans:[...data.plans.filter(p=>p.id!==changed.id),changed].slice(-12),drafts});
+      }} onDraft={persist} onSave={log=>{onLog(log);setSelected(null)}} explain={exercise=><ExerciseExplanation exercise={exercise} catalog={catalog}/>}/>
     }
   </section>;
 
@@ -56,8 +65,8 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
     </div>
     {!compact&&plan&&<p className="raw-routine-ready"><CheckCircle2 size={18}/> Tu rutina está lista</p>}
     {!(compact?pending.length:sessions.length)&&<article className="card raw-empty">
-      <Dumbbell size={22}/><h3>{resting?'Hoy descansas':!plan?'Aún no tienes una rutina':technical??(sessions.length?'Entreno completado':'Día sin físico ni carrera')}</h3>
-      {!compact&&plan&&<p>{resting?'El descanso está aplicado a esta fecha.':technical?'Esta sesión la dirige tu entrenador en el club. El físico y la carrera se organizan en los días de tu plan.':'No tienes sesiones de físico ni carrera pendientes en esta fecha.'}</p>}
+      <Dumbbell size={22}/><h3>{resting?'Hoy descansas':!plan?'Aún no tienes una rutina':technical??(sessions.length?'Entreno completado':(gym?'Descanso del gimnasio':'Día sin físico ni carrera'))}</h3>
+      {!compact&&plan&&<p>{resting?'El descanso está aplicado a esta fecha.':technical?'Esta sesión la dirige tu entrenador en el club. El físico y la carrera se organizan en los días de tu plan.':(gym?'No tienes una sesión de gimnasio pendiente en esta fecha.':'No tienes sesiones de físico ni carrera pendientes en esta fecha.')}</p>}
       {!plan&&!resting&&<button className="button outline" onClick={onPlan}>Crear mi rutina <ArrowRight size={16}/></button>}
       {technical&&!resting&&onActivity&&!previewOnly&&<button className="button outline" disabled={disabled} onClick={onActivity}>{clubRecorded?'Revisar':'Registrar'} sesión de {technical==='Sparring'?'sparring':'boxeo'}</button>}
     </article>}
@@ -74,7 +83,7 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
     {!compact&&plan&&<article className="card raw-training-overview">
       <h3>Tu semana de entrenamiento</h3>
       {upcoming&&<p>Próximo entreno · <strong>{trainingDays[upcoming.day]}</strong>: {upcoming.sessions.filter(session=>!session.saved).map(({session})=>session.title).join(' y ')}.</p>}
-      {!weekSessions.length&&<p>Tienes el calendario del club guardado. Añade huecos para que podamos organizar también tu físico y tu carrera.</p>}
+      {!weekSessions.length&&<p>{gym?'Añade días para organizar tu próxima semana de gimnasio.':'Tienes el calendario del club guardado. Añade huecos para que podamos organizar también tu físico y tu carrera.'}</p>}
       <details open={!sessions.length}><summary>Ver los próximos 7 días</summary>
         <div className="raw-training-week">{week.map(day=>{
           const labels=[day.club,...day.sessions.map(({session})=>session.title+' · '+session.minutes+' min')].filter(Boolean);
@@ -83,7 +92,7 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
             <span>{labels.join(' · ')||(day.planned?'Descanso':'Sin rutina para esta fecha')}</span><ArrowRight size={16}/></button>;
         })}</div>
       </details>
-      <button className="button outline" onClick={onPlan}><CalendarDays size={17}/> {weekSessions.length?'Ver o ajustar mi rutina':'Añadir días de físico y carrera'}</button>
+      <button className="button outline" onClick={onPlan}><CalendarDays size={17}/> {weekSessions.length?'Ver o ajustar mi rutina':(gym?'Añadir días de gimnasio':'Añadir días de físico y carrera')}</button>
     </article>}
     {!compact&&logs.length>0&&<details className="card raw-disclosure"><summary>Entrenos registrados · {logs.reduce((n,l)=>n+l.minutes,0)} min</summary>{logs.map(log=><details key={log.id}><summary>{log.title} · {log.minutes} min</summary>{log.entries.filter(e=>e.sets>0).map(e=><p key={e.exerciseId}>{e.name} · {e.sets} series · {e.actual}{e.kg!==null?' · '+e.kg+' kg':''}</p>)}</details>)}</details>}
   </section>;

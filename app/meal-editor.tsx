@@ -1,6 +1,7 @@
 'use client';
 import SelectField from './select-field';
 import FoodPhoto from './food-photo';
+import {appendPhotoItems} from './food-photo-model';
 
 import {useState} from 'react';
 import {Plus,Trash2,ArrowLeftRight,Check} from 'lucide-react';
@@ -29,7 +30,8 @@ export default function MealEditor({initial,savedFoods=[],disabled,onSave,onCanc
   }
   const picker=replacing!==null&&<FoodGrid key={replacing} picker onPick={choose} savedFoods={savedFoods} disabled={disabled} onSave={()=>{}} onCancel={()=>setReplacing(null)}/>;
   return <div className="meal-ingredient-editor raw-ingredient-editor">
-    <FoodPhoto disabled={disabled} beforeCamera={onUsePlanned&&<button type="button" className="text-button" disabled={disabled} onClick={onUsePlanned}>Partir del plato previsto</button>} onReady={(found,message)=>{setItems(found);setReplacing(null);setNotice('Estimación por foto · revisa alimentos, gramos y preparación antes de guardar. '+message)}}/>
+    <FoodPhoto disabled={disabled} buttonLabel={items.length?'Añadir otro plato con foto':undefined} beforeCamera={onUsePlanned&&<button type="button" className="text-button" disabled={disabled} onClick={onUsePlanned}>Partir del plato previsto</button>} onReady={(found,message)=>{const combined=appendPhotoItems(items,found);setItems(combined);setReplacing(null);setNotice('Foto añadida a esta comida. Se conserva lo que ya tenías; revisa que no hayas fotografiado dos veces el mismo plato. '+message)}}/>
+    {items.length>0&&<p className="muted">¿Falta el segundo plato o el postre? Añade otra foto o un alimento manualmente: se sumarán a esta comida. Al terminar, guarda la comida completa.</p>}
     <h3>Ingredientes de tu comida · {items.length}</h3>
     {notice&&<p role="status">{notice}</p>}
     <p>Construye el plato completo y pulsa «Guardar comida completa» cuando esté listo.</p>

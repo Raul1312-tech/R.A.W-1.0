@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newProfile,generatePlan,dateKey} from '../app/model.ts';
+import {newProfile,generatePlan,dateKey,emptyDay,total} from '../app/model.ts';
 import {foodPreferenceIds,foodPreferencesSchema} from '../app/preparation-preferences.ts';
 import {saveFoodPreferences,daySettings} from '../app/preparation-engine.ts';
 import {previewNutritionSituation} from '../app/nutrition-situations-model.ts';
-import {photoItems,photoEstimateSchema} from '../app/food-photo-model.ts';
+import {photoItems,photoEstimateSchema,appendPhotoItems} from '../app/food-photo-model.ts';
+import {recordMeal,foodDayView} from '../app/daily-food-model.ts';
 import {stateSchema} from '../app/validation.ts';
 import {estimateFoodPhoto} from '../lib/food-photo-ai.ts';
 const prefs={foods:{rice:'usual',pasta:'usual',bread:'usual',potato:'usual',sweetpotato:'usual',quinoa:'like',couscous:'like',chicken:'usual',turkey:'usual',egg:'usual',yogurt:'usual'},variety:'balanced',certification:'none'};
@@ -47,4 +48,25 @@ test('vision caller sends a nonstored structured request and rejects incomplete 
   globalThis.fetch=async()=>Response.json({error:'hidden'},{status:429});
   await assert.rejects(()=>estimateFoodPhoto('data:image/jpeg;base64,abc','','test-key'),/ocupado/);
  }finally{globalThis.fetch=original}
+});
+
+test('successive photo courses sum into one editable meal across saves and a schema reload',()=>{
+ const p=newProfile(),plan=generatePlan(p,3),date=dateKey();
+ const course=(name,grams)=>photoItems({message:'Estimación',assumptions:[],items:[{name,grams,basis:'cocido',k:130,p:3,c:28,f:.3}]});
+ const first=course('Primer plato',150),second=course('Segundo plato',100),dessert=course('Postre',80);
+ let day=recordMeal(emptyDay(p),plan,date,4,'alternative',first);
+ const firstSaved=structuredClone(day);
+ const previous=day.items.filter(item=>day.foodPlan.records[0].itemIds.includes(item.id));
+ const combined=appendPhotoItems(previous,second);
+ assert.equal(previous.length,1);assert.equal(combined.length,2);
+ day=recordMeal(day,plan,date,4,'alternative',combined);
+ const loaded=stateSchema.parse({active:p.id,profiles:[{...p,plans:[plan],days:{[date]:day}}]}).profiles[0].days[date];
+ const finalItems=appendPhotoItems(loaded.items,dessert);
+ const final=recordMeal(loaded,plan,date,4,'alternative',finalItems);
+ assert.equal(final.foodPlan.records.length,1);assert.equal(final.items.length,3);
+ assert.equal(total(final.items).k,total([...first,...second,...dessert]).k);
+ assert.equal(firstSaved.items.length,1);
+ const finished=structuredClone(final);for(let slot=0;slot<4;slot++)Object.assign(finished,recordMeal(finished,plan,date,slot,'planned'));
+ assert.equal(foodDayView(finished,plan,date).adjustments.length,0);
+ assert.throws(()=>appendPhotoItems(Array.from({length:20},()=>first[0]),second),/20 ingredientes/);
 });

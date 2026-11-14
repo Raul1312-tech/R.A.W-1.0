@@ -4,6 +4,9 @@ import {useEffect,useRef,useState,useMemo} from 'react';
 import {BookOpen,CalendarDays,ArrowUpRight,ArrowRight,Plus,Check,RefreshCw,Utensils,Droplets,Footprints,Dumbbell,TrendingUp,Settings,Download,Trash2,X,Save,LogIn,Sun,ChartNoAxesCombined} from 'lucide-react';
 import BodyMeasures from './body-measures';
 import MoveGymDay from './move-gym-day';
+import TodayNutrition from './today-nutrition';
+import TodayWater from './today-water';
+import FoodPhoto from './food-photo';
 import {useDisclosureSaveFeedback} from './use-disclosure-save-feedback';
 import {coordinateGymWorkouts} from './gym-coordination';
 import Brand from './brand';
@@ -69,6 +72,7 @@ const [gymCalendarOpen,setGymCalendarOpen]=useState(false);
 const [editingOnboarding,setEditingOnboarding]=useState<string>();
 const [progressView,setProgressView]=useState<'summary'|'photos'>('summary');
 const [quickMeal,setQuickMeal]=useState('Primera comida');
+const [quickInitial,setQuickInitial]=useState<Item[]>([]),[quickNotice,setQuickNotice]=useState('');
 const importInput=useRef<HTMLInputElement>(null);
 const [pendingImport,setPendingImport]=useState<State|null>(null);
 const [state,setState]=useState<State>(initialState);const [tab,setTab]=useState<Tab>('today');const [date,setDate]=useState('');const [ready,setReady]=useState(false);const [auth,setAuth]=useState(false);const [status,setStatus]=useState('Conectando…');const [error,setError]=useState('');const [toast,setToast]=useState('');const [dirty,setDirty]=useState(false);const [modal,setModal]=useState<'food'|'activity'|'profileNew'|'shopping'|'boxing'|null>(null);const [foodId,setFoodId]=useState('rice');const [grams,setGrams]=useState(100);const [search,setSearch]=useState('');const [pendingPlan,setPendingPlan]=useState<Plan|null>(null);const [pendingMeal,setPendingMeal]=useState<{meal:Meal;slot:number;label:string;sourceDay:string}|null>(null);const [shoppingDays,setShoppingDays]=useState(7);const [historyPlan,setHistoryPlan]=useState('');
@@ -102,6 +106,7 @@ useEffect(()=>{
 },[demo]);
 useEffect(()=>{if(!modal&&!pendingMeal&&!pendingPlan)return;const previous=document.activeElement as HTMLElement|null;const dialog=document.querySelector<HTMLElement>('[role=dialog]');const focusable=()=>Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not([tabindex="-1"]),textarea,a[href]')??[]);focusable()[0]?.focus();const handler=(event:KeyboardEvent)=>{if(document.querySelector('.raw-select-picker[open]'))return;if(event.key==='Escape'){setModal(null);setPendingMeal(null);setPendingPlan(null)}if(event.key==='Tab'){const list=focusable();const first=list[0],last=list.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}}};document.addEventListener('keydown',handler);return()=>{document.removeEventListener('keydown',handler);previous?.focus()};},[modal,!!pendingMeal,!!pendingPlan]);
 useEffect(()=>{if(!toast)return;const id=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(id)},[toast]);
+useEffect(()=>{if(modal!=='food'){setQuickInitial([]);setQuickNotice('')}},[modal]);
 useEffect(()=>{const f=(e:BeforeUnloadEvent)=>{if(serial.current>persisted.current){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',f);return()=>window.removeEventListener('beforeunload',f)},[]);
 async function save(){if(busy.current||!readyRef.current||serial.current===persisted.current)return;busy.current=true;setStatus('Guardando…');const version=serial.current;try{
   if(demo){writeDemo(window.localStorage,current.current,demoKey)}else{
@@ -179,7 +184,9 @@ function openTraining(view:typeof trainingView){
 }
 const dateLabel=date?new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(date+'T12:00:00Z')):'';
 const activeFoodPlan=planForFoodDate(p,plan,date);
-const dailyMeals=(compact=false)=><DailyMeals key={'meals:'+p.id+':'+date+':'+compact} compact={compact} day={day} plan={activeFoodPlan} date={date} profile={p} disabled={actionsDisabled||date>dateKey()} onChange={changeFoodDay} onProfile={changeProfile} onMenu={()=>openTab(activeFoodPlan?'menu':'profile')}/>;
+const todaySnapshot=foodSnapshot(day,activeFoodPlan,date);
+const nextMealLabel=todaySnapshot?.labels.find((_,slot)=>!todaySnapshot.records.some(record=>record.slot===slot))??'Otra toma';
+const dailyMeals=(compact=false,agenda=false)=><DailyMeals key={'meals:'+p.id+':'+date+':'+compact+':'+agenda} compact={compact} agenda={agenda} day={day} plan={activeFoodPlan} date={date} profile={p} disabled={actionsDisabled||date>dateKey()} onChange={changeFoodDay} onProfile={changeProfile} onMenu={()=>openTab(activeFoodPlan?'menu':'profile')}/>;
 const dailyTraining=(compact=false)=><DailyTraining key={'training:'+p.id+':'+date+':'+compact} compact={compact} data={p.workouts??{plans:[],logs:[]}} clubRecorded={!!p.preparation?.clubRecords?.[date]} date={date} disabled={actionsDisabled} previewOnly={date>dateKey()} resting={day.nutrition?.training==='rest'&&!day.competition} onChange={changeWorkouts} onLog={logWorkout} onPlan={()=>openTraining('calendar')} onOpen={()=>openTraining('sessions')} onActivity={()=>setModal('boxing')} onDate={setDate}/>;
 const stateLabel=!day.complete?'Registro en curso':consumed.k<allowance.k*.95?'Por debajo de la referencia':consumed.k>allowance.k*1.05?'Por encima de la referencia':'Dentro del rango de energía';
 if(!ready)return <main className="auth-error card"><span className="eyebrow">RISE</span><h1>{error?'No se pudo abrir tu historial.':'Preparando tu espacio.'}</h1><p role={error?'alert':'status'}>{error||'Cargando tu plan y tus últimos registros…'}</p>{error&&<a className="button orange" href={demo?'/demo':auth?'/login':'/'}>{auth?'Iniciar sesión':'Reintentar'}</a>}</main>;
@@ -202,11 +209,23 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 {!gym&&(tab==='today'||tab==='menu'||tab==='routine'&&trainingView==='sessions')&&<CompetitionSummary profile={p} date={date} onSettings={()=>openTraining('competition')}/>}
 {tab==='today'&&<>
   <section className="raw-today-intro"><span className="eyebrow">{dateLabel}</span><h1>Hoy</h1><p>Hola, {p.name}.</p></section>
-  <div className="raw-today-grid">
-    {dailyMeals(true)}
-    {dailyTraining(true)}
+  <div className="today-agenda-layout">
+    <div className="today-food-column">
+      <TodayNutrition consumed={consumed} target={allowance}/>
+      <section className="today-shortcuts" aria-label="Registrar en mi día">
+        <FoodPhoto key={p.id+':photo:'+date} compact disabled={actionsDisabled} onReady={(items,message)=>{setQuickMeal(nextMealLabel);setQuickInitial(items);setQuickNotice('Estimación por foto · revisa alimentos y cantidades. '+message);setModal('food')}}/>
+        <button className="button outline today-shortcut" disabled={actionsDisabled} onClick={()=>{setQuickMeal(nextMealLabel);setQuickInitial([]);setQuickNotice('');setModal('food')}}><Utensils size={21}/>Otra comida</button>
+        <button className="button outline today-shortcut" disabled={actionsDisabled} onClick={()=>setModal('activity')}><Plus size={21}/>Otro registro</button>
+      </section>
+      <div className="card today-food-agenda">{dailyMeals(false,true)}</div>
+      <button className="text-button today-menu-link" onClick={()=>openTab('menu')}>Personalizar mis comidas <ArrowRight size={16}/></button>
+    </div>
+    <aside className="today-activity-column">
+      <TodayWater profile={p} date={date} day={day} disabled={actionsDisabled} onChange={changeFoodDay}/>
+      {dailyTraining(true)}
+      <button className="text-button" onClick={()=>openTab('journal')}>Ver registro del día <ArrowRight size={16}/></button>
+    </aside>
   </div>
-  <div className="raw-actions raw-today-links"><button className="text-button" onClick={()=>openTab('menu')}>Ver todas las comidas <ArrowRight size={16}/></button><button className="text-button" onClick={()=>openTab('journal')}>Ver registro del día <ArrowRight size={16}/></button></div>
   <details className="card raw-disclosure"><summary>Más sobre mi plan y actividad</summary>
     <Hydration profile={p} date={date} day={day} disabled={actionsDisabled} onDay={changeFoodDay} onProfile={changeProfile}/><div className="raw-actions"><button className="button outline" disabled={actionsDisabled||day.water>=15000} onClick={()=>updateDay({water:Math.min(15000,day.water+250)})}><Droplets size={17}/> Añadir un vaso de agua</button><button className="button outline" disabled={actionsDisabled} onClick={()=>setModal('activity')}>Registrar peso, pasos o minutos</button></div>
     {p.confirmed&&<DayPreparation key={'day-preparation:'+p.id+':'+date} profile={p} date={date} disabled={actionsDisabled} onChange={changeProfile}/> }
@@ -260,7 +279,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 {(modal||pendingPlan||pendingMeal)&&<div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget){setModal(null);setPendingPlan(null);setPendingMeal(null)}}}><section className="modal" role="dialog" aria-modal="true" aria-label={pendingPlan?'Revisar nuevo menú':pendingMeal?'Registrar comida':'Formulario'}><button className="modal-close icon-button" aria-label="Cerrar" onClick={()=>{setModal(null);setPendingPlan(null);setPendingMeal(null)}}><X/></button>
 {pendingPlan&&<><span className="eyebrow">VARIEDAD CON LA MISMA ESTRATEGIA</span><h2>Revisa el cambio.</h2><p>Se conserva el resto de la semana y sus objetivos. El cambio quedará en el historial.</p>{planDays(pendingPlan).map((d,di)=><div className="preview-meal" key={d.day}><b>{d.day}</b><MacroLine m={total(d.meals.flatMap(m=>m.items))}/>{d.meals.map((m,i)=><small key={i}>{mealLabelsFor(d.meals.length)[i]}: {m.name}{plan?.week?.[di]?.meals[i].name!==m.name?' · NUEVO':''}</small>)}</div>)}<button className="button orange full" onClick={()=>setPlan(pendingPlan)}>Aplicar cambio <Check size={18}/></button></>}
 {pendingMeal&&<><span className="eyebrow">{date}</span><h2>Tu comida, a tu manera.</h2><p>{pendingMeal.sourceDay} · {pendingMeal.label}: {pendingMeal.meal.name}.</p><Field label="Fecha en la que lo has comido"><input type="date" max={dateKey()} value={date} onChange={e=>{if(e.target.value)setDate(e.target.value)}}/></Field><MealEditor initial={pendingMeal.meal.items} savedFoods={previousFoods(p)} disabled={actionsDisabled} onSave={addMeal} onCancel={()=>setPendingMeal(null)}/></>}
-{modal==='food'&&<><span className="eyebrow">REGISTRAR EN {date}</span><h2>Un plato, a tu manera.</h2><SelectField label="Comida a la que añadir alimentos" value={quickMeal} onValueChange={selection=>setQuickMeal(selection)}>{[...(foodSnapshot(day,planForFoodDate(p,plan,date),date)?.labels??mealLabelsFor(p.mealCount??5)),'Otra toma'].map(label=><option value={label} key={label}>{displayMeal(label)}</option>)}</SelectField><p className="muted">Se añadirán a lo que ya tengas registrado en esta comida.</p><FoodGrid savedFoods={previousFoods(p)} disabled={actionsDisabled} onSave={quickFood} onCancel={()=>setModal(null)} saveLabel="Añadir al registro"/></>}
+{modal==='food'&&<><span className="eyebrow">REGISTRAR EN {date}</span><h2>Un plato, a tu manera.</h2><SelectField label="Comida a la que añadir alimentos" value={quickMeal} onValueChange={selection=>setQuickMeal(selection)}>{[...(foodSnapshot(day,planForFoodDate(p,plan,date),date)?.labels??mealLabelsFor(p.mealCount??5)),'Otra toma'].map(label=><option value={label} key={label}>{displayMeal(label)}</option>)}</SelectField><p className="muted">Se añadirán a lo que ya tengas registrado en esta comida.</p>{quickNotice&&<p className="notice" role="status">{quickNotice}</p>}<FoodGrid initial={quickInitial} savedFoods={previousFoods(p)} disabled={actionsDisabled} onSave={quickFood} onCancel={()=>setModal(null)} saveLabel="Añadir al registro"/></>}
 {modal==='boxing'&&<ClubSession key={p.id+date} profile={p} date={date} disabled={actionsDisabled} onChange={changeProfile} onClose={()=>setModal(null)}/> }
 {modal==='activity'&&<><span className="eyebrow">REGISTRAR EN {date}</span><h2>Más que calorías.</h2><form onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);updateDay({weight:f.get('weight')?n(f,'weight'):null,steps:f.get('steps')?n(f,'steps'):null,minutes:n(f,'minutes'),sleep:f.get('sleep')?n(f,'sleep'):null,training:String(f.get('training')),notes:String(f.get('notes'))});setModal(null);setToast('Registro actualizado.');}}><div className="form-grid"><Field label="Peso · kg"><input type="number" name="weight" min={30} max={300} step="0.1" defaultValue={day.weight??''}/></Field><Field label="Pasos"><input type="number" name="steps" min={0} max={100000} defaultValue={day.steps??''}/></Field><Field label="Entrenamiento · minutos"><input type="number" name="minutes" min={0} max={600} defaultValue={day.minutes} required/></Field><Field label="Sueño · horas"><input type="number" name="sleep" min={0} max={24} step="0.25" defaultValue={day.sleep??''}/></Field></div><Field label="Sesión, ejercicios, series, repeticiones y cargas"><textarea name="training" maxLength={2000} defaultValue={day.training} placeholder="Ej.: Sentadilla 3 × 8 · 50 kg. Esfuerzo 7/10."/></Field><Field label="Hambre, energía o notas"><textarea name="notes" maxLength={3000} defaultValue={day.notes}/></Field><p className="muted">El peso diario no cambia automáticamente tus calorías. Revisamos tendencias antes de ajustar.</p><button className="button orange full">Guardar registro <Check size={17}/></button></form></>}
 {modal==='profileNew'&&<><h2>Un nuevo punto de partida.</h2><p>Cada persona tendrá su propio historial. Los valores iniciales son ejemplos y debes sustituirlos por sus datos en Perfil antes de generar un menú. Esta herramienta está pensada para adultos.</p><form onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);const next=newProfile(String(f.get('name')).trim());if(!next.name)return;change({...state,active:next.id,profiles:[...state.profiles,next]});setModal(null);setHistoryPlan('');setTab('profile');}}><Field label="Nombre"><input name="name" required maxLength={60}/></Field><button className="button orange full">Crear perfil y completar datos <ArrowRight size={17}/></button></form></>}

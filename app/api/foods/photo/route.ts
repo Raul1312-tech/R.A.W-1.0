@@ -16,19 +16,19 @@ export async function POST(request:Request){
  let body;try{body=schema.parse(await readLimitedJson(request));if(!Buffer.from(body.image.split(',')[1],'base64').subarray(0,3).equals(Buffer.from([255,216,255])))throw Error()}catch{return reply({error:'Foto no válida. Usa una imagen de comida y vuelve a intentarlo.'},400)}
  if(!process.env.OPENAI_FOOD_API_KEY)return reply({error:'El análisis por foto todavía no está configurado en este servidor.'},503);
  const hash=createHash('sha256').update('food-photo-v1|'+body.image+'|'+body.note).digest('hex'),day=new Date().toISOString().slice(0,10);
- const {data:rows,error:readError}=await db.from('coach_reviews').select('choice,input_hash,slot').eq('owner',user!.id).eq('request_day',day);
+ const {data:rows,error:readError}=await db.from('food_photo_reviews').select('choice,input_hash,slot').eq('owner',user!.id).eq('request_day',day);
  if(readError)return reply({error:'No se pudo comprobar la disponibilidad del análisis.'},503);
  const match=rows?.find(row=>row.input_hash===hash);
  if(match){const parsed=photoEstimateSchema.safeParse(match.choice);return parsed.success?reply({estimate:parsed.data}):reply({error:'Este análisis ya está en curso o no se completó. Usa el registro manual.'},409)}
  let slot=-1;
- for(let i=0;i<3;i++){const {error:claim}=await db.from('coach_reviews').insert({owner:user!.id,request_day:day,slot:i,profile:'food-photo',input_hash:hash});if(!claim){slot=i;break}if(claim.code!=='23505')return reply({error:'No se pudo reservar el análisis.'},503)}
- if(slot<0)return reply({error:'Has utilizado las tres consultas IA de hoy, compartidas con el coordinador. Puedes registrar manualmente y volver mañana (00:00 UTC).'},429);
+ for(let i=0;i<12;i++){const {error:claim}=await db.from('food_photo_reviews').insert({owner:user!.id,request_day:day,slot:i,input_hash:hash});if(!claim){slot=i;break}if(claim.code!=='23505')return reply({error:'No se pudo reservar el análisis.'},503)}
+ if(slot<0)return reply({error:'Has utilizado los 12 análisis de comida de hoy. El cupo del coordinador es independiente. Puedes registrar manualmente y volver mañana (00:00 UTC).'},429);
  try{
   const estimate=await estimateFoodPhoto(body.image,body.note,process.env.OPENAI_FOOD_API_KEY);
-  // The existing usage ledger has a 2 kB cap. Keep a compact result when it fits,
-  // otherwise just a receipt; never store the image or the user's note.
-  const cached=Buffer.byteLength(JSON.stringify(estimate),'utf8')<1900?estimate:{foodPhoto:true,completed:true};
-  const {error:writeError}=await db.from('coach_reviews').update({choice:cached}).eq('owner',user!.id).eq('request_day',day).eq('slot',slot);
+  // Cache estimates independently of coach usage; oversized results keep only a receipt.
+  // Never store the image or the user's note.
+  const cached=Buffer.byteLength(JSON.stringify(estimate),'utf8')<15000?estimate:{foodPhoto:true,completed:true};
+  const {error:writeError}=await db.from('food_photo_reviews').update({choice:cached}).eq('owner',user!.id).eq('request_day',day).eq('slot',slot);
   if(writeError)throw Error('No se pudo guardar el resultado del análisis.');
   return reply({estimate});
  }catch{return reply({error:'No se pudo completar el análisis. Tu comida no se ha registrado; puedes introducirla manualmente.'},503)}

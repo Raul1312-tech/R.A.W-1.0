@@ -1,5 +1,6 @@
 'use client';
 import SelectField from './select-field';
+import FoodPhoto from './food-photo';
 import {useState,useRef,useEffect} from 'react';
 import {Plus,Minus,Trash2,Search,Check} from 'lucide-react';
 import {foods,total,type Food,type Item} from './model';
@@ -11,6 +12,7 @@ import type {FoodSearchResult} from './open-food-facts';
 import {foodPortions as portions} from './food-portions';
 const searchCache=new Map<string,FoodSearchResult>();
 export default function FoodGrid({initial=[],planned,savedFoods=[],onSave,onCancel,disabled=false,saveLabel='Guardar lo que he comido',picker=false,onPick}:{picker?:boolean;onPick?:(food:Food)=>void;initial?:Item[];planned?:Item[];savedFoods?:Food[];onSave:(items:Item[])=>void;onCancel:()=>void;disabled?:boolean;saveLabel?:string}){
+  const [photoNotice,setPhotoNotice]=useState('');
   const [items,setItems]=useState<Item[]>(()=>structuredClone(initial));const [query,setQuery]=useState('');const [filter,setFilter]=useState('Todos');const [custom,setCustom]=useState(false);const [error,setError]=useState('');
   const [limit,setLimit]=useState(picker?6:24);const [remote,setRemote]=useState<FoodSearchResult|null>(null);const [remoteQuery,setRemoteQuery]=useState('');const [busy,setBusy]=useState(false);const [searchError,setSearchError]=useState('');
   const controller=useRef<AbortController|null>(null);const requestId=useRef(0);
@@ -30,6 +32,8 @@ export default function FoodGrid({initial=[],planned,savedFoods=[],onSave,onCanc
   function save(){try{onSave(items);setError('')}catch(e){setError(e instanceof Error?e.message:'Revisa el registro.')}}
   function tiles(list:Food[]){return <div className="food-tile-grid">{list.map(f=>{const source=foodSource(f);return <article className="food-result-card" key={f.id}><button type="button" className="food-tile" disabled={disabled||!picker&&items.length>=20&&!items.some(it=>it.food.id===f.id)} onClick={()=>add(f)}>{picker?<Check size={16}/>:<Plus size={16}/>}<b>{f.name}</b><small>{picker?'Elegir':portions[f.id]?`${portions[f.id][0]} ${f.unit.includes('ml')?'ml':'g'} · ${portions[f.id][1]}`:`Añadir 100 ${f.unit.includes('ml')?'ml':'g'}`} · {f.unit}</small><small>{Math.round(f.k)} kcal · P {f.p} · C {f.c} · G {f.f} / 100 {f.unit.includes('ml')?'ml':'g'}</small></button>{source&&<a className="food-source" href={source.url} target="_blank" rel="noreferrer">{source.label}{f.id.startsWith('off-')?' · '+f.id.slice(4):''} ↗</a>}</article>})}</div>}
   return <div className={"food-grid-editor "+(picker?"raw-food-picker":"")}>
+    {!picker&&<FoodPhoto disabled={disabled} onReady={(found)=>{setItems(found);setError('');setPhotoNotice('Estimación por foto añadida al plato. Revisa las cantidades y pulsa Guardar cuando esté correcto.')}}/>}
+    {photoNotice&&<p className="notice" role="status">{photoNotice}</p>}
     <div className="food-entry-head"><h3>{picker?'Elige el alimento':'¿Qué has comido?'}</h3><button type="button" className="text-button" onClick={onCancel}>Cerrar</button></div>
     {planned&&<button type="button" className="button outline" onClick={()=>setItems(structuredClone(planned))}>Partir del plato previsto y cambiar cantidades</button>}
     <form className="food-search-form" onSubmit={e=>{e.preventDefault();void searchProducts()}}><label className="food-search"><Search size={18}/><input aria-label="Buscar alimento" value={query} maxLength={80} onChange={e=>changeQuery(e.target.value)} placeholder="Alimento, marca o código de barras…"/></label><button type="submit" className="button orange" disabled={busy||query.trim().length<3}>{busy?'Buscando…':'Buscar productos'}</button></form>

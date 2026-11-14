@@ -1,10 +1,10 @@
-import {emptyDay,foodById,generatePlan,type Day,type Food,type Plan,type Profile} from './model.ts';
+import {dateKey,emptyDay,foodById,generatePlan,type Day,type Food,type Plan,type Profile} from './model.ts';
 import {foodSnapshot} from './daily-food-model.ts';
 import {mealSlots,mealTimes} from './meal-layout.ts';
 import {previewNutritionSituation} from './nutrition-situations-model.ts';
 import {clubForDate,dailySessions,editCalendarDay,planForDate} from './training-calendar-model.ts';
 import {baseConditioning,type TrainingPlan} from './training-model.ts';
-import {foodPreferenceIds,type FoodPreferences,type Readiness} from './preparation-preferences.ts';
+import {foodPreferenceIds,foodPreferencesSchema,type FoodPreferences,type Readiness} from './preparation-preferences.ts';
 import type {Supplement} from './preparation-schema.ts';
 import {situationEnergy} from './nutrition-estimates.ts';
 import {competitionPhase} from './competition-phase.ts';
@@ -12,11 +12,20 @@ import {competitionPhase} from './competition-phase.ts';
 export const addDays=(date:string,n:number)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 export const foodAllowed=(p:Profile,f:Food)=>!p.excluded.includes(f.id)&&p.preparation?.foodPreferences?.foods[f.id]!=='avoid'&&!f.allergens.some(a=>p.allergens.includes(a));
 export function saveFoodPreferences(p:Profile,foodPreferences:FoodPreferences):Profile{
- const next={...p,preparation:{...p.preparation,foodPreferences}};
+ foodPreferences=foodPreferencesSchema.parse(foodPreferences);
+ let next={...p,preparation:{...p.preparation,foodPreferences}};
  const previous=p.plans.at(-1);
  const plan=p.confirmed?generatePlan(next,(previous?.seed??0)%100000+1):null;
  if(p.confirmed&&!plan)throw new Error('No hemos encontrado un menú compatible. Revisa los alimentos marcados como evitar.');
- return {...next,plans:plan?[...p.plans,plan].slice(-36):p.plans};
+ next={...next,plans:plan?[...p.plans,plan].slice(-36):p.plans};
+ if(plan){
+  next={...next,days:{...next.days}};
+  for(const [date,day] of Object.entries(p.days)){
+   if(date<dateKey()||day.complete||day.competition||p.preparation?.monthlyMenus?.some(m=>m.month===date.slice(0,7)))continue;
+   if(day.nutrition?.situationId==='coordinated')next.days[date]=previewNutritionSituation(next,{...daySettings(next,date),...day.nutrition,id:'coordinated'},date,plan.seed);
+  }
+ }
+ return next;
 }
 export function supplementChoices(p:Profile,date:string){
  const active=situationEnergy(p,{training:p.days[date]?.nutrition?.training??'usual'},date).minutes>0;

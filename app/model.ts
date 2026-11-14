@@ -1,3 +1,4 @@
+import {foodPreferenceIds} from './preparation-preferences.ts';
 import type {StrategyVersion} from './strategy-version.ts';
 import type {Onboarding} from './onboarding-schema';
 import type {Athlete} from './athlete-schema';
@@ -150,8 +151,14 @@ export function generatePlan(profile:Profile,seed:number,previous?:Plan,override
    const candidates=templates.map(t=>recipeMeal(t,profile,fractions[slot],target)).filter((m):m is Meal=>!!m&&m.name!==previousMeal?.name);
    const score=(m:Meal)=> {
     const repeat=preferences?.variety==='repeat',balanced=preferences?.variety==='balanced';
+    const familiarity=preferences&&!preferences.explore?Object.values(foodPreferenceIds).reduce((cost,ids)=>{
+     const selected=ids.some(id=>preferences.foods[id]==='usual'||preferences.foods[id]==='like');if(!selected)return cost;
+     const present=m.items.filter(it=>(ids as readonly string[]).includes(it.food.id));
+     const occasional=(d+slot)%5===4&&preferences.variety!=='repeat';
+     return cost+present.reduce((sum,it)=>sum+(preferences.foods[it.food.id]==='usual'?(occasional?12:0):preferences.foods[it.food.id]==='like'?(occasional?0:18):100),0);
+    },0):0;
     const reward=m.items.reduce((n,it)=>n+(preferences?.foods[it.food.id]==='usual'?18:preferences?.foods[it.food.id]==='like'?5:preferred.has(it.food.id)?1.5:0),0);
-    return (usedNames.has(m.name)?repeat?-3:balanced?5:preferences?12:1000:0)+(previousNames.has(m.name)?2:0)-reward+
+    return familiarity+(usedNames.has(m.name)?repeat?-3:balanced?5:preferences?12:1000:0)+(previousNames.has(m.name)?2:0)-reward+
       m.items.filter(it=>it.food.id!=='olive').reduce((a,it)=>a+(uses.get(it.food.id)??0)*(repeat?0:.28),0)+noise(seed*7919+(repeat?0:d*311)+slot*101,m.name)*3;
    };
    candidates.sort((a,b)=>score(a)-score(b));

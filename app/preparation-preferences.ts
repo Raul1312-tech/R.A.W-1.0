@@ -7,6 +7,7 @@ export const foodPreferenceIds={
 const preference=z.enum(['usual','like','avoid']);
 export const foodPreferencesSchema=z.object({
   foods:z.object(Object.fromEntries(Object.values(foodPreferenceIds).flat().map(id=>[id,preference.optional()]))).strict(),
+  explore:z.boolean().optional(),
   variety:z.enum(['repeat','balanced','varied']),
   proteinStyle:z.enum(['any','fillet','minced']).optional(),
   certification:z.enum(['none','halal']),

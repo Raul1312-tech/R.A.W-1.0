@@ -209,7 +209,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 {!p.confirmed&&tab!=='profile'&&<div className="notice raw-setup-notice"><span>Completa tu perfil para preparar tu plan.</span><button className="text-button" onClick={()=>openTab('profile')}>Configurar perfil <ArrowRight size={16}/></button></div>}
 {!gym&&(tab==='today'||tab==='menu'||tab==='routine'&&trainingView==='sessions')&&<CompetitionSummary profile={p} date={date} onSettings={()=>openTraining('competition')}/>}
 {tab==='today'&&<>
-  <section className="raw-today-intro"><div><span className="eyebrow">{dateLabel}</span><h1>Tu día. A por ello.</h1><p>Hola, {p.name}.</p></div><button type="button" className="button outline today-buy" disabled={!plan} onClick={()=>setModal('shopping')}><ShoppingBasket size={18}/> Mi compra</button></section>
+  <section className="raw-today-intro"><div><span className="eyebrow">{dateLabel}</span><h1>Haz que cuente.</h1><p>Hola, {p.name}.</p></div><button type="button" className="button outline today-buy" disabled={!plan} onClick={()=>setModal('shopping')}><ShoppingBasket size={18}/> Mi compra</button></section>
   <div className="today-agenda-layout">
     <div className="today-food-column">
       <TodayNutrition consumed={consumed} target={allowance}/>

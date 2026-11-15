@@ -78,7 +78,9 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   return {snapshot,meals,recorded,projected:forecast,remaining,balanced,adjustments,pending,cursor,finished:pending.length===0};
 }
 export function recordMeal(day:Day,plan:Plan|undefined,date:string,slot:number,status:MealRecord['status'],items?:Item[]):Day{
-  const view=foodDayView(day,plan,date);if(!view||!view.meals[slot])throw new Error('No hay una comida prevista para este día.');
+  // A new manual/photo meal resumes automatic balancing, including older disabled snapshots.
+  const source=status==='alternative'&&day.foodPlan?{...day,foodPlan:{...day.foodPlan,autoAdjust:true}}:day;
+  const view=foodDayView(source,plan,date);if(!view||!view.meals[slot])throw new Error('No hay una comida prevista para este día.');
   const snapshot=view.snapshot;const old=snapshot.records.find(r=>r.slot===slot);
   // A repeated one-tap confirmation is idempotent, including very quick double taps.
   if(status==='planned'&&old?.status==='planned')return day;
@@ -98,11 +100,11 @@ export function undoMeal(day:Day,slot:number):Day{
 export function replaceLooseFood(day:Day,items:Item[],meal:string):Day{
   if(!items.length||items.length>20||items.some(it=>!Number.isFinite(it.grams)||it.grams<.1||it.grams>3000))throw new Error('Revisa los alimentos y las cantidades.');
   if(day.items.length+items.length>200)throw new Error('Este día ha alcanzado el límite de alimentos.');
-  return {...day,complete:false,items:[...day.items,...items.map(it=>({...structuredClone(it),id:crypto.randomUUID(),meal}))]};
+  return {...day,complete:false,foodPlan:day.foodPlan?{...day.foodPlan,autoAdjust:true}:undefined,items:[...day.items,...items.map(it=>({...structuredClone(it),id:crypto.randomUUID(),meal}))]};
 }
 export function syncFoodRecords(day:Day,items:Day['items']):Day['foodPlan']{
   const snapshot=day.foodPlan;if(!snapshot)return;
-  return {...snapshot,records:snapshot.records.flatMap(record=>{
+  return {...snapshot,autoAdjust:true,records:snapshot.records.flatMap(record=>{
     if(record.status==='skipped')return [record];
     const previous=day.items.filter(it=>record.itemIds.includes(it.id));
     const next=items.filter(it=>record.itemIds.includes(it.id)||it.meal===snapshot.labels[record.slot]);

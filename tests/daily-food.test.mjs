@@ -55,6 +55,16 @@ test('exact plan completion counts the full day once with no invented automatic 
   assert.deepEqual(total(result.items),total(plan.week[1].meals.flatMap(m=>m.items)));
   assert.equal(result.foodPlan.records.length,5);assert.equal(foodDayView(result,plan,date).pending.length,0);assert.equal(result.complete,true);
 });
+test('new manual or photographed foods resume automatic balance on legacy disabled snapshots',()=>{
+  const {plan,day,date}=setup();const initial=recordMeal(day,plan,date,0,'planned');
+  initial.foodPlan.autoAdjust=false;
+  const actual=initial.items.map(({food,grams})=>({food,grams:grams*.4}));
+  const changed=recordMeal(initial,plan,date,0,'alternative',actual);
+  assert.equal(changed.foodPlan.autoAdjust,true);assert.ok(foodDayView(changed,plan,date).adjustments.length>0);
+  assert.equal(replaceLooseFood(initial,[food('bread',40)],'Otra toma').foodPlan.autoAdjust,true);
+  assert.equal(syncFoodRecords(initial,initial.items.map(x=>({...x,grams:x.grams+1}))).autoAdjust,true);
+  assert.equal(initial.foodPlan.autoAdjust,false);
+});
 test('skipping a meal records no consumption and never removes or doubles remaining meals',()=>{
   const {plan,day,date}=setup();const skipped=recordMeal(day,plan,date,0,'skipped');
   assert.equal(skipped.items.length,0);const view=foodDayView(skipped,plan,date);assert.equal(view.pending.length,4);

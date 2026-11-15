@@ -97,4 +97,23 @@
 :root body .raw-shell .today-macro-f progress::-webkit-progress-value{background:#a47179}
 :root body .raw-shell .today-macro-f progress::-moz-progress-bar{background:#a47179}
 @media(max-width:760px){:root body .raw-shell .today-nutrition{padding:18px}}
+/* Daily pictograms and the same quiet meal agenda in Today and Food. */
+:root body .raw-shell .today-meal-art.meal-emoji{font-size:30px;line-height:1;background:radial-gradient(circle,#33443844,transparent 72%);border:0;width:44px;height:48px;filter:drop-shadow(0 2px 3px #0003)}
+:root body .raw-shell .today-agenda-row{grid-template-columns:24px 44px minmax(0,1fr) auto}
+:root body .raw-shell .menu-day-agenda{background:transparent;padding:0}
+:root body .raw-shell .raw-page-heading h1{font-family:inherit;font-size:clamp(28px,3.5vw,38px);font-weight:500;letter-spacing:-1px;text-transform:none;margin:8px 0}
+:root body .raw-shell .today-meal-options{margin-top:10px;padding-top:6px;border-top:1px solid #3b3e3c}
+:root body .raw-shell .today-meal-options>.text-button{display:flex;margin:4px 0}
+:root body .raw-shell .today-meal-options .raw-select-field{margin:12px 0}
+:root body .raw-shell .water-glass{width:25px;height:36px;background:linear-gradient(100deg,#bdcbc3,#e0e9e2 45%,#b9cbc2);box-shadow:inset 0 1px #fff;isolation:isolate}
+:root body .raw-shell .water-glass:after{content:'';position:absolute;inset:4px auto 5px 5px;width:3px;background:#ffffff80;z-index:1;border-radius:4px}
+:root body .raw-shell .today-water .water-glass>span{background:linear-gradient(90deg,#4d8e9f,#82b7c0 55%,#639d9f);border-top:2px solid #c6e4e6}
+:root body .raw-shell .today-water .water-glass>span[style="height: 0%;"]{border:0}
+:root body .raw-shell .water-bottle-button{gap:10px;padding:7px 12px;min-height:58px}
+:root body .raw-shell .water-bottle{display:block;position:relative;width:24px;height:43px;flex-shrink:0;filter:drop-shadow(0 2px 2px #24423720)}
+:root body .raw-shell .water-bottle-cap{position:absolute;width:12px;height:5px;left:6px;top:0;background:#507b65;border-radius:2px 2px 0 0}
+:root body .raw-shell .water-bottle-body{position:absolute;inset:5px 0 0;background:linear-gradient(90deg,#a4bdb4,#edf2eb 40%,#b7ccc1);clip-path:polygon(28% 0,72% 0,74% 12%,100% 25%,100% 94%,87% 100%,13% 100%,0 94%,0 25%,26% 12%);border-radius:7px;overflow:hidden}
+:root body .raw-shell .water-bottle-liquid{position:absolute;inset:13px 2px 2px;background:linear-gradient(90deg,#5896a5,#8dc0c8);border-radius:3px 3px 5px 5px}
+:root body .raw-shell .water-bottle-label{position:absolute;inset:20px 0 8px;background:#f4f2e8b8;border-top:1px solid #fff8;border-bottom:1px solid #fff8}
+@media(max-width:450px){:root body .raw-shell .today-agenda-row{grid-template-columns:22px 38px minmax(0,1fr) auto;gap:8px}:root body .raw-shell .today-meal-art.meal-emoji{width:38px;font-size:29px}}
 @media(max-width:760px){:root body .raw-shell .today-energy.card{padding:10px 0 20px}:root body .raw-shell .today-energy .today-stat-value{font-size:53px}:root body .raw-shell .today-macro.card{padding:0 10px}:root body .raw-shell .today-macro:first-child{padding-left:0}:root body .raw-shell .today-macro .today-stat-value{font-size:24px}:root body .raw-shell .today-macro .today-stat-value small{display:block}}

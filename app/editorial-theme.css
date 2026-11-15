@@ -78,4 +78,19 @@
 :root body .raw-shell .shopping-estimate>span,:root body .raw-shell .shopping-estimate>strong{color:#395f46}
 :root body .raw-shell .more-destinations button{background:#1e2021;color:#a0b3a6;border-color:#3b3e3c;border-radius:var(--editorial-radius)}
 :root body .raw-shell .notice.error{background:#36272b!important;border-color:#956c71!important;color:#efc6cd!important}
+/* Slightly stronger identity accents, confined to small marks and edges. */
+:root body .raw-shell .raw-header.header:after{width:48px;height:3px}
+:root body .raw-shell .today-shortcut>svg,:root body .raw-shell .today-buy>svg,:root body .raw-shell .today-supplement>svg{color:#83b395}
+:root body .raw-shell .today-macro-p progress::-webkit-progress-value{background:#78ae8e}
+:root body .raw-shell .today-macro-p progress::-moz-progress-bar{background:#78ae8e}
+:root body .raw-shell .today-macro-f progress::-webkit-progress-value{background:#b77e86}
+:root body .raw-shell .today-macro-f progress::-moz-progress-bar{background:#b77e86}
+:root body .raw-shell .today-agenda-meal.is-next{box-shadow:inset 0 3px #6dad86}
+:root body .raw-shell .raw-workout-card{box-shadow:inset 0 2px #98666e}
+:root body .raw-shell .raw-workout-card .eyebrow:before{width:6px;height:6px;background:#c18b93}
+:root body .raw-shell .today-water.card{box-shadow:inset 0 -2px #ba9699}
+:root body .raw-shell .today-water .today-section-title svg{color:#4f8262}
+:root body .raw-shell .raw-header nav.raw-nav button[aria-current=page]{box-shadow:inset 0 -2px #6dad86}
+:root body .raw-shell .more-destinations button>svg{color:#83b395}
+:root body .raw-shell .more-destinations button:nth-child(3n)>svg{color:#bf8d94}
 @media(max-width:760px){:root body .raw-shell .today-energy.card{padding:10px 0 20px}:root body .raw-shell .today-energy .today-stat-value{font-size:53px}:root body .raw-shell .today-macro.card{padding:0 10px}:root body .raw-shell .today-macro:first-child{padding-left:0}:root body .raw-shell .today-macro .today-stat-value{font-size:24px}:root body .raw-shell .today-macro .today-stat-value small{display:block}:root body .raw-shell .today-agenda-meal.is-next{padding:17px 14px}:root body .raw-shell .today-agenda-meal.is-next .today-meal-text h3{font-size:25px}}

@@ -1,4 +1,5 @@
 import {competitionPhase} from './competition-phase.ts';
+import {varyBoxingSession} from './boxing-monthly-variation.ts';
 import {allTrainingSessions,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,trainingPlanSchema,updateTrainingConfig,workoutKey,type TrainingConfig,type TrainingData,type TrainingPlan,type TrainingSession,type WorkoutDraft,type WorkoutLog} from './training-model.ts';
 
 export const weekdayOf=(date:string)=>(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
@@ -20,7 +21,7 @@ export function clubForDate(plan:TrainingPlan|undefined,date:string){
 export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]{
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
-  const sessions=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
+  const sessions=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest').map(s=>varyBoxingSession(s,plan.config,date));
   const c=plan.config.sport==='boxing'?plan.config.competition:undefined,phase=c?competitionPhase(c,date):undefined;
   if(!c?.taper||!phase?.active||phase.daysToFight>14)return sessions;
   if(phase.daysToFight<=2||phase.phase==='weigh-in'||phase.phase==='recovery')return [];

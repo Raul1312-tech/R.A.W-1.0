@@ -72,13 +72,12 @@ export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange
   }
   const portion=total([{food:{...s,unit:'por 100 g'},grams:s.amount*(s.unit==='capsules'?s.gramsPerUnit:1)}]);
   const statusField=<SelectField label={'Estado de '+s.name} value={status??(checked?'taken':'')} disabled={disabled} onValueChange={mark}><option value="">Pendiente</option><option value="taken" disabled={conflict}>Tomado</option><option value="skipped">No tomado</option><option value="poor-tolerance">Me sentó mal</option></SelectField>;
-  return <div className={inline?'today-supplement':'habit-row'} key={s.id}>
-   {inline&&<Pill size={20} aria-hidden="true"/>}
-   <div className="today-supplement-copy"><strong>{s.name}</strong><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'}{s.timing==='during'?' · durante el entreno':s.timing==='postworkout'?' · después de entrenar':s.timing==='breakfast'?' · desayuno':' · noche'}{s.kind!=='creatine'?` · ${Math.round(portion.k)} kcal · ${Math.round(portion.p)} g proteína`:''}</small>
-   {inline?<details><summary>Detalles{status==='skipped'?' · no tomado':status==='poor-tolerance'?' · me sentó mal':''}</summary><p>{advice}</p>{statusField}</details>:<p><strong>Mentor:</strong> {advice}</p>}</div>
-   {inline?<button type="button" className={'button outline supplement-check '+(checked?'is-taken':'')} aria-pressed={checked} aria-label={(checked?'Deshacer toma de ':'Marcar como tomado ')+s.name} disabled={disabled||conflict&&!checked} onClick={()=>mark(checked?'':'taken')}>{checked?<><Check size={16}/> Tomado</>:<>Marcar</>}</button>:statusField}
-   {inline&&conflict&&<p className="notice error">Este producto contiene un alérgeno de tu perfil.</p>}
-  </div>;
+  const preview=<><span className="supplement-pictogram" aria-hidden="true">{s.kind==='protein'?'🥤':s.kind==='creatine'?(s.unit==='capsules'?'💊':'🥄'):'🧃'}</span><span className="today-supplement-copy"><strong>{s.name}</strong><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'} · {checked?'Tomado':status==='skipped'?'No tomado':status==='poor-tolerance'?'Me sentó mal':'Pendiente'}</small></span></>;
+  return inline?<div className="today-supplement compact-supplement" key={s.id}>
+   <details key={String(checked)+':'+(status??'pending')} className="supplement-details"><summary>{preview}</summary><div className="supplement-expanded"><p>{s.timing==='during'?'Durante el entreno':s.timing==='postworkout'?'Después de entrenar':s.timing==='breakfast'?'Con el desayuno':'Por la noche'}{s.kind!=='creatine'&&<> · {Math.round(portion.k)} kcal · {Math.round(portion.p)} g proteína</>}</p><p>{advice}</p>{statusField}</div></details>
+   <button type="button" className={'button outline supplement-check '+(checked?'is-taken':'')} aria-pressed={checked} aria-label={(checked?'Deshacer toma de ':'Marcar como tomado ')+s.name} disabled={disabled||conflict&&!checked} onClick={()=>mark(checked?'':'taken')}>{checked?<><Check size={16}/> Tomado</>:<>Marcar</>}</button>
+   {conflict&&<p className="notice error">Este producto contiene un alérgeno de tu perfil.</p>}
+  </div>:<div className="habit-row" key={s.id}><div>{preview}<p><strong>Mentor:</strong> {advice}</p></div>{statusField}</div>;
  })}
  {message&&<p role="status">{message}</p>}</>;
  return inline?<section className="today-supplements" aria-label={postworkout?'Suplementación después de entrenar':'Suplementos de esta comida'}>{content}</section>:<details className="raw-disclosure"><summary><Pill size={16}/> Suplementos de esta comida · {forSlot.length}</summary>{content}</details>;

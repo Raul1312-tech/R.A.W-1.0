@@ -117,3 +117,21 @@
 :root body .raw-shell .water-bottle-label{position:absolute;inset:20px 0 8px;background:#f4f2e8b8;border-top:1px solid #fff8;border-bottom:1px solid #fff8}
 @media(max-width:450px){:root body .raw-shell .today-agenda-row{grid-template-columns:22px 38px minmax(0,1fr) auto;gap:8px}:root body .raw-shell .today-meal-art.meal-emoji{width:38px;font-size:29px}}
 @media(max-width:760px){:root body .raw-shell .today-energy.card{padding:10px 0 20px}:root body .raw-shell .today-energy .today-stat-value{font-size:53px}:root body .raw-shell .today-macro.card{padding:0 10px}:root body .raw-shell .today-macro:first-child{padding-left:0}:root body .raw-shell .today-macro .today-stat-value{font-size:24px}:root body .raw-shell .today-macro .today-stat-value small{display:block}}
+
+/* Selected weekdays and compact supplement previews. */
+:root body .raw-shell .routine-day-picks button[aria-pressed="true"]{background:#244d38!important;color:#f5fbf7!important;border:2px solid #79b98f!important;box-shadow:0 0 0 2px #6dad8622!important;font-weight:800!important}
+:root body .raw-shell .routine-day-picks button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:46px}
+:root body .raw-shell .compact-supplement{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;padding:10px 12px!important;gap:8px!important}
+:root body .raw-shell .supplement-details{min-width:0;width:100%}
+:root body .raw-shell .supplement-details>summary{display:flex!important;align-items:center;gap:10px;list-style:none;cursor:pointer;min-height:44px;color:inherit!important}
+:root body .raw-shell .supplement-details>summary::-webkit-details-marker{display:none}
+:root body .raw-shell .supplement-pictogram{font-size:28px;line-height:1.2;flex:0 0 32px;text-align:center}
+:root body .raw-shell .supplement-expanded{padding:8px 0 4px;font-size:.9rem}
+:root body .raw-shell .supplement-details .today-supplement-copy{min-width:0}
+:root body .raw-shell .supplement-details .today-supplement-copy strong{font-size:.92rem;overflow-wrap:anywhere}
+:root body .raw-shell .compact-supplement>.supplement-check{min-height:44px!important;padding:8px 12px!important;margin-top:0!important}
+:root body .raw-shell .compact-supplement>.notice{grid-column:1/-1}
+:root body .raw-shell .usual-meal-toggle{width:100%;margin:10px 0}
+:root body .raw-shell .usual-meal-picker{display:grid;gap:8px;padding:12px 0}
+:root body .raw-shell .usual-meal-picker button{display:flex;align-items:flex-start;flex-direction:column;text-align:left;gap:5px;white-space:normal}
+:root body .raw-shell .usual-meal-picker small{font-weight:400;color:#a4b4aa}

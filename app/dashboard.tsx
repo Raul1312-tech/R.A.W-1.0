@@ -6,6 +6,7 @@ import BodyMeasures from './body-measures';
 import MoveGymDay from './move-gym-day';
 import TodayNutrition from './today-nutrition';
 import TodayWater from './today-water';
+import BoxingInspiration from './boxing-inspiration';
 import FoodPhoto from './food-photo';
 import {useDisclosureSaveFeedback} from './use-disclosure-save-feedback';
 import {coordinateGymWorkouts} from './gym-coordination';
@@ -209,6 +210,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 {!gym&&(tab==='today'||tab==='menu'||tab==='routine'&&trainingView==='sessions')&&<CompetitionSummary profile={p} date={date} onSettings={()=>openTraining('competition')}/>}
 {tab==='today'&&<>
   <section className="raw-today-intro"><div><span className="eyebrow">{dateLabel}</span><h1>Haz que cuente.</h1><p>Hola, {p.name}.</p></div><button type="button" className="button outline today-buy" disabled={!plan} onClick={()=>setModal('shopping')}><ShoppingBasket size={18}/> Mi compra</button></section>
+  {mode==='boxing'&&<BoxingInspiration key={p.id+':'+date} date={date}/>}
   <div className="today-agenda-layout">
     <div className="today-food-column">
       <TodayNutrition consumed={consumed} target={allowance}/>

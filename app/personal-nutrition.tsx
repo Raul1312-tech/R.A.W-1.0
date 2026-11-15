@@ -14,7 +14,7 @@ export function NutritionHabits({profile:p,plan,disabled,competitionActive=false
  const favoritesDialog=useRef<HTMLDialogElement>(null);
  const [month,setMonth]=useState(new Date().toISOString().slice(0,7)),[message,setMessage]=useState('');
  const fixed=p.preparation?.monthlyMenus?.find(m=>m.month===month);
- return <section className="card personal-nutrition">
+ return <section id="nutrition-habits" className="card personal-nutrition">
  <div className="raw-meal-tools">
    <button type="button" className="button soft" onClick={()=>favoritesDialog.current?.showModal()}><Bookmark size={18}/> Comidas habituales <span className="saved-meals-count">{p.preparation?.favorites?.length??0}</span><ArrowRight size={17}/></button>
    <button type="button" className="button outline" disabled={!plan} onClick={onShopping}><Download size={17}/> Lista de compra</button>
@@ -38,7 +38,7 @@ function SupplementSettings({profile:p,disabled,onChange}:{profile:Profile;disab
  <p><strong>Mentor · {kind==='protein'?'proteína en polvo':kind==='sportsDrink'?'bebida deportiva':'creatina'}.</strong> {supplementAdvice(p,dateKey(),day,example)}</p><p>Creatina: referencia general de mantenimiento de 3–5 g diarios en adultos, sin necesitar carga; los gramos no equivalen al número de pastillas. Comprueba la cantidad real en la etiqueta y revísala con tu profesional, especialmente cerca de un pesaje. No se programa una retirada automática.</p><a href="https://www.ausport.gov.au/ais/nutrition/supplements/group_a/performance-supplements2/creatine" target="_blank" rel="noreferrer">Referencia AIS · creatina ↗</a><p>Revisa la etiqueta y el control de sustancias prohibidas. Los horarios son recordatorios, no tomas obligatorias.</p>
  </details></>;
 }
-export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange,onProfile}:{profile:Profile;date:string;day:Day;slot:number;times:string[];disabled:boolean;onChange:(d:Day)=>void;onProfile:(p:Profile)=>void}){
+export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange,onProfile,inline=false,postworkout=false}:{profile:Profile;date:string;day:Day;slot:number;times:string[];disabled:boolean;onChange:(d:Day)=>void;onProfile:(p:Profile)=>void;inline?:boolean;postworkout?:boolean}){
  const [message,setMessage]=useState('');
  const feedback=p.preparation?.supplementFeedback?.[date]??{};
  const scheduled=supplementsForDay(p,day);
@@ -49,9 +49,9 @@ export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange
  const after=clubTime?.time?times.findIndex(t=>minute(t)>=minute(clubTime.time!)+clubTime.minutes):-1;
  const training=!!club||dailySessions(data,date).length>0||day.minutes>0;
  const before=clubTime?.time?times.findLastIndex(t=>minute(t)<=minute(clubTime.time!)):0;
- const forSlot=visible.filter(s=>slot===(s.timing==='breakfast'?0:s.timing==='evening'?times.length-1:s.timing==='during'?Math.max(0,before):training?(after<0?times.length-1:after):0));
+ const forSlot=visible.filter(s=>postworkout?s.timing==='postworkout':inline&&s.timing==='postworkout'?false:slot===(s.timing==='breakfast'?0:s.timing==='evening'?times.length-1:s.timing==='during'?Math.max(0,before):training?(after<0?times.length-1:after):0));
  if(!forSlot.length)return null;
- return <details className="raw-disclosure"><summary><Pill size={16}/> Suplementos de esta comida · {forSlot.length}</summary>
+ const content=<>
  {forSlot.map(s=>{
   const checked=day.items.some(i=>i.id==='supplement-'+s.id),status=feedback[s.id];
   const conflict=s.allergens.some(a=>p.allergens.includes(a));
@@ -74,8 +74,16 @@ export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange
     setMessage('Registro actualizado.');
    }catch(e){setMessage((e as Error).message)}
   }
-  return <div className="habit-row" key={s.id}><div><strong>{s.name}</strong><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'}{s.timing==='during'?' · durante el entreno · también cuenta en bebidas':s.timing==='postworkout'&&training?' · después de entrenar':''}</small><p><strong>Mentor:</strong> {advice}</p></div>
-   <SelectField label={'Estado de '+s.name} value={status??(checked?'taken':'')} disabled={disabled} onValueChange={mark}><option value="">Pendiente</option><option value="taken" disabled={conflict}>Tomado</option><option value="skipped">No tomado</option><option value="poor-tolerance">Me sentó mal</option></SelectField></div>;
+  const portion=total([{food:{...s,unit:'por 100 g'},grams:s.amount*(s.unit==='capsules'?s.gramsPerUnit:1)}]);
+  const statusField=<SelectField label={'Estado de '+s.name} value={status??(checked?'taken':'')} disabled={disabled} onValueChange={mark}><option value="">Pendiente</option><option value="taken" disabled={conflict}>Tomado</option><option value="skipped">No tomado</option><option value="poor-tolerance">Me sentó mal</option></SelectField>;
+  return <div className={inline?'today-supplement':'habit-row'} key={s.id}>
+   {inline&&<Pill size={20} aria-hidden="true"/>}
+   <div className="today-supplement-copy"><strong>{s.name}</strong><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'}{s.timing==='during'?' · durante el entreno':s.timing==='postworkout'?' · después de entrenar':s.timing==='breakfast'?' · desayuno':' · noche'}{s.kind!=='creatine'?` · ${Math.round(portion.k)} kcal · ${Math.round(portion.p)} g proteína`:''}</small>
+   {inline?<details><summary>Detalles{status==='skipped'?' · no tomado':status==='poor-tolerance'?' · me sentó mal':''}</summary><p>{advice}</p>{statusField}</details>:<p><strong>Mentor:</strong> {advice}</p>}</div>
+   {inline?<button type="button" className={'button outline supplement-check '+(checked?'is-taken':'')} aria-pressed={checked} aria-label={(checked?'Deshacer toma de ':'Marcar como tomado ')+s.name} disabled={disabled||conflict&&!checked} onClick={()=>mark(checked?'':'taken')}>{checked?<><Check size={16}/> Tomado</>:<>Marcar</>}</button>:statusField}
+   {inline&&conflict&&<p className="notice error">Este producto contiene un alérgeno de tu perfil.</p>}
+  </div>;
  })}
- {message&&<p role="status">{message}</p>}</details>;
+ {message&&<p role="status">{message}</p>}</>;
+ return inline?<section className="today-supplements" aria-label={postworkout?'Suplementación después de entrenar':'Suplementos de esta comida'}>{content}</section>:<details className="raw-disclosure"><summary><Pill size={16}/> Suplementos de esta comida · {forSlot.length}</summary>{content}</details>;
 }

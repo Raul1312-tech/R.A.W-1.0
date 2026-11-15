@@ -2,8 +2,8 @@
 
 import {gymSubstitute} from './gym-actions';
 import {editCalendarDay} from './training-calendar-model';
-import {useState} from 'react';
-import {CalendarDays,CheckCircle2,Dumbbell,ArrowRight} from 'lucide-react';
+import {useEffect,useId,useRef,useState} from 'react';
+import {CalendarDays,CheckCircle2,Dumbbell,ArrowRight,X} from 'lucide-react';
 import {trainingDays,type TrainingData,type WorkoutLog,type WorkoutDraft} from './training-model';
 import {clubForDate,dailySessions,planForDate,upcomingTrainingWeek} from './training-calendar-model';
 import WorkoutSession from './workout-session';
@@ -19,13 +19,18 @@ type Props={
 
 export default function DailyTraining({data,date,disabled,compact,clubRecorded,resting,previewOnly,onChange,onLog,onPlan,onOpen,onActivity,onDate}:Props){
   const [selected,setSelected]=useState<string|null>(null);
+  const dialog=useRef<HTMLDialogElement>(null),titleId=useId();
+  const opener=useRef<HTMLElement|null>(null);
   const catalog=useExerciseCatalog();
   const sessions=dailySessions(data,date);
   const plan=planForDate(data,date);
   const gym=plan?.config.sport==='hypertrophy';
   const club=clubForDate(plan,date),technical=club==='sparring'?'Sparring':club==='technique'?'Boxeo técnico':null;
-  const pending=sessions.filter(s=>!s.saved&&(!resting||s.draft));
   const active=sessions.find(s=>s.key===selected);
+  useEffect(()=>{
+    if(compact&&active&&dialog.current&&!dialog.current.open)dialog.current.showModal();
+  },[compact,active?.key]);
+  function close(){dialog.current?.close();setSelected(null);opener.current?.focus()}
   const logs=data.logs.filter(l=>l.date===date);
   const week=compact?[]:upcomingTrainingWeek(data,date);
   const upcoming=week.find(day=>day.date>date&&day.sessions.some(session=>!session.saved));
@@ -35,15 +40,14 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
     onChange({...data,drafts:[...(data.drafts??[]).filter(d=>d.id!==draft.id),draft].slice(-30)});
   }
   function open(entry:(typeof sessions)[number]){
+    opener.current=document.activeElement as HTMLElement|null;
     if(!previewOnly&&!entry.draft&&!entry.saved){
       persist({...makeDraft(entry.key,entry.session),date,planId:entry.plan.id,session:entry.session,runningSince:Date.now()});
     }
     setSelected(entry.key);
   }
 
-  if(!compact&&active)return <section className="raw-training">
-    <button className="text-button" onClick={()=>setSelected(null)}>← Volver a las sesiones</button>
-    {previewOnly?<article className="card raw-training-overview"><span className="eyebrow">SESIÓN PREVISTA · {active.session.minutes} MIN</span>
+  const activeContent=active&&(previewOnly?<article className="card raw-training-overview"><span className="eyebrow">SESIÓN PREVISTA · {active.session.minutes} MIN</span>
       <h2>{active.session.title}</h2><p>{active.session.focus}</p><p><strong>Calentamiento:</strong> {active.session.warmup}</p>
       {active.session.exercises.map(exercise=><section key={exercise.id}><h3>{exercise.name}</h3><p>{exercise.sets} × {exercise.dose} · Descanso: {exercise.rest}</p>
         <ExerciseExplanation exercise={exercise} catalog={catalog}/></section>)}
@@ -55,31 +59,34 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
        const changed=editCalendarDay(active.plan,date.slice(0,7),date,[replacement],'date');
        const drafts=(data.drafts??[]).map(d=>d.id===active.key?{...d,session:replacement}:d);
        onChange({...data,plans:[...data.plans.filter(p=>p.id!==changed.id),changed].slice(-12),drafts});
-      }} onDraft={persist} onSave={log=>{onLog(log);setSelected(null)}} explain={exercise=><ExerciseExplanation exercise={exercise} catalog={catalog}/>}/>
-    }
+      }} onDraft={persist} onSave={log=>{onLog(log);close()}} explain={exercise=><ExerciseExplanation exercise={exercise} catalog={catalog}/>}/>);
+  if(!compact&&active)return <section className="raw-training">
+    <button className="text-button" onClick={close}>← Volver a las sesiones</button>
+    {activeContent}
   </section>;
 
-  return <section className="raw-training" aria-label={compact?'Próximo entreno':'Sesiones del día'}>
-    <div className="raw-section-label"><h2>{compact?'Próximo entreno':'Sesiones del día'}</h2>
-      {!compact&&<button className="text-button" onClick={onPlan}><CalendarDays size={17}/> Ver calendario</button>}
+  return <section className="raw-training" aria-label={compact?'Entrenamiento de hoy':'Sesiones del día'}>
+    <div className="raw-section-label"><h2>{compact?'Tu entrenamiento de hoy':'Sesiones del día'}</h2>
+      <button className="text-button" onClick={onPlan}><CalendarDays size={17}/> {compact?'Mi rutina':'Ver calendario'}</button>
     </div>
     {!compact&&plan&&<p className="raw-routine-ready"><CheckCircle2 size={18}/> Tu rutina está lista</p>}
-    {!(compact?pending.length:sessions.length)&&<article className="card raw-empty">
+    {!sessions.length&&<article className="card raw-empty">
       <Dumbbell size={22}/><h3>{resting?'Hoy descansas':!plan?'Aún no tienes una rutina':technical??(sessions.length?'Entreno completado':(gym?'Descanso del gimnasio':'Día sin físico ni carrera'))}</h3>
       {!compact&&plan&&<p>{resting?'El descanso está aplicado a esta fecha.':technical?'Esta sesión la dirige tu entrenador en el club. El físico y la carrera se organizan en los días de tu plan.':(gym?'No tienes una sesión de gimnasio pendiente en esta fecha.':'No tienes sesiones de físico ni carrera pendientes en esta fecha.')}</p>}
       {!plan&&!resting&&<button className="button outline" onClick={onPlan}>Crear mi rutina <ArrowRight size={16}/></button>}
       {technical&&!resting&&onActivity&&!previewOnly&&<button className="button outline" disabled={disabled} onClick={onActivity}>{clubRecorded?'Revisar':'Registrar'} sesión de {technical==='Sparring'?'sparring':'boxeo'}</button>}
     </article>}
-    {(compact?pending.slice(0,1):sessions).map(entry=>{
+    {sessions.map(entry=>{
       const {session,key,draft,saved}=entry;
       const hiddenByRest=resting&&!draft&&!saved;
       return <article className="card raw-workout-card" key={key}>
         <span className="eyebrow">{saved?'REGISTRADA':draft?'EN CURSO':hiddenByRest?'DESCANSO APLICADO':session.minutes+' MIN APROX.'}</span>
         <h3>{session.title}</h3>
-        {!hiddenByRest&&<button className={'button '+(compact||saved?'outline':'orange')} disabled={disabled} onClick={()=>compact?onOpen?.():open(entry)}>{compact?'Ir al entreno':previewOnly?'Ver sesión':saved?'Revisar sesión':draft?'Continuar sesión':'Empezar sesión'} <ArrowRight size={16}/></button>}
+        {compact&&<p>{session.focus}</p>}
+        {!hiddenByRest&&<button className={'button '+(saved?'outline':'orange')} disabled={disabled} onClick={()=>open(entry)}>{previewOnly?'Ver sesión':saved?'Revisar sesión':draft?'Continuar sesión':compact?'Abrir sesión de hoy':'Empezar sesión'} <ArrowRight size={16}/></button>}
       </article>;
     })}
-    {!compact&&sessions.length>0&&technical&&!resting&&<p className="notice">{technical} previsto. Acuerda el trabajo con tu entrenador. {onActivity&&!previewOnly&&<button className="text-button" disabled={disabled} onClick={onActivity}>{clubRecorded?'Revisar sesión de boxeo':'Registrar sesión de boxeo'}</button>}</p>}
+    {sessions.length>0&&technical&&!resting&&<p className="notice">{technical} previsto. Acuerda el trabajo con tu entrenador. {onActivity&&!previewOnly&&<button className="text-button" disabled={disabled} onClick={onActivity}>{clubRecorded?'Revisar sesión de boxeo':'Registrar sesión de boxeo'}</button>}</p>}
     {!compact&&plan&&<article className="card raw-training-overview">
       <h3>Tu semana de entrenamiento</h3>
       {upcoming&&<p>Próximo entreno · <strong>{trainingDays[upcoming.day]}</strong>: {upcoming.sessions.filter(session=>!session.saved).map(({session})=>session.title).join(' y ')}.</p>}
@@ -95,5 +102,10 @@ export default function DailyTraining({data,date,disabled,compact,clubRecorded,r
       <button className="button outline" onClick={onPlan}><CalendarDays size={17}/> {weekSessions.length?'Ver o ajustar mi rutina':(gym?'Añadir días de gimnasio':'Añadir días de físico y carrera')}</button>
     </article>}
     {!compact&&logs.length>0&&<details className="card raw-disclosure"><summary>Entrenos registrados · {logs.reduce((n,l)=>n+l.minutes,0)} min</summary>{logs.map(log=><details key={log.id}><summary>{log.title} · {log.minutes} min</summary>{log.entries.filter(e=>e.sets>0).map(e=><p key={e.exerciseId}>{e.name} · {e.sets} series · {e.actual}{e.kg!==null?' · '+e.kg+' kg':''}</p>)}</details>)}</details>}
+    {compact&&active&&<dialog ref={dialog} className="raw-dialog today-workout-dialog" aria-labelledby={titleId} onCancel={e=>{e.preventDefault();close()}} onClose={()=>setSelected(null)}>
+      <header><div><span className="eyebrow">{date} · REGISTRO DE ENTRENAMIENTO</span><h2 id={titleId}>{active.session.title}</h2></div><button type="button" className="icon-button" aria-label="Cerrar entrenamiento" onClick={close}><X size={22}/></button></header>
+      <p className="muted">Tu progreso se guarda al marcar las series. Puedes cerrar y continuar después.</p>
+      {activeContent}
+    </dialog>}
   </section>;
 }

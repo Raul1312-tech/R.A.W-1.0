@@ -1,7 +1,7 @@
 'use client';
 import SelectField from './select-field';
 import {useEffect,useRef,useState,useMemo} from 'react';
-import {BookOpen,CalendarDays,ArrowUpRight,ArrowRight,Plus,Check,RefreshCw,Utensils,Droplets,Footprints,Dumbbell,TrendingUp,Settings,Download,Trash2,X,Save,LogIn,Sun,ChartNoAxesCombined} from 'lucide-react';
+import {BookOpen,CalendarDays,ArrowUpRight,ArrowRight,Plus,Check,RefreshCw,Utensils,Droplets,Footprints,Dumbbell,TrendingUp,Settings,Download,ShoppingBasket,Trash2,X,Save,LogIn,Sun,ChartNoAxesCombined} from 'lucide-react';
 import BodyMeasures from './body-measures';
 import MoveGymDay from './move-gym-day';
 import TodayNutrition from './today-nutrition';
@@ -38,7 +38,7 @@ import DailyMeals from './daily-meals';
 import FoodPreferencesEditor from './food-preferences-editor';
 import {BaselineReview,DayPreparation} from './preparation-tools';
 import {withCoordinatedDay} from './preparation-engine';
-import {NutritionHabits} from './personal-nutrition';
+import {NutritionHabits,MealSupplements} from './personal-nutrition';
 import {planForFoodDate,applyRepeats} from './preparation-model';
 import dynamic from 'next/dynamic';
 const ProgressPhotos=dynamic(()=>import('./progress-photos'),{loading:()=><p role="status">Abriendo tu álbum…</p>});
@@ -49,13 +49,13 @@ import {stateSchema} from './validation';
 import {readDemo,writeDemo} from '../lib/demo-storage';
 import {weekdays,planDays,allPlanItems,foodById,total,targets,generatePlan,updateMenuSelection,initialState,newProfile,emptyDay,dateKey,weightTrend,type State,type Profile,type Day,type Item,type Meal,type Plan,type Macro,type Food} from './model';
 const FoodGrid=dynamic(()=>import('./food-grid'),{loading:()=><p role="status">Abriendo alimentos…</p>});
-type Tab='today'|'menu'|'routine'|'journal'|'progress'|'learn'|'profile';
+type Tab='today'|'menu'|'routine'|'journal'|'progress'|'learn'|'profile'|'more';
 const tabs:{id:Tab;name:string;icon:typeof Sun}[]=[
   {id:'today',name:'Hoy',icon:Sun},
   {id:'menu',name:'Comidas',icon:Utensils},
-  {id:'routine',name:'Entreno',icon:Dumbbell},
+  {id:'routine',name:'Rutina',icon:Dumbbell},
   {id:'progress',name:'Progreso',icon:TrendingUp},
-  {id:'learn',name:'Aprende',icon:BookOpen},
+  {id:'more',name:'Más',icon:Settings},
 ];
 const round=(n:number)=>Math.round(n).toLocaleString('es-ES');
 const dec=(n:number)=>n.toLocaleString('es-ES',{maximumFractionDigits:1});
@@ -122,6 +122,7 @@ function logWorkout(log:WorkoutLog){
   const journal=latest.days[log.date]??emptyDay(latest);
   const result=reconcileWorkout(latest.workouts?.logs??[],log,journal.minutes);
   changeProfile({...latest,workouts:{...latest.workouts,plans:latest.workouts?.plans??[],logs:result.logs,drafts:(latest.workouts?.drafts??[]).filter(d=>d.id!==log.id)},days:{...latest.days,[log.date]:{...journal,minutes:result.minutes}}});
+  setToast('Entrenamiento registrado.');
 }
 function changeProfile(next:Profile){const planned=replanCompetition(next,dateKey());change({...current.current,profiles:current.current.profiles.map(x=>x.id===next.id?planned:x)})}
 function saveOnboardingDraft(draft:OnboardingDraft){
@@ -172,13 +173,13 @@ const dateInput=<input aria-label="Fecha del registro" className="date-input" ty
 const head=(eyebrow:string,title:string,copy:string)=><div className="section-head"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{copy}</p></div>{tab==='journal'?dateInput:null}</div>;
 function openTab(next:Tab){
   if(next==='today')setDate(dateKey());
-  if(next==='routine'){setTrainingView('sessions');setGymCalendarOpen(false);setDate(dateKey())}
+  if(next==='routine'){setTrainingView('calendar');setGymCalendarOpen(false);setDate(dateKey())}
   setTab(next);
   window.scrollTo({top:0});
 }
 function openTraining(view:typeof trainingView){
   setTab('routine');
-  setTrainingView(gym&&view==='calendar'?'sessions':view);
+  setTrainingView(view);
   if(gym&&view==='calendar')setGymCalendarOpen(true);
   window.scrollTo({top:0});
 }
@@ -196,7 +197,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 <header className="header raw-header">
   <a className="brand" href="#" onClick={e=>{e.preventDefault();openTab('today')}}><Brand modality={mode}/></a>
   <nav className="raw-nav" aria-label="Navegación principal">{tabs.map(({id,name,icon:Icon})=>{
-    const active=tab===id||(id==='progress'&&tab==='journal');
+    const active=tab===id||(id==='progress'&&tab==='journal')||(id==='more'&&(tab==='learn'||tab==='profile'));
     return <button key={id} className={active?'active':''} aria-current={active?'page':undefined} onClick={()=>openTab(id)}><Icon size={21}/><span>{name}</span></button>;
   })}</nav>
   <button className="profile-btn" onClick={()=>openTab('profile')} aria-label="Mi perfil" aria-current={tab==='profile'?'page':undefined}><span>{p.name.slice(0,1).toUpperCase()}</span><b>Perfil</b><Settings size={17}/></button>
@@ -208,7 +209,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 {!p.confirmed&&tab!=='profile'&&<div className="notice raw-setup-notice"><span>Completa tu perfil para preparar tu plan.</span><button className="text-button" onClick={()=>openTab('profile')}>Configurar perfil <ArrowRight size={16}/></button></div>}
 {!gym&&(tab==='today'||tab==='menu'||tab==='routine'&&trainingView==='sessions')&&<CompetitionSummary profile={p} date={date} onSettings={()=>openTraining('competition')}/>}
 {tab==='today'&&<>
-  <section className="raw-today-intro"><span className="eyebrow">{dateLabel}</span><h1>Hoy</h1><p>Hola, {p.name}.</p></section>
+  <section className="raw-today-intro"><div><span className="eyebrow">{dateLabel}</span><h1>Tu día. A por ello.</h1><p>Hola, {p.name}.</p></div><button type="button" className="button outline today-buy" disabled={!plan} onClick={()=>setModal('shopping')}><ShoppingBasket size={18}/> Mi compra</button></section>
   <div className="today-agenda-layout">
     <div className="today-food-column">
       <TodayNutrition consumed={consumed} target={allowance}/>
@@ -216,13 +217,15 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
         <FoodPhoto key={p.id+':photo:'+date} compact disabled={actionsDisabled} onReady={(items,message)=>{setQuickMeal(nextMealLabel);setQuickInitial(items);setQuickNotice('Estimación por foto · revisa alimentos y cantidades. '+message);setModal('food')}}/>
         <button className="button outline today-shortcut" disabled={actionsDisabled} onClick={()=>{setQuickMeal(nextMealLabel);setQuickInitial([]);setQuickNotice('');setModal('food')}}><Utensils size={21}/>Otra comida</button>
         <button className="button outline today-shortcut" disabled={actionsDisabled} onClick={()=>setModal('activity')}><Plus size={21}/>Otro registro</button>
+        <button className="button outline today-shortcut" disabled={!plan} onClick={()=>setModal('shopping')}><ShoppingBasket size={21}/>Mi compra</button>
       </section>
       <div className="card today-food-agenda">{dailyMeals(false,true)}</div>
       <button className="text-button today-menu-link" onClick={()=>openTab('menu')}>Personalizar mis comidas <ArrowRight size={16}/></button>
     </div>
     <aside className="today-activity-column">
-      <TodayWater profile={p} date={date} day={day} disabled={actionsDisabled} onChange={changeFoodDay}/>
       {dailyTraining(true)}
+      <MealSupplements profile={p} date={date} day={day} slot={0} times={[]} disabled={actionsDisabled||date>dateKey()} onChange={changeFoodDay} onProfile={changeProfile} inline postworkout/>
+      <TodayWater profile={p} date={date} day={day} disabled={actionsDisabled} onChange={changeFoodDay}/>
       <button className="text-button" onClick={()=>openTab('journal')}>Ver registro del día <ArrowRight size={16}/></button>
     </aside>
   </div>
@@ -236,6 +239,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
 </>}
 {tab==='menu'&&<>
   <section className="raw-page-heading"><div><span className="eyebrow">TU PLAN DE ALIMENTACIÓN</span><h1>Comidas</h1></div>{dateInput}</section>
+  <nav className="meal-plan-shortcuts" aria-label="Herramientas de mi dieta"><button type="button" className="button orange" disabled={!plan} onClick={()=>setModal('shopping')}><ShoppingBasket size={19}/> Mi compra</button><button type="button" className="button outline" onClick={()=>document.getElementById('nutrition-habits')?.scrollIntoView({behavior:'smooth',block:'start'})}>Mis habituales y suplementos</button></nav>
   {p.confirmed&&plan&&!datedCompetition&&<ChangeDayPlan key={p.id+':'+date} profile={p} date={date} disabled={actionsDisabled} onChange={changeProfile}/>}
   {datedCompetition&&<p className="raw-situation-tag">El plan de competición organiza las comidas de esta fecha.</p>}
   <div id="raw-day-meals">{dailyMeals()}</div>
@@ -267,6 +271,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
     <MoveGymDay data={p.workouts??{plans:[],logs:[]}} from={date} today={dateKey()} onChange={changeWorkouts} disabled={actionsDisabled}/>
   </>}
 </>}
+{tab==='more'&&<><section className="raw-page-heading"><div><span className="eyebrow">TUS HERRAMIENTAS</span><h1>Todo a mano.</h1></div></section><div className="more-destinations"><button type="button" onClick={()=>setModal('shopping')} disabled={!plan}><ShoppingBasket size={24}/><strong>Lista de la compra</strong><span>Productos, presupuesto y descarga</span></button><button type="button" onClick={()=>openTab('menu')}><Utensils size={24}/><strong>Habituales y suplementos</strong><span>Organiza tu alimentación</span></button><button type="button" onClick={()=>openTraining('calendar')}><CalendarDays size={24}/><strong>Calendario de entrenamiento</strong><span>Tu preparación a largo plazo</span></button><button type="button" onClick={()=>openTab('learn')}><BookOpen size={24}/><strong>Aprende</strong><span>Nutrición, entrenamiento y hábitos</span></button><button type="button" onClick={()=>openTab('profile')}><Settings size={24}/><strong>Mi perfil y objetivos</strong><span>Preferencias y configuración</span></button><button type="button" onClick={()=>openTab('journal')}><TrendingUp size={24}/><strong>Historial diario</strong><span>Consulta y corrige tus registros</span></button></div></>}
 {tab==='learn'&&<Learn profile={p} target={t}/>}
 {tab==='profile'&&<>{head('TU ESPACIO',onboardingVisible?'Configura tu perfil':'Perfil',onboardingVisible?'Personaliza tu alimentación y tu entrenamiento.':'Ajusta tus datos y tus preferencias.')}<div className="profile-select card"><SelectField label="Perfil activo" value={p.id} onValueChange={selection=>{change({...state,active:selection});setHistoryPlan('')}}>{state.profiles.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</SelectField><button className="button outline" disabled={actionsDisabled||state.profiles.length>=20} onClick={()=>setModal('profileNew')}><Plus size={17}/> Otra persona</button><span className="muted">{demo?'Perfiles de prueba independientes en este navegador.':'Cada deportista conserva sus propios datos dentro de tu cuenta.'}</span></div>{
   onboardingVisible?<ProfileOnboarding key={'onboarding-'+p.id} profile={storedProfile} disabled={actionsDisabled}
@@ -274,7 +279,7 @@ return <div className={'raw-shell '+(gym?'gym-mode':'boxing-mode')}>
     onComplete={next=>{changeProfile(next);setEditingOnboarding(undefined);setHistoryPlan('');setToast('Tu plan inicial está listo.');openTab('today')}}/>:
     <><button className="button outline" onClick={()=>setEditingOnboarding(p.id)}>{p.onboarding?.draft?'Retomar onboarding':'Revisar onboarding'}</button><ProfileSetup key={p.id} profile={p} disabled={actionsDisabled} demo={demo} onSave={next=>{changeProfile(next);setHistoryPlan('');setToast('Perfil guardado. Tu menú está listo.');openTab('today')}}/></>
 }<div className="utility raw-account"><span><i className={'status-dot '+(dirty?'pending':'')}/>{status}</span><details className="data-tools"><summary>Mi cuenta y mis datos</summary><div><button className="text-button" disabled={actionsDisabled} onClick={()=>importInput.current?.click()}>Importar historial</button><button className="text-button" onClick={()=>download('raw-historial.json',JSON.stringify(state,null,2))}><Download size={14}/> Exportar datos</button>{dirty&&readyRef.current&&<button className="text-button" onClick={()=>void save()}><Save size={14}/> Reintentar guardado</button>}<>{demo?<button className="text-button" disabled={dirty} onClick={()=>window.location.assign('/login')}>Acceder a mi cuenta</button>:<form action="/auth/signout" method="post"><button className="text-button" disabled={dirty} title={dirty?'Guarda o exporta tus cambios antes de salir':'Cerrar sesión'}>Salir</button></form>}</></div></details><button className="text-button" onClick={()=>openTab('learn')}>Guías y referencias</button></div></>}
-<footer><a className="brand" href="#" onClick={e=>{e.preventDefault();openTab('today')}}><Brand onLight modality={mode}/></a><p>Disciplina. Oficio. Evolución.</p><span>Orientación nutricional para adultos · Referencias en Aprende</span></footer></main>
+<footer><a className="brand" href="#" onClick={e=>{e.preventDefault();openTab('today')}}><Brand modality={mode}/></a><p>Disciplina. Oficio. Evolución.</p><span>Orientación nutricional para adultos · Referencias en Aprende</span></footer></main>
 {toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}
 {(modal||pendingPlan||pendingMeal)&&<div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget){setModal(null);setPendingPlan(null);setPendingMeal(null)}}}><section className="modal" role="dialog" aria-modal="true" aria-label={pendingPlan?'Revisar nuevo menú':pendingMeal?'Registrar comida':'Formulario'}><button className="modal-close icon-button" aria-label="Cerrar" onClick={()=>{setModal(null);setPendingPlan(null);setPendingMeal(null)}}><X/></button>
 {pendingPlan&&<><span className="eyebrow">VARIEDAD CON LA MISMA ESTRATEGIA</span><h2>Revisa el cambio.</h2><p>Se conserva el resto de la semana y sus objetivos. El cambio quedará en el historial.</p>{planDays(pendingPlan).map((d,di)=><div className="preview-meal" key={d.day}><b>{d.day}</b><MacroLine m={total(d.meals.flatMap(m=>m.items))}/>{d.meals.map((m,i)=><small key={i}>{mealLabelsFor(d.meals.length)[i]}: {m.name}{plan?.week?.[di]?.meals[i].name!==m.name?' · NUEVO':''}</small>)}</div>)}<button className="button orange full" onClick={()=>setPlan(pendingPlan)}>Aplicar cambio <Check size={18}/></button></>}

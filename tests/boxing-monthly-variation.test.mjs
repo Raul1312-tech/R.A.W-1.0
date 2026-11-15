@@ -39,6 +39,8 @@ test('manual overrides, loaded prescriptions and started sessions remain pinned;
  let draft={...makeDraft(workoutKey(p.id,session,date),session),planId:p.id,date,session};draft=toggleSet(draft,session,session.exercises[0].id,0);
  assert.deepEqual(dailySessions({plans:[p],logs:[],drafts:[draft]},date)[0].session,session);
  p.sessions[1].exercises[0].plannedKg=15;
+ const last=p.sessions[1].exercises.at(-1);last.plannedKg=20;
+ for(const d of dates){const ex=sessionsForDate(p,d)[0].exercises;assert.equal(new Set(ex.map(e=>e.id)).size,ex.length);assert.deepEqual(ex.at(-1),last)}
  assert.deepEqual(sessionsForDate(p,dates[2])[0].exercises[0],p.sessions[1].exercises[0]);
  const gym=monthly({...defaultTrainingConfig(),days:[1,3]});assert.deepEqual(sessionsForDate(gym,dates[0]),sessionsForDate(gym,dates[2]));
 });

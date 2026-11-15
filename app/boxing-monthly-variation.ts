@@ -11,12 +11,13 @@ export function varyBoxingSession(session:TrainingSession,config:TrainingConfig,
   if(config.equipment==='dumbbells')kit.add('dumbbells');
   if(config.medicineBall)kit.add('medicineBall');
   const level=config.level==='beginner'?1:config.level==='intermediate'?2:3;
+  const reserved=new Set(session.exercises.filter(ex=>ex.plannedKg!=null).map(ex=>findExerciseRecord(ex)?.id));
   const used=new Set<string>();
   const exercises=session.exercises.map(ex=>{
     const original=findExerciseRecord(ex);
     // Keep an individually prescribed load or unfamiliar/custom movement intact.
     if(!original?.category||!original.pattern||ex.plannedKg!=null){if(original)used.add(original.id);return ex}
-    const pool=boxingPhysicalCatalog.filter(r=>r.category===original.category&&r.pattern===original.pattern&&
+    const pool=boxingPhysicalCatalog.filter(r=>!reserved.has(r.id)&&r.category===original.category&&r.pattern===original.pattern&&
       (r.minLevel??1)<=level&&(r.equipment??[]).every(k=>kit.has(k))&&
       !(config.phase==='deload'&&r.impact==='high')&&!(config.excludedExercises??[]).some(id=>id===r.id||id==='boxing-'+r.id));
     const index=pool.findIndex(r=>r.id===original.id);

@@ -1,5 +1,6 @@
 import {competitionPhase} from './competition-phase.ts';
 import {varyBoxingSession} from './boxing-monthly-variation.ts';
+import {recognizeCopiedWeeks} from './training-override-origin.ts';
 import {allTrainingSessions,boxingSchedule,defaultTrainingConfig,generateTrainingPlan,trainingPlanSchema,updateTrainingConfig,workoutKey,type TrainingConfig,type TrainingData,type TrainingPlan,type TrainingSession,type WorkoutDraft,type WorkoutLog} from './training-model.ts';
 
 export const weekdayOf=(date:string)=>(new Date(date+'T12:00:00Z').getUTCDay()+6)%7;
@@ -11,7 +12,8 @@ export function monthDates(month:string){
 }
 export function planForDate(data:TrainingData,date:string){
   const monthly=data.plans.filter(p=>p.month===date.slice(0,7)).at(-1);
-  return monthly??(data.plans.some(p=>p.month)?undefined:data.plans.at(-1));
+  const chosen=monthly??(data.plans.some(p=>p.month)?undefined:data.plans.at(-1));
+  return chosen?recognizeCopiedWeeks(chosen,data.plans):undefined;
 }
 export function clubForDate(plan:TrainingPlan|undefined,date:string){
   if(plan?.config.sport!=='boxing')return undefined;
@@ -21,7 +23,8 @@ export function clubForDate(plan:TrainingPlan|undefined,date:string){
 export function sessionsForDate(plan:TrainingPlan,date:string):TrainingSession[]{
   if(plan.month&&plan.month!==date.slice(0,7))return [];
   const override=plan.overrides?.find(o=>o.date===date);
-  const sessions=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest').map(s=>varyBoxingSession(s,plan.config,date));
+  const base=override?override.sessions:allTrainingSessions(plan).filter(s=>s.day===weekdayOf(date)&&s.kind!=='rest');
+  const sessions=override&&override.source!=='weekly-copy'?base:base.map(s=>varyBoxingSession(s,plan.config,date));
   const c=plan.config.sport==='boxing'?plan.config.competition:undefined,phase=c?competitionPhase(c,date):undefined;
   if(!c?.taper||!phase?.active||phase.daysToFight>14)return sessions;
   if(phase.daysToFight<=2||phase.phase==='weigh-in'||phase.phase==='recovery')return [];
@@ -49,14 +52,14 @@ export function reschedulePlan(plan:TrainingPlan,selection:TrainingConfig,month:
       else next.extraSessions![next.extraSessions!.findIndex(e=>e.day===s.day)]=moved;
     }
   }
-  const overrides=plan.month===month?(plan.overrides??[]).map(o=>({date:o.date,sessions:[...o.sessions.filter(s=>!changedKinds.has(s.kind)),...sessionsForDate(next,o.date).filter(s=>changedKinds.has(s.kind))]})):[];
+  const overrides=plan.month===month?(plan.overrides??[]).map(o=>({date:o.date,source:'dated-copy' as const,sessions:[...sessionsForDate(plan,o.date).filter(s=>!changedKinds.has(s.kind)),...sessionsForDate(next,o.date).filter(s=>changedKinds.has(s.kind))]})):[];
   return trainingPlanSchema.parse({...next,overrides,clubOverrides:plan.month===month?plan.clubOverrides:undefined});
 }
 export function editCalendarDay(plan:TrainingPlan,month:string,date:string,sessions:TrainingSession[],scope:'date'|'weekday'){
   if(!monthDates(month).includes(date))throw new Error('La fecha no pertenece al mes.');
   const dates=scope==='date'?[date]:monthDates(month).filter(d=>weekdayOf(d)===weekdayOf(date));
   // Converting a legacy weekly plan creates a new monthly identity; old session keys remain valid.
-  return trainingPlanSchema.parse({...plan,id:plan.month?plan.id:crypto.randomUUID(),month,overrides:[...(plan.overrides??[]).filter(o=>!dates.includes(o.date)),...dates.map(d=>({date:d,sessions:structuredClone(sessions).map(s=>({...s,day:weekdayOf(d)}))}))]});
+  return trainingPlanSchema.parse({...plan,id:plan.month?plan.id:crypto.randomUUID(),month,overrides:[...(plan.overrides??[]).filter(o=>!dates.includes(o.date)),...dates.map(d=>({date:d,source:'manual',sessions:structuredClone(sessions).map(s=>({...s,day:weekdayOf(d)}))}))]});
 }
 export const sessionSlot=(session:TrainingSession)=>session.kind==='conditioning'?'running':'physical';
 export function monthlyLoadWarnings(plan:TrainingPlan,month:string){
@@ -116,7 +119,7 @@ export function refreshBoxingCatalog(data:TrainingData,today:string):TrainingPla
  const next={...generateTrainingPlan({...old.config,catalogVersion:2}),month};
  const overrides=monthDates(month).flatMap(date=>{
   const explicit=old.overrides?.find(o=>o.date===date);
-  return explicit?[structuredClone(explicit)]:date<today?[{date,sessions:structuredClone(sessionsForDate(old,date))}]:[];
+  return explicit?[structuredClone(explicit)]:date<today?[{date,source:old.config.catalogVersion===2?'dated-copy' as const:'weekly-copy' as const,sessions:structuredClone(sessionsForDate(old,date))}]:[];
  });
  return trainingPlanSchema.parse({...next,overrides,clubOverrides:old.clubOverrides});
 }

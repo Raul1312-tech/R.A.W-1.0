@@ -8,3 +8,9 @@
 - La variedad disponible depende del material y del número de alternativas compatibles; no se promete un ejercicio distinto para cada fecha cuando el catálogo no lo permite. Cuello usa las variantes actuales ilustradas, sin inventar cargas ni puentes cervicales.
 
 Validación: 202 pruebas, comprobación TypeScript, compilación de producción y revisión visual del guardado de habituales, suplementos y selección de días.
+
+## Corrección de copias semanales antiguas
+
+La renovación antigua del catálogo copiaba todos los días previos a la fecha de renovación como excepciones sin indicar su origen. Esas copias impedían la variedad entre semanas. Ahora se distinguen ediciones manuales, copias de una semana base y sesiones ya calculadas para una fecha. Para datos antiguos, solo se reconocen automáticamente prefijos completos de al menos siete días que coincidan exactamente con una misma semana anterior. Los casos ambiguos se conservan. La recuperación se aplica al leer el plan, sin cambiar registros de ejecución ni requerir regenerar el mes.
+
+Comprobado el caso del físico C repetido en los sábados 7 y 14 de noviembre; el enfoque se conserva y las listas cambian. Pasan 205 pruebas, TypeScript y compilación de producción.

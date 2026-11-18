@@ -11,6 +11,7 @@ const stamp=(input:unknown)=>{let h=2166136261;for(const char of JSON.stringify(
 
 /** Competition takes precedence over ordinary pending plans. Actual records remain immutable. */
 export function replanCompetition(p:Profile,today:string):Profile{
+ if(p.athlete?.sport==='strength')return p;
  if(!/^\d{4}-\d{2}-\d{2}$/.test(today))return p;
  const c=p.preparation?.competition,days={...p.days};let changed=false;
  for(const [dt,d] of Object.entries(days))if(dt>=today&&d.competition&&(!c||!competitionPhase(c,dt).active)&&!hasNutritionRecords(d)){
@@ -48,6 +49,7 @@ export function replanCompetition(p:Profile,today:string):Profile{
  return changed?{...p,days,workouts}:p;
 }
 export function competitionWeek(p:Profile,date:string):{plan:Plan;dates:string[]}|undefined{
+ if(p.athlete?.sport==='strength')return undefined;
  const c=p.preparation?.competition;if(!c||!date||!competitionPhase(c,date).active)return;
  const weekday=(new Date(date+'T12:00:00Z').getUTCDay()+6)%7,monday=shift(date,-weekday),dates=Array.from({length:7},(_,i)=>shift(monday,i));
  const reference=p.plans.at(-1);if(!reference)return;

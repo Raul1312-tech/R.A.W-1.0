@@ -30,7 +30,7 @@ export function foodSnapshot(day:Day,plan:Plan|undefined,date:string):DailyFoodP
 }
 const fixedFoods=new Set(['veg','tomato','broccoli','carrot','zucchini','pepper','spinach','greenbeans','banana','apple','orange','pear','kiwi','berries']);
 const keys=['k','p','c','f'] as const;
-/** Bounded same-day portion adjustment. ±20% is a product limit, not a clinical prescription. */
+/** Same-day multi-nutrient fit. Portion and meal limits are product guardrails, not prescriptions. */
 export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   const snapshot=foodSnapshot(day,plan,date);if(!snapshot)return undefined;
   const meals=structuredClone(snapshot.meals);
@@ -48,25 +48,39 @@ export function foodDayView(day:Day,plan:Plan|undefined,date:string){
   const baseline=projected();
   const hasAlternatives=!!day.nutrition||snapshot.records.some(r=>r.status!=='planned')||day.items.some(it=>!snapshot.records.some(r=>r.itemIds.includes(it.id)));
   const denominators=[Math.max(500,day.target.k),Math.max(30,day.target.p),Math.max(50,day.target.c),Math.max(20,day.target.f)];
-  const weights=[1.5,1,.7,.7];
+  const weights=[2,2,1,1];
   const score=(macro:Macro)=>keys.reduce((n,k,i)=>n+weights[i]*((macro[k]-day.target[k])/denominators[i])**2,0);
   if(snapshot.autoAdjust&&hasAlternatives&&eligible.length){
-    const vars=eligible.flatMap(slot=>meals[slot].items.flatMap((it,index)=>fixedFoods.has(it.food.id)?[]:[{slot,index,grams:it.grams,scale:1,a:keys.map((k,i)=>it.food[k]*it.grams/100/denominators[i])}]));
-    const residual=keys.map((k,i)=>(day.target[k]-baseline[k])/denominators[i]);const regularization=.003;
-    for(let pass=0;pass<50;pass++)for(const v of vars){
+    const mealEnergy=meals.map(m=>total(m.items).k),originalEnergy=[...mealEnergy];
+    const vars=eligible.flatMap(slot=>meals[slot].items.flatMap((it,index)=>{
+      if(fixedFoods.has(it.food.id)||it.grams<=0)return [];
+      const cap=it.food.f>70?45:it.food.f>30?100:it.food.p>15?400:it.food.c>55?250:800;
+      return [{slot,index,grams:it.grams,scale:1,max:Math.min(2,Math.max(it.grams,cap)/it.grams),energy:it.food.k*it.grams/100,a:keys.map((k,i)=>it.food[k]*it.grams/100/denominators[i])}];
+    }));
+    const residual=keys.map((k,i)=>(day.target[k]-baseline[k])/denominators[i]);const regularization=.00002;
+    for(let pass=0;pass<400;pass++)for(const v of vars){
       const numerator=v.a.reduce((n,a,i)=>n+weights[i]*a*residual[i],0)+regularization*(1-v.scale);
       const denominator=v.a.reduce((n,a,i)=>n+weights[i]*a*a,0)+regularization;
-      const next=Math.max(.8,Math.min(1.2,v.scale+numerator/denominator));
+      const other=mealEnergy[v.slot]-v.energy*v.scale;
+      const min=v.energy>0?Math.max(.5,(originalEnergy[v.slot]*.6-other)/v.energy):.5;
+      const max=v.energy>0?Math.min(v.max,(originalEnergy[v.slot]*1.75-other)/v.energy):v.max;
+      const next=Math.max(min,Math.min(max,v.scale+numerator/denominator));
+      mealEnergy[v.slot]+=v.energy*(next-v.scale);
       for(let i=0;i<4;i++)residual[i]-=v.a[i]*(next-v.scale);v.scale=next;
     }
-    for(const v of vars){const min=Math.min(v.grams,Math.ceil(v.grams*.8)),max=Math.max(v.grams,Math.floor(v.grams*1.2));meals[v.slot].items[v.index].grams=Math.min(max,Math.max(min,Math.round(v.grams*v.scale)))}
+    for(const v of vars){const min=Math.min(v.grams,Math.ceil(v.grams*.5)),max=Math.max(v.grams,Math.floor(v.grams*v.max));meals[v.slot].items[v.index].grams=Math.min(max,Math.max(min,Math.round(v.grams*v.scale)))}
     if(score(projected())>=score(baseline)-.00001)for(const slot of eligible)meals[slot]=structuredClone(snapshot.meals[slot]);
   }
   const adjustments=pending.flatMap(slot=>meals[slot].items.flatMap((it,i)=>it.grams!==snapshot.meals[slot].items[i].grams?[{slot,name:it.food.name,before:snapshot.meals[slot].items[i].grams,after:it.grams}]:[]));
-  return {snapshot,meals,recorded,projected:projected(),adjustments,pending,cursor,finished:pending.length===0};
+  const forecast=projected();
+  const remaining=Object.fromEntries(keys.map(k=>[k,day.target[k]-forecast[k]])) as Macro;
+  const balanced=keys.every(k=>Math.abs(remaining[k])<=Math.max(k==='k'?50:5,day.target[k]*.05));
+  return {snapshot,meals,recorded,projected:forecast,remaining,balanced,adjustments,pending,cursor,finished:pending.length===0};
 }
 export function recordMeal(day:Day,plan:Plan|undefined,date:string,slot:number,status:MealRecord['status'],items?:Item[]):Day{
-  const view=foodDayView(day,plan,date);if(!view||!view.meals[slot])throw new Error('No hay una comida prevista para este día.');
+  // A new manual/photo meal resumes automatic balancing, including older disabled snapshots.
+  const source=status==='alternative'&&day.foodPlan?{...day,foodPlan:{...day.foodPlan,autoAdjust:true}}:day;
+  const view=foodDayView(source,plan,date);if(!view||!view.meals[slot])throw new Error('No hay una comida prevista para este día.');
   const snapshot=view.snapshot;const old=snapshot.records.find(r=>r.slot===slot);
   // A repeated one-tap confirmation is idempotent, including very quick double taps.
   if(status==='planned'&&old?.status==='planned')return day;
@@ -86,11 +100,11 @@ export function undoMeal(day:Day,slot:number):Day{
 export function replaceLooseFood(day:Day,items:Item[],meal:string):Day{
   if(!items.length||items.length>20||items.some(it=>!Number.isFinite(it.grams)||it.grams<.1||it.grams>3000))throw new Error('Revisa los alimentos y las cantidades.');
   if(day.items.length+items.length>200)throw new Error('Este día ha alcanzado el límite de alimentos.');
-  return {...day,complete:false,items:[...day.items,...items.map(it=>({...structuredClone(it),id:crypto.randomUUID(),meal}))]};
+  return {...day,complete:false,foodPlan:day.foodPlan?{...day.foodPlan,autoAdjust:true}:undefined,items:[...day.items,...items.map(it=>({...structuredClone(it),id:crypto.randomUUID(),meal}))]};
 }
 export function syncFoodRecords(day:Day,items:Day['items']):Day['foodPlan']{
   const snapshot=day.foodPlan;if(!snapshot)return;
-  return {...snapshot,records:snapshot.records.flatMap(record=>{
+  return {...snapshot,autoAdjust:true,records:snapshot.records.flatMap(record=>{
     if(record.status==='skipped')return [record];
     const previous=day.items.filter(it=>record.itemIds.includes(it.id));
     const next=items.filter(it=>record.itemIds.includes(it.id)||it.meal===snapshot.labels[record.slot]);

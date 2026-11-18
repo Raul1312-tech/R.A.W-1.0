@@ -95,7 +95,7 @@ const toggle=(values:number[],value:number)=>values.includes(value)?values.filte
 
 function Basics({a,update,onSport}:{a:OnboardingAnswers;update:Update;onSport:(sport:'boxing'|'strength')=>void}){
   const b=a.basics;
-  const {competition,...generalGoals}=choices.goal;
+  const {competition,...restGoals}=choices.goal;const generalGoals={...restGoals,performance:'Recomposición · mejorar músculo manteniendo el peso'};
   const sportValidation=useQuestion('basics.sport'),nameValidation=useQuestion('basics.name');
   return <>
     <Question field="basics.sport"><fieldset {...sportValidation} className="onboarding-multi"><legend>¿Qué deporte quieres preparar?</legend><div className="onboarding-sports">
@@ -183,9 +183,9 @@ function Food({a,update}:{a:OnboardingAnswers;update:Update}){
       <Multi field="food.allergies" label="Alergias alimentarias" options={allergenOptions} values={f.allergies} max={20} onChange={allergies=>update('food',{allergies})}/>
       <Multi field="food.intolerances" label="Intolerancias alimentarias" options={allergenOptions} values={f.intolerances} max={20} onChange={intolerances=>update('food',{intolerances})}/>
     </details>
-    <details className="raw-disclosure"><summary>Mis hidratos, proteínas y variedad · opcional</summary>
+    <section className="onboarding-staples"><h3>¿Qué sueles comprar y comer?</h3>
       <FoodPreferenceFields value={f.preferences} onChange={preferences=>update('food',{preferences})}/>
-    </details>
+    </section>
     <details className="raw-disclosure"><summary>Alimentos que quieres evitar o repetir</summary>
       <label className="field"><span>Buscar en el catálogo</span><input type="search" value={foodQuery} onChange={e=>setFoodQuery(e.target.value)}/></label>
       <Multi field="food.excluded" label="Evitar en mi menú" options={foodOptions} values={f.excluded} onChange={excluded=>update('food',{excluded,preferred:f.preferred?.filter(id=>!excluded.includes(id))??[]})}/>

@@ -51,7 +51,7 @@ test('competition dates validate and taper is optional, dated, does not double a
  const competition={fight:'2026-11-15T19:00:00+01:00',weighIn:'2026-11-15T09:00:00+01:00',weight:70,taper:true,notes:''};
  assert.ok(competitionSchema.safeParse(competition).success);assert.equal(competitionContext(competition,'2026-11-15').hours,10);
  assert.equal(competitionSchema.safeParse({...competition,weighIn:'2026-11-16T09:00:00Z'}).success,false);
- const plan={...generateTrainingPlan({...defaultTrainingConfig(),level:'competitive',days:[0,1,2,3,4,5,6],competition}),month:'2026-11'};
+ const plan={...generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',level:'competitive',physicalDays:[0,1,2,3,4,5,6],runningDays:[],competition}),month:'2026-11'};
  const before=JSON.stringify(plan),full=sessionsForDate(plan,'2026-11-02'),taper=sessionsForDate(plan,'2026-11-09');
  assert.ok(taper[0].exercises[0].sets<full[0].exercises[0].sets);assert.equal(sessionsForDate(plan,'2026-11-14').length,0);
  assert.ok(sessionsForDate({...plan,config:{...plan.config,competition:{...competition,taper:false}}},'2026-11-14').length);

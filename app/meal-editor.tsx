@@ -1,5 +1,7 @@
 'use client';
 import SelectField from './select-field';
+import FoodPhoto from './food-photo';
+import {appendPhotoItems} from './food-photo-model';
 
 import {useState} from 'react';
 import {Plus,Trash2,ArrowLeftRight,Check} from 'lucide-react';
@@ -11,13 +13,14 @@ import {foodPortions} from './food-portions';
 const FoodGrid=dynamic(()=>import('./food-grid'),{loading:()=><p role="status">Abriendo alimentos…</p>});
 const portionSizes=[{label:'Pequeña',factor:.5},{label:'Habitual',factor:1},{label:'Grande',factor:1.5}];
 
-export default function MealEditor({initial,savedFoods=[],disabled,onSave,onCancel,saveLabel='Añadir al registro'}:{
-  initial:Item[];savedFoods?:Food[];disabled:boolean;onSave:(items:Item[])=>void;onCancel:()=>void;saveLabel?:string;
+export default function MealEditor({initial,savedFoods=[],savedMeals=[],disabled,onSave,onCancel,onUsePlanned,saveLabel='Añadir al registro'}:{
+  initial:Item[];savedFoods?:Food[];savedMeals?:{id:string;meal:{name:string;items:Item[]}}[];disabled:boolean;onSave:(items:Item[])=>void;onCancel:()=>void;onUsePlanned?:()=>void;saveLabel?:string;
 }){
   const [items,setItems]=useState(()=>structuredClone(initial));
   const [replacing,setReplacing]=useState<number|'add'|null>(initial.length?null:'add');
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
+  const [usualsOpen,setUsualsOpen]=useState(false);
   function choose(food:Food){
     setItems(current=>replacing==='add'?[...current,{food,grams:foodPortions[food.id]?.[0]??100}]:current.map((it,i)=>i===replacing?{...it,food}:it));
     setNotice(food.name+' añadido al borrador. Puedes ajustar su cantidad y añadir más ingredientes.');
@@ -28,6 +31,10 @@ export default function MealEditor({initial,savedFoods=[],disabled,onSave,onCanc
   }
   const picker=replacing!==null&&<FoodGrid key={replacing} picker onPick={choose} savedFoods={savedFoods} disabled={disabled} onSave={()=>{}} onCancel={()=>setReplacing(null)}/>;
   return <div className="meal-ingredient-editor raw-ingredient-editor">
+    <FoodPhoto disabled={disabled} buttonLabel={items.length?'Añadir otro plato con foto':undefined} beforeCamera={onUsePlanned&&<button type="button" className="text-button" disabled={disabled} onClick={onUsePlanned}>Partir del plato previsto</button>} onReady={(found,message)=>{const combined=appendPhotoItems(items,found);setItems(combined);setReplacing(null);setNotice('Foto añadida a esta comida. Se conserva lo que ya tenías; revisa que no hayas fotografiado dos veces el mismo plato. '+message)}}/>
+    <button type="button" className="button outline usual-meal-toggle" aria-expanded={usualsOpen} disabled={disabled} onClick={()=>setUsualsOpen(!usualsOpen)}>♡ Elegir comida habitual</button>
+    {usualsOpen&&<section className="usual-meal-picker" aria-label="Tus comidas habituales"><h3>Elige tu plato guardado</h3>{savedMeals.length?savedMeals.map(f=><button type="button" className="button outline" key={f.id} disabled={disabled} onClick={()=>{setItems(structuredClone(f.meal.items));setReplacing(null);setUsualsOpen(false);setNotice(f.meal.name+' listo para revisar. Sustituye los ingredientes del borrador; guarda la comida para registrarla.')}}>{f.meal.name}<small>{Math.round(total(f.meal.items).k)} kcal · {f.meal.items.length} ingredientes</small></button>):<p>Aún no tienes platos habituales guardados. Puedes guardarlos desde «Ver plato y opciones» en tus comidas.</p>}</section>}
+    {items.length>0&&<p className="muted">¿Falta el segundo plato o el postre? Añade otra foto o un alimento manualmente: se sumarán a esta comida. Al terminar, guarda la comida completa.</p>}
     <h3>Ingredientes de tu comida · {items.length}</h3>
     {notice&&<p role="status">{notice}</p>}
     <p>Construye el plato completo y pulsa «Guardar comida completa» cuando esté listo.</p>

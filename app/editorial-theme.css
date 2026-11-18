@@ -1,0 +1,166 @@
+/* Approved Grafito editorial · user-selected 15 px corners and #6DAD86 accent. */
+:root{--bg:#121314;--paper:#1e2021;--ink:#eeede8;--muted:#b3b2ad;--border:#3b3e3c;--green:#6dad86;--orange:#6dad86}
+:root body .raw-shell{--raw-green:#6dad86;--raw-soft:#252d28;--raw-muted:#b3b2ad;--raw-border:#3b3e3c;--raw-line:#3b3e3c;--raw-surface:#1e2021;--editorial-radius:15px;background:radial-gradient(ellipse 430px 300px at 100% 0,rgba(45,93,65,.18),transparent 82%),radial-gradient(ellipse 270px 430px at 0 78%,rgba(44,79,57,.08),transparent 90%),#121314}
+:root body .raw-shell .raw-header.header{background:radial-gradient(ellipse at 100% 0,rgba(45,93,65,.14),transparent 75%),#141616;border-bottom:1px solid #353b36;border-image:none;position:relative}
+:root body .raw-shell .raw-header.header:after{content:'';position:absolute;bottom:-1px;left:24px;width:30px;height:2px;background:linear-gradient(90deg,#486151 0 30%,transparent 30% 35%,#e7e5dc 35% 65%,transparent 65% 70%,#98686c 70%)}
+:root body .raw-shell :is(.card,.daily-meal-card,.planned-exercise-card,.raw-dialog,.modal,.saved-meals-dialog,.food-result-card,.photo-add,.reference-details){border-radius:var(--editorial-radius)}
+:root body .raw-shell :is(.card,.raw-dialog,.modal,.saved-meals-dialog,.raw-food-picker,.food-grid-editor,.raw-ingredient,.food-result,.food-search-results,.food-selection,.photo-add,.photo-empty,.photo-hidden,.reference-details,.raw-empty,.route-help,.onboarding-panel,.raw-select-picker,.routine-metrics article,.routine-boxing-config,.routine-preview-days p,.routine-context,.routine-warmup,.routine-prescription,.routine-rest,.routine-schedule-split section,.routine-calendar-warnings,.routine-explanation,.routine-learning-tip,.workout-progress,.workout-exercise,.routine-session-switch,.muscle-volume>div,.gym-set-fields,.food-staple,.food-analysis-progress,.food-search,.food-basket,.food-basket-footer,.food-label-form,.food-result-card,.situation-preview,.daily-situation-banner,.ingredient-picker,.automatic-nutrition,.outside-meal-reserve,.journal-search,.journal-article,.journal-article details,.journal-tools,.calendar-save,.exercise-picker,.month-cell){background:#1e2021!important;border-color:#3b3e3c!important}
+:root body .raw-shell details:not(.card):not(.raw-select-picker){background:#1e2021!important;border-color:#3b3e3c!important}
+:root body .raw-shell :is(input,select,textarea,.raw-select-trigger){background:#151817!important;border-color:#545b55!important}
+:root body .raw-shell .button:is(.outline,.soft),:root body .raw-shell .food-camera-button{background:#232725!important;border-color:#474d48!important;color:#e9ebe5!important;border-radius:10px;box-shadow:none}
+:root body .raw-shell .button.orange,:root body .raw-shell button.primary{background:#e7e6df!important;color:#202820!important;border-color:#e7e6df!important;border-radius:10px}
+:root body .raw-shell .button[aria-pressed=true].outline,:root body .raw-shell .supplement-check.is-taken{background:#344f3e!important;border-color:#65806e!important;color:#edf2eb!important}
+:root body .raw-shell :is(.routine-day-picks button,.routine-sport-picks button,.routine-week button,.workout-set-buttons button,.workout-rpe button,.routine-session-switch button,.modality-choices>button,.food-staple button,.food-filter button,.food-tile,.portion-control>button,.situation-choice,.journal-filters button,.journal-action,.journal-mark,.exercise-order button){background:#232725!important;border-color:#474d48!important}
+:root body .raw-shell :is(.routine-sport-picks button.selected,.routine-day-picks button.selected,.routine-week button.selected,.month-cell.selected,.situation-choice.is-selected,.food-tile[aria-pressed=true],.workout-set-buttons button[aria-pressed=true]){background:#344f3e!important;border-color:#65806e!important;color:#edf2eb!important}
+:root body .raw-shell .icon-button{background:#292e2b;color:#c6d3c9;border-color:#474d48}
+:root body .raw-shell .raw-select-picker{--ink:#eeede8;--raw-muted:#b3b2ad;--raw-green:#6dad86;color:#eeede8}
+:root body .raw-shell :is(.today-shortcuts .food-camera-button,.today-shortcuts>.today-shortcut){border-radius:12px}
+:root body .raw-shell .raw-demo{background:#171c19;color:#b3bcb5;border-color:#353b36}
+:root body .raw-shell .raw-header nav.raw-nav{background:#141715!important;border-color:#353b36!important}
+:root body .raw-shell .raw-header nav.raw-nav button{color:#b3b6af!important}
+:root body .raw-shell .raw-header nav.raw-nav button[aria-current=page]{background:#252d28!important;color:#efeee8!important}
+:root body .raw-shell .raw-header nav.raw-nav button[aria-current=page]>svg{color:#6dad86}
+:root body .raw-shell .raw-today-intro h1{font-weight:500;letter-spacing:-1.3px;text-transform:none;font-size:clamp(29px,3.5vw,40px)}
+:root body .raw-shell .raw-today-intro .eyebrow{font-size:10px;letter-spacing:1.6px}
+:root body .raw-shell .today-nutrition{gap:0}
+:root body .raw-shell .today-energy.card{--ink:#eeede8;--raw-muted:#b3b2ad;--raw-green:#6dad86;--raw-border:#3b3e3c;background:transparent!important;color:#eeede8!important;border:0!important;border-radius:0;padding:12px 0 20px;margin:0;color-scheme:dark}
+:root body .raw-shell .today-energy .today-stat-value{font-size:60px;letter-spacing:-3px;font-weight:500;line-height:1.1;margin:15px 0 20px;color:#eeede8}
+:root body .raw-shell .today-energy .today-stat-value small{font-size:17px;color:#b3b2ad;letter-spacing:0}
+:root body .raw-shell .today-energy .today-stat-heading>span{font-size:10px;letter-spacing:1.6px;color:#b3b2ad}
+:root body .raw-shell .today-energy .today-stat-heading small{font-size:11px;color:#b3b2ad}
+:root body .raw-shell .today-energy progress{height:3px}
+:root body .raw-shell .today-energy progress::-webkit-progress-bar{background:#373d38}
+:root body .raw-shell .today-energy progress::-webkit-progress-value{background:#6dad86}
+:root body .raw-shell .today-energy progress::-moz-progress-bar{background:#6dad86}
+:root body .raw-shell .today-macro-grid{gap:0;border-bottom:1px solid #3b3e3c;padding:0 0 18px;margin-bottom:11px}
+:root body .raw-shell .today-macro.card{background:transparent!important;border:0!important;border-right:1px solid #3b3e3c!important;border-radius:0;padding:0 18px}
+:root body .raw-shell .today-macro:first-child{padding-left:0}
+:root body .raw-shell .today-macro:last-child{border-right:0!important}
+:root body .raw-shell .today-macro h2{font-size:12px;font-weight:400;color:#b3b2ad}
+:root body .raw-shell .today-macro .today-stat-value{font-size:26px;font-weight:500;letter-spacing:-.7px;margin:7px 0}
+:root body .raw-shell .today-macro .today-stat-value small{font-size:11px;letter-spacing:0;color:#b3b2ad;display:inline}
+:root body .raw-shell .today-macro progress{height:2px;opacity:.8}
+:root body .raw-shell .today-macro progress::-webkit-progress-bar{background:#373d38}
+:root body .raw-shell .today-macro progress::-webkit-progress-value{background:#a7afa4}
+:root body .raw-shell .today-macro progress::-moz-progress-bar{background:#a7afa4}
+:root body .raw-shell .today-nutrition-note{font-size:11px;margin:0}
+:root body .raw-shell .today-food-agenda.card{background:transparent!important;border:0!important;padding:0;margin-top:5px}
+:root body .raw-shell .today-meal-agenda>.raw-section-label h2{font-size:17px;font-weight:500}
+:root body .raw-shell .today-agenda-meal{padding:18px 0;border-color:#3b3e3c}
+:root body .raw-shell .today-meal-art{background:transparent;color:#a0b3a6;border:1px solid #3b3e3c}
+:root body .raw-shell .today-meal-label>small{background:#303832;color:#cad4ca}
+:root body .raw-shell .today-agenda-meal[data-status=planned] .today-meal-label>small,:root body .raw-shell .today-agenda-meal[data-status=alternative] .today-meal-label>small{background:#303d33;color:#bfd8c5}
+:root body .raw-shell .today-workout-card,:root body .raw-shell .raw-workout-card{background:radial-gradient(ellipse at 100% 0,rgba(51,91,63,.14),transparent 65%),#1c1f1e!important;border-color:#39423c!important;border-radius:var(--editorial-radius)}
+:root body .raw-shell .raw-workout-card h3{font-size:25px;letter-spacing:-.7px;font-weight:500}
+:root body .raw-shell .raw-workout-card .eyebrow:before{content:'';display:inline-block;width:5px;height:5px;margin-right:8px;vertical-align:middle;background:#ae757c;border-radius:50%}
+:root body .raw-shell .raw-workout-card>.button{width:100%;justify-content:space-between;background:transparent!important;color:#eeede8!important;border:0!important;border-bottom:1px solid #39423c!important;border-radius:0;padding:13px 0;box-shadow:none}
+:root body .raw-shell .raw-workout-card>.button svg{color:#a7c3b1}
+:root body .raw-shell .today-supplements{border-color:#4b5d50}
+:root body .raw-shell .today-supplement-copy strong{font-weight:500}
+:root body .raw-shell .today-supplement>svg{color:#a0b3a6}
+:root body .raw-shell .today-water.card,:root body .raw-shell .shopping-estimate{--ink:#232a24;--raw-muted:#646b61;--raw-green:#395f46;--raw-border:#c6cfc0;background:#eeece5!important;color:#232a24!important;border:0!important;border-radius:var(--editorial-radius)}
+:root body .raw-shell .today-water .today-section-title h2{font-size:16px;font-weight:500}
+:root body .raw-shell .today-water .water-glass{background:#c3cec1}
+:root body .raw-shell .today-water .water-glass>span{background:#6d9580}
+:root body .raw-shell .today-water .button.outline{background:transparent!important;color:#385944!important;border-color:#bcc9bb!important}
+:root body .raw-shell .today-water>.text-button{color:#956c71}
+:root body .raw-shell .shopping-estimate>span,:root body .raw-shell .shopping-estimate>strong{color:#395f46}
+:root body .raw-shell .more-destinations button{background:#1e2021;color:#a0b3a6;border-color:#3b3e3c;border-radius:var(--editorial-radius)}
+:root body .raw-shell .notice.error{background:#36272b!important;border-color:#956c71!important;color:#efc6cd!important}
+/* Slightly stronger identity accents, confined to small marks and edges. */
+:root body .raw-shell .raw-header.header:after{width:48px;height:3px}
+:root body .raw-shell .today-shortcut>svg,:root body .raw-shell .today-buy>svg,:root body .raw-shell .today-supplement>svg{color:#83b395}
+:root body .raw-shell .today-macro-p progress::-webkit-progress-value{background:#78ae8e}
+:root body .raw-shell .today-macro-p progress::-moz-progress-bar{background:#78ae8e}
+:root body .raw-shell .today-macro-f progress::-webkit-progress-value{background:#b77e86}
+:root body .raw-shell .today-macro-f progress::-moz-progress-bar{background:#b77e86}
+:root body .raw-shell .raw-workout-card{box-shadow:inset 0 2px #98666e}
+:root body .raw-shell .raw-workout-card .eyebrow:before{width:6px;height:6px;background:#c18b93}
+:root body .raw-shell .today-water.card{box-shadow:inset 0 -2px #ba9699}
+:root body .raw-shell .today-water .today-section-title svg{color:#4f8262}
+:root body .raw-shell .raw-header nav.raw-nav button[aria-current=page]{box-shadow:inset 0 -2px #6dad86}
+:root body .raw-shell .more-destinations button>svg{color:#83b395}
+:root body .raw-shell .more-destinations button:nth-child(3n)>svg{color:#bf8d94}
+/* Ivory identifies fixed summary sections; every meal keeps the same graphite treatment. */
+:root body .raw-shell .today-agenda-meal.is-next{background:transparent!important;border-left:0;padding:18px 0;box-shadow:none}
+:root body .raw-shell .today-nutrition{--ink:#232a24;--raw-muted:#646b61;--raw-green:#395f46;background:#eeece5;border-radius:var(--editorial-radius);padding:22px;color:#232a24;color-scheme:light}
+:root body .raw-shell .today-energy.card{--ink:#232a24;--raw-muted:#646b61;--raw-green:#395f46;color:#232a24!important;color-scheme:light}
+:root body .raw-shell .today-energy .today-stat-value{color:#232a24}
+:root body .raw-shell .today-energy :is(.today-stat-value small,.today-stat-heading>span,.today-stat-heading small){color:#646b61}
+:root body .raw-shell .today-macro-grid{border-bottom-color:#c6cfc0}
+:root body .raw-shell .today-macro.card{border-right-color:#c6cfc0!important}
+:root body .raw-shell .today-macro :is(h2,.today-stat-value small){color:#646b61}
+:root body .raw-shell .today-macro .today-stat-value{color:#232a24}
+:root body .raw-shell .today-nutrition progress::-webkit-progress-bar{background:#d5dcd2}
+:root body .raw-shell .today-nutrition progress::-webkit-progress-value{background:#567d62}
+:root body .raw-shell .today-nutrition progress::-moz-progress-bar{background:#567d62}
+:root body .raw-shell .today-macro-f progress::-webkit-progress-value{background:#a47179}
+:root body .raw-shell .today-macro-f progress::-moz-progress-bar{background:#a47179}
+@media(max-width:760px){:root body .raw-shell .today-nutrition{padding:18px}}
+/* Daily pictograms and the same quiet meal agenda in Today and Food. */
+:root body .raw-shell .today-meal-art.meal-emoji{font-size:30px;line-height:1;background:radial-gradient(circle,#33443844,transparent 72%);border:0;width:44px;height:48px;filter:drop-shadow(0 2px 3px #0003)}
+:root body .raw-shell .today-agenda-row{grid-template-columns:24px 44px minmax(0,1fr) auto}
+:root body .raw-shell .menu-day-agenda{background:transparent;padding:0}
+:root body .raw-shell .raw-page-heading h1{font-family:inherit;font-size:clamp(28px,3.5vw,38px);font-weight:500;letter-spacing:-1px;text-transform:none;margin:8px 0}
+:root body .raw-shell .today-meal-options{margin-top:10px;padding-top:6px;border-top:1px solid #3b3e3c}
+:root body .raw-shell .today-meal-options>.text-button{display:flex;margin:4px 0}
+:root body .raw-shell .today-meal-options .raw-select-field{margin:12px 0}
+:root body .raw-shell .water-glass{width:25px;height:36px;background:linear-gradient(100deg,#bdcbc3,#e0e9e2 45%,#b9cbc2);box-shadow:inset 0 1px #fff;isolation:isolate}
+:root body .raw-shell .water-glass:after{content:'';position:absolute;inset:4px auto 5px 5px;width:3px;background:#ffffff80;z-index:1;border-radius:4px}
+:root body .raw-shell .today-water .water-glass>span{background:linear-gradient(90deg,#4d8e9f,#82b7c0 55%,#639d9f);border-top:2px solid #c6e4e6}
+:root body .raw-shell .today-water .water-glass>span[style="height: 0%;"]{border:0}
+:root body .raw-shell .water-bottle-button{gap:10px;padding:7px 12px;min-height:58px}
+:root body .raw-shell .water-bottle{display:block;position:relative;width:24px;height:43px;flex-shrink:0;filter:drop-shadow(0 2px 2px #24423720)}
+:root body .raw-shell .water-bottle-cap{position:absolute;width:12px;height:5px;left:6px;top:0;background:#507b65;border-radius:2px 2px 0 0}
+:root body .raw-shell .water-bottle-body{position:absolute;inset:5px 0 0;background:linear-gradient(90deg,#a4bdb4,#edf2eb 40%,#b7ccc1);clip-path:polygon(28% 0,72% 0,74% 12%,100% 25%,100% 94%,87% 100%,13% 100%,0 94%,0 25%,26% 12%);border-radius:7px;overflow:hidden}
+:root body .raw-shell .water-bottle-liquid{position:absolute;inset:13px 2px 2px;background:linear-gradient(90deg,#5896a5,#8dc0c8);border-radius:3px 3px 5px 5px}
+:root body .raw-shell .water-bottle-label{position:absolute;inset:20px 0 8px;background:#f4f2e8b8;border-top:1px solid #fff8;border-bottom:1px solid #fff8}
+@media(max-width:450px){:root body .raw-shell .today-agenda-row{grid-template-columns:22px 38px minmax(0,1fr) auto;gap:8px}:root body .raw-shell .today-meal-art.meal-emoji{width:38px;font-size:29px}}
+@media(max-width:760px){:root body .raw-shell .today-energy.card{padding:10px 0 20px}:root body .raw-shell .today-energy .today-stat-value{font-size:53px}:root body .raw-shell .today-macro.card{padding:0 10px}:root body .raw-shell .today-macro:first-child{padding-left:0}:root body .raw-shell .today-macro .today-stat-value{font-size:24px}:root body .raw-shell .today-macro .today-stat-value small{display:block}}
+
+/* Selected weekdays and compact supplement previews. */
+:root body .raw-shell .routine-day-picks button[aria-pressed="true"]{background:#244d38!important;color:#f5fbf7!important;border:2px solid #79b98f!important;box-shadow:0 0 0 2px #6dad8622!important;font-weight:800!important}
+:root body .raw-shell .routine-day-picks button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:46px}
+:root body .raw-shell .compact-supplement{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;padding:10px 12px!important;gap:8px!important}
+:root body .raw-shell .supplement-details{min-width:0;width:100%}
+:root body .raw-shell .supplement-details>summary{display:flex!important;align-items:center;gap:10px;list-style:none;cursor:pointer;min-height:44px;color:inherit!important}
+:root body .raw-shell .supplement-details>summary::-webkit-details-marker{display:none}
+:root body .raw-shell .supplement-pictogram{font-size:28px;line-height:1.2;flex:0 0 32px;text-align:center}
+:root body .raw-shell .supplement-expanded{padding:8px 0 4px;font-size:.9rem}
+:root body .raw-shell .supplement-details .today-supplement-copy{min-width:0}
+:root body .raw-shell .supplement-details .today-supplement-copy strong{font-size:.92rem;overflow-wrap:anywhere}
+:root body .raw-shell .compact-supplement>.supplement-check{min-height:44px!important;padding:8px 12px!important;margin-top:0!important}
+:root body .raw-shell .compact-supplement>.notice{grid-column:1/-1}
+:root body .raw-shell .usual-meal-toggle{width:100%;margin:10px 0}
+:root body .raw-shell .usual-meal-picker{display:grid;gap:8px;padding:12px 0}
+:root body .raw-shell .usual-meal-picker button{display:flex;align-items:flex-start;flex-direction:column;text-align:left;gap:5px;white-space:normal}
+:root body .raw-shell .usual-meal-picker small{font-weight:400;color:#a4b4aa}
+
+/* A quiet editorial moment, exclusive to the boxing daily dashboard. */
+:root body .raw-shell .boxing-inspiration{margin:0 0 24px;min-width:0}
+:root body .raw-shell .boxing-inspiration .lateral-carousel{margin:0}
+:root body .raw-shell .boxing-legend-card{display:grid;grid-template-columns:minmax(0,1fr) clamp(130px,28%,220px);border:1px solid #ffffff17;border-radius:var(--radius,15px);overflow:hidden;background:radial-gradient(ellipse at 0% 100%,#28553b33,transparent 65%),#1a1d1c;min-height:220px}
+:root body .raw-shell .boxing-legend-copy{padding:24px 28px;min-width:0;align-self:center}
+:root body .raw-shell .boxing-legend-theme{display:block;color:#a1c5ac;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;line-height:1.5}
+:root body .raw-shell .boxing-legend-copy blockquote{padding:0;margin:12px 0 14px;border:0;background:none}
+:root body .raw-shell .boxing-legend-copy blockquote p{font-family:Georgia,serif;font-size:clamp(23px,2.8vw,34px);line-height:1.2;letter-spacing:-.025em;color:#f2f0e9;margin:0 0 14px}
+:root body .raw-shell .boxing-legend-copy cite{display:block;font-size:13px;font-style:normal;font-weight:700;color:#e4e9e5}
+:root body .raw-shell .boxing-legend-copy cite:before{content:'';display:inline-block;width:18px;height:2px;background:#b46870;vertical-align:middle;margin-right:9px}
+:root body .raw-shell .boxing-legend-card figure{position:relative;min-height:220px;margin:0;align-self:stretch;background:#121614}
+:root body .raw-shell .boxing-legend-card figure:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#1a1d1c44,transparent 35%);pointer-events:none}
+:root body .raw-shell .boxing-legend-card img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 18%;display:block}
+:root body .raw-shell .boxing-legend-card figcaption{position:absolute;bottom:8px;right:8px;z-index:1;border-radius:5px;background:#101412b3;color:#d5ded8;padding:3px 6px;font-size:9px;letter-spacing:.04em}
+:root body .raw-shell .boxing-legend-source{font-size:11px;color:#aab6ae}
+:root body .raw-shell .boxing-legend-source>summary{min-height:0!important;padding:4px 0!important;font-size:11px!important;font-weight:400!important;color:#aab6ae!important;display:list-item!important;cursor:pointer}
+:root body .raw-shell .boxing-legend-source>summary:after{display:none!important}
+:root body .raw-shell .boxing-legend-source p{font-size:11px;line-height:1.6;margin:6px 0 0}
+:root body .raw-shell .boxing-legend-source a{color:#b4d8bf;text-decoration:underline;text-underline-offset:3px}
+:root body .raw-shell .boxing-inspiration .lateral-controls{margin:8px 0 0!important;padding:0!important;gap:12px}
+:root body .raw-shell .boxing-inspiration .lateral-controls button{min-height:44px!important;padding:8px 12px!important;background:#202723!important;border:1px solid #7e9f8933!important;font-size:12px!important}
+:root body .raw-shell .boxing-inspiration .lateral-position>span{font-size:10px!important}
+:root body .raw-shell .boxing-inspiration .lateral-position>b{font-size:16px!important}
+:root body .raw-shell .boxing-inspiration .lateral-footer{display:none}
+@media(max-width:480px){:root body .raw-shell .boxing-legend-card{grid-template-columns:minmax(0,1fr) 112px;min-height:210px}:root body .raw-shell .boxing-legend-copy{padding:18px 14px}:root body .raw-shell .boxing-legend-copy blockquote p{font-size:22px}:root body .raw-shell .boxing-legend-theme{font-size:9px;letter-spacing:.08em}:root body .raw-shell .boxing-legend-card figure{min-height:210px}:root body .raw-shell .boxing-inspiration .lateral-controls button{gap:6px!important}:root body .raw-shell .boxing-inspiration{margin-bottom:20px}}
+
+:root body .raw-shell details.boxing-legend-source{padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+:root body .raw-shell .boxing-legend-source>summary{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important}

@@ -5,6 +5,24 @@ import {foodSnapshot,foodDayView,recordMeal,undoMeal,syncFoodRecords,replaceLoos
 import {stateSchema} from '../app/validation.ts';
 const setup=()=>{const profile={...newProfile('Prueba'),confirmed:true};const plan=generatePlan(profile,3);return {profile,plan,day:emptyDay(profile),date:'2026-11-03'}};
 const food=(id,grams)=>({food:foodById(id),grams});
+test('manual and estimated shortfalls fit all four targets, are deterministic and respect meal bounds',()=>{
+  const {plan,day,date}=setup(),base=foodDayView(day,plan,date);
+  for(const factor of [.4,1.4]){
+    const items=base.meals[0].items.map(it=>({...it,grams:it.grams*factor}));
+    const logged=recordMeal(day,plan,date,0,'alternative',items),before=JSON.stringify(logged);
+    const view=foodDayView(logged,plan,date);
+    assert.ok(Math.abs(view.remaining.k)<50);
+    for(const k of ['p','c','f'])assert.ok(Math.abs(view.remaining[k])<5,k);
+    for(const slot of view.pending){const original=total(base.meals[slot].items).k,adjusted=total(view.meals[slot].items).k;assert.ok(adjusted>=original*.6-10&&adjusted<=original*1.75+10)}
+    assert.deepEqual(foodDayView(logged,plan,date),view);assert.equal(JSON.stringify(logged),before);
+  }
+});
+test('infeasible macro excess remains visible and no adjustment carries into a finished day',()=>{
+  const {plan,day,date}=setup();let logged=recordMeal(day,plan,date,0,'alternative',[food('olive',500)]);
+  const view=foodDayView(logged,plan,date);assert.equal(view.balanced,false);assert.ok(view.remaining.f<0);
+  for(const slot of view.pending)logged=recordMeal(logged,plan,date,slot,'planned');
+  const finished=foodDayView(logged,plan,date);assert.equal(finished.adjustments.length,0);assert.equal(finished.finished,true);assert.deepEqual(finished.projected,total(logged.items));
+});
 test('daily food uses Tuesday menu and snapshots it across weekly menu changes and JSON reload',()=>{
   const {profile,plan,day,date}=setup();assert.deepEqual(foodSnapshot(day,plan,date).meals,plan.week[1].meals);
   const saved=recordMeal(day,plan,date,0,'planned');const newer=generatePlan(profile,4);
@@ -26,7 +44,7 @@ test('manual breakfast edits replace rather than duplicate and portions move tow
   const breakfast=base.meals[0].items.map(it=>({...it,grams:it.grams*1.4}));
   const logged=recordMeal(day,plan,date,0,'alternative',breakfast);const view=foodDayView(logged,plan,date);
   assert.ok(view.adjustments.length>0);assert.ok(Math.abs(view.projected.k-day.target.k)<Math.abs(total([...breakfast,...base.meals.slice(1).flatMap(m=>m.items)]).k-day.target.k));
-  for(const a of view.adjustments){assert.ok(a.slot>0);assert.ok(a.after>=a.before*.8&&a.after<=a.before*1.2)}
+  for(const a of view.adjustments){assert.ok(a.slot>0);assert.ok(a.after>=Math.ceil(a.before*.5)&&a.after<=a.before*2)}
   assert.deepEqual(view.meals[0],base.meals[0]);assert.deepEqual(logged.items.map(({food,grams})=>({food,grams})),breakfast);
   const edited=recordMeal(logged,plan,date,0,'alternative',[food('bread',80),food('turkey-slices',60)]);
   assert.equal(edited.items.length,2);assert.equal(edited.foodPlan.records.length,1);
@@ -37,11 +55,21 @@ test('exact plan completion counts the full day once with no invented automatic 
   assert.deepEqual(total(result.items),total(plan.week[1].meals.flatMap(m=>m.items)));
   assert.equal(result.foodPlan.records.length,5);assert.equal(foodDayView(result,plan,date).pending.length,0);assert.equal(result.complete,true);
 });
+test('new manual or photographed foods resume automatic balance on legacy disabled snapshots',()=>{
+  const {plan,day,date}=setup();const initial=recordMeal(day,plan,date,0,'planned');
+  initial.foodPlan.autoAdjust=false;
+  const actual=initial.items.map(({food,grams})=>({food,grams:grams*.4}));
+  const changed=recordMeal(initial,plan,date,0,'alternative',actual);
+  assert.equal(changed.foodPlan.autoAdjust,true);assert.ok(foodDayView(changed,plan,date).adjustments.length>0);
+  assert.equal(replaceLooseFood(initial,[food('bread',40)],'Otra toma').foodPlan.autoAdjust,true);
+  assert.equal(syncFoodRecords(initial,initial.items.map(x=>({...x,grams:x.grams+1}))).autoAdjust,true);
+  assert.equal(initial.foodPlan.autoAdjust,false);
+});
 test('skipping a meal records no consumption and never removes or doubles remaining meals',()=>{
   const {plan,day,date}=setup();const skipped=recordMeal(day,plan,date,0,'skipped');
   assert.equal(skipped.items.length,0);const view=foodDayView(skipped,plan,date);assert.equal(view.pending.length,4);
-  for(const a of view.adjustments)assert.ok(a.after<=a.before*1.2&&a.after>=a.before*.8);
-  assert.ok(view.projected.k<day.target.k); // The bounded adjustment does not pretend to recover a whole missing meal.
+  for(const a of view.adjustments)assert.ok(a.after<=a.before*2&&a.after>=Math.ceil(a.before*.5));
+  assert.ok(Math.abs(view.projected.k-day.target.k)<100); // Recover a feasible missing meal without inventing a consumption record.
 });
 test('dinner adjusts all still-pending meals of the same date, and disabling adjustment preserves base portions',()=>{
   const {plan,day,date}=setup();const original=JSON.stringify(plan);
@@ -66,7 +94,7 @@ test('legacy food logs attach to their meal without duplication and single-item 
 });
 test('large deviations stay bounded and invalid amounts cannot enter the meal log',()=>{
   const {plan,day,date}=setup();const result=recordMeal(day,plan,date,0,'alternative',[food('olive',500)]);const view=foodDayView(result,plan,date);
-  assert.ok(view.meals.every(m=>m.items.every(it=>it.grams>0)));assert.ok(view.adjustments.every(a=>a.after>=a.before*.8));
+  assert.ok(view.meals.every(m=>m.items.every(it=>it.grams>0)));assert.ok(view.adjustments.every(a=>a.after>=Math.ceil(a.before*.5)));
   assert.throws(()=>recordMeal(day,plan,date,0,'alternative',[]));assert.throws(()=>recordMeal(day,plan,date,0,'alternative',[food('bread',NaN)]));
   assert.throws(()=>replaceLooseFood(day,[food('bread',4000)],'Otra toma'));
 });

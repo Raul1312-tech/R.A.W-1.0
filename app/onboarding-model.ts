@@ -6,6 +6,8 @@ import {allTrainingSessions,defaultTrainingConfig,generateTrainingPlan,recommend
 import {planForDate} from './training-calendar-model.ts';
 import {replanCompetition} from './competition-plan.ts';
 import {stateSchema} from './validation.ts';
+import {previewNutritionSituation,hasNutritionRecords} from './nutrition-situations-model.ts';
+import {daySettings} from './preparation-engine.ts';
 
 const activityFactors={seated:1.2,mixed:1.4,active:1.6,physical:1.8};
 
@@ -131,8 +133,8 @@ export function prepareOnboarding(profile:Profile,answers:OnboardingAnswers,toda
     mealCount:nutrition.mealCount,confirmed:true,
     athlete:{sport:basics.sport,level,goal:athleteGoal,schedule:nutrition.schedule,
       competitionWeight:category===undefined?{mode:'none'}:{mode:'target',weight:category,date:answersCompetition.weighDate}},
-  },today);
-  if(!active&&!config.limitation&&(config.days.length||config.technicalDays.length||config.sparringDays.length)){
+  },today,true);
+  if((!active||active.config.sport!==config.sport)&&!config.limitation&&(config.days.length||config.technicalDays.length||config.sparringDays.length)){
     const routine={...generateTrainingPlan(config),month:today.slice(0,7)};
     if(allTrainingSessions(routine).some(day=>day.kind!=='rest')||config.technicalDays.length||config.sparringDays.length){
       next.workouts={...next.workouts,plans:[...(next.workouts?.plans??[]),routine].slice(-12),logs:next.workouts?.logs??[]};
@@ -140,9 +142,23 @@ export function prepareOnboarding(profile:Profile,answers:OnboardingAnswers,toda
   }
   const lastPreviewDate=new Date(Date.parse(today+'T12:00:00Z')+6*86400000).toISOString().slice(0,10);
   const currentMonth=today.slice(0,7),nextMonth=lastPreviewDate.slice(0,7);
-  if(next.workouts&&!active&&currentMonth!==nextMonth&&!planForDate(next.workouts,lastPreviewDate)){
+  if(next.workouts&&(!active||active.config.sport!==config.sport)&&currentMonth!==nextMonth&&!planForDate(next.workouts,lastPreviewDate)){
     const first=planForDate(next.workouts,today);
     if(first)next.workouts={...next.workouts,plans:[...next.workouts.plans,{...first,id:crypto.randomUUID(),month:nextMonth}].slice(-12)};
+  }
+  if(active&&active.config.sport!==config.sport&&next.workouts){
+    const futureMonths=[...new Set(next.workouts.plans.map(plan=>plan.month).filter((month):month is string=>!!month&&month>today.slice(0,7)))];
+    for(const month of futureMonths){
+      next.workouts.plans.push({...generateTrainingPlan(config),month});
+    }
+    next.workouts.plans=next.workouts.plans.slice(-12);
+    for(const [date,day] of Object.entries(next.days)){
+      if(date<today||hasNutritionRecords(day))continue;
+      if(day.competition||day.nutrition?.situationId==='coordinated'||day.nutrition?.situationId.startsWith('competition-')){
+        const clean={...day,competition:undefined,nutrition:undefined,foodPlan:undefined,supplementForecast:undefined};
+        next.days[date]=previewNutritionSituation({...next,days:{...next.days,[date]:clean}},daySettings(next,date),date,next.plans.at(-1)?.seed??1);
+      }
+    }
   }
   const prepared=replanCompetition(next,today);
   stateSchema.parse({active:prepared.id,profiles:[prepared]});

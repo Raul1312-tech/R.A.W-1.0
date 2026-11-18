@@ -68,6 +68,19 @@ test('finishing musculación retains existing routines and historical records',(
   assert.deepEqual(next.days['2026-11-01'],p.days['2026-11-01']);
 });
 
+test('changing boxing to gym keeps past plans and records while replacing future combat calendars',()=>{
+ const p=prepareOnboarding(newProfile(),athleteAnswers('boxing'),'2026-11-10');
+ const original=structuredClone(p.workouts.plans[0]);
+ p.workouts.plans.push({...original,id:'boxing-december',month:'2026-12'});
+ p.days['2026-11-01']={...emptyDay(p),weight:72,complete:true};
+ const next=prepareOnboarding(p,athleteAnswers('strength'),'2026-11-12');
+ assert.deepEqual(next.workouts.plans.find(plan=>plan.id===original.id),original);
+ assert.equal(next.workouts.plans.filter(plan=>plan.month==='2026-12').at(-1).config.sport,'hypertrophy');
+ assert.deepEqual(next.days['2026-11-01'],p.days['2026-11-01']);
+ assert.equal(next.preparation.competition,undefined);
+ assert.ok(stateSchema.safeParse({active:next.id,profiles:[next]}).success);
+});
+
 test('confirmed competition dates round-trip as local clock times and preserve the chosen zone',()=>{
   const p=newProfile();
   const a=athleteAnswers('boxing');

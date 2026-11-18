@@ -2,9 +2,8 @@
 import SelectField from './select-field';
 import {useState,useRef} from 'react';
 import {Bookmark,Download,Pill,Check,X,ArrowRight} from 'lucide-react';
-import {type Profile,type Plan,type Day,total,targets,dateKey,emptyDay} from './model';
+import {type Profile,type Plan,type Day,total,dateKey} from './model';
 import {freezeMonth,toggleSupplement,supplementsForDay} from './preparation-model';
-import SupplementRecommendations from './supplement-recommendations';
 import {savePlannedSupplement} from './preparation-engine';
 import {supplementAdvice} from './supplement-advice';
 import {dailySessions,planForDate,clubForDate,weekdayOf} from './training-calendar-model';
@@ -14,7 +13,7 @@ export function NutritionHabits({profile:p,plan,disabled,competitionActive=false
  const favoritesDialog=useRef<HTMLDialogElement>(null);
  const [month,setMonth]=useState(new Date().toISOString().slice(0,7)),[message,setMessage]=useState('');
  const fixed=p.preparation?.monthlyMenus?.find(m=>m.month===month);
- return <section className="card personal-nutrition">
+ return <section id="nutrition-habits" className="card personal-nutrition">
  <div className="raw-meal-tools">
    <button type="button" className="button soft" onClick={()=>favoritesDialog.current?.showModal()}><Bookmark size={18}/> Comidas habituales <span className="saved-meals-count">{p.preparation?.favorites?.length??0}</span><ArrowRight size={17}/></button>
    <button type="button" className="button outline" disabled={!plan} onClick={onShopping}><Download size={17}/> Lista de compra</button>
@@ -24,21 +23,18 @@ export function NutritionHabits({profile:p,plan,disabled,competitionActive=false
  {!p.preparation?.favorites?.length&&<p>Todavía no hay platos guardados. En una comida, abre los ingredientes y pulsa «Guardar comida».</p>}
  </div></dialog>
  <details className="raw-disclosure"><summary>Fijar la dieta del mes y preparar la compra</summary><p>{competitionActive?'La preparación de competición ya organiza sus fechas y la compra sigue esas comidas. Puedes fijar otra semana habitual al terminar el evento.':'Repite la semana elegida durante el mes, con tus comidas habituales.'} El mes queda guardado: generar otra semana no lo cambia. Puedes volver a fijarlo cuando quieras; los registros diarios se conservan.</p><label className="field">Mes<input type="month" value={month} onChange={e=>setMonth(e.target.value)}/></label><div className="button-row"><button className="button outline" disabled={disabled||!plan||competitionActive} onClick={()=>{try{onChange(freezeMonth(p,plan!,month));setMessage('Dieta fijada para '+month+'. Ya puedes descargar su compra.')}catch(e){setMessage((e as Error).message)}}}>{fixed?'Actualizar dieta fijada':'Fijar dieta del mes'}</button>{fixed&&<button className="text-button" disabled={disabled} onClick={()=>onChange({...p,preparation:{...p.preparation,monthlyMenus:p.preparation!.monthlyMenus!.filter(m=>m.month!==month)}})}>Dejar de usar este mes</button>}<button className="button orange" disabled={!plan} onClick={onShopping}><Download size={16}/> Lista de compra</button></div>{fixed&&<p>{fixed.days.length} días guardados · actualizado {new Date(fixed.created).toLocaleDateString('es-ES')}. Los alimentos frescos conviene comprarlos por semanas o congelarlos.</p>}</details>{message&&<p role="status">{message}</p>}
- <details className="raw-disclosure"><summary>Cómo se calcula mi dieta</summary><p>La app usa tu edad, altura, peso, actividad y objetivo para calcular una referencia de {Math.round(targets(p).k)} kcal. Tus situaciones adaptan el reparto y la actividad de cada fecha. Comer fuera se reserva en el plan y se afina con lo que registres.</p><p>No necesitas elegir calorías ni hacer cuentas. Son estimaciones que se revisan con tu evolución.</p></details><SupplementSettings profile={p} disabled={disabled} onChange={onChange}/>
+ <SupplementSettings profile={p} disabled={disabled} onChange={onChange}/>
  </section>;
 }
 function SupplementSettings({profile:p,disabled,onChange}:{profile:Profile;disabled:boolean;onChange:(p:Profile)=>void}){
  const [kind,setKind]=useState<Supplement['kind']>('protein'),[error,setError]=useState('');
- const day=p.days[dateKey()]??emptyDay(p);
- const example=(p.preparation?.supplements??[]).find(s=>s.kind===kind)??{id:'',kind,allergens:[]};
- return <><SupplementRecommendations profile={p} disabled={disabled} onChange={onChange}/><details><summary><Pill size={18}/> Mis suplementos y horarios</summary><p>El batido cuenta como alimento cuando lo marcas. La creatina se registra aparte, sin sumar proteína. Si el batido ya está en una comida, no lo marques otra vez aquí.</p>
+ return <><details><summary><Pill size={18}/> Mis suplementos y horarios</summary><p>El batido cuenta como alimento cuando lo marcas. La creatina se registra aparte, sin sumar proteína. Si el batido ya está en una comida, no lo marques otra vez aquí.</p>
  {(p.preparation?.supplements??[]).map(s=><div className="habit-row" key={s.id}><div><b>{s.name}</b><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'} · {s.timing==='during'?'Durante el entreno':s.timing==='postworkout'?'Después de entrenar':s.timing==='breakfast'?'Desayuno':'Por la noche'}</small></div><button className="text-button" disabled={disabled} onClick={()=>onChange({...p,preparation:{...p.preparation,supplements:p.preparation!.supplements!.filter(x=>x.id!==s.id)}})}>Quitar del plan</button></div>)}
  <form key={kind} onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);const n=(k:string)=>Number(f.get(k));const s:Supplement={id:crypto.randomUUID(),kind,name:String(f.get('name')),timing:String(f.get('timing')) as Supplement['timing'],amount:n('amount'),unit:String(f.get('unit')) as Supplement['unit'],gramsPerUnit:n('gramsPerUnit'),k:kind!=='creatine'?n('k'):0,p:kind!=='creatine'?n('p'):0,c:kind!=='creatine'?n('c'):0,f:kind!=='creatine'?n('f'):0,allergens:String(f.get('allergens')).split(',').map(s=>s.trim()).filter(Boolean)};const next={...p.preparation,supplements:[...(p.preparation?.supplements??[]),s]};if(!preparationSchema.safeParse(next).success||s.unit!=='ml'&&s.amount*(s.unit==='capsules'?s.gramsPerUnit:1)>200){setError('Revisa cantidades y etiqueta; máximo 12 suplementos y 200 g por toma.');return}try{onChange(savePlannedSupplement(p,s,dateKey()));e.currentTarget.reset();setError('Suplemento guardado. Lo verás en las comidas en las que esté previsto.')}catch(error){setError((error as Error).message)}}}>
  <div className="form-grid"><SelectField label="Tipo" value={kind} onValueChange={selection=>setKind(selection as typeof kind)}><option value="protein">Proteína en polvo</option><option value="creatine">Creatina monohidrato</option><option value="sportsDrink">Bebida deportiva</option></SelectField><label className="field">Nombre del producto<input name="name" required maxLength={100} placeholder="Nombre de la etiqueta"/></label><SelectField label="Momento" name="timing" defaultValue={kind==='sportsDrink'?'during':kind==='protein'?'postworkout':'breakfast'}><option value="breakfast">Desayuno</option><option value="during">Durante el entreno</option><option value="postworkout">Después de entrenar</option><option value="evening">Noche</option></SelectField><label className="field">Cantidad por toma<input name="amount" type="number" min="0.1" max={kind==='sportsDrink'?1000:200} step="0.1" defaultValue={kind==='creatine'?3:kind==='sportsDrink'?500:30} required/></label><SelectField label="Unidad" name="unit" defaultValue={kind==='sportsDrink'?'ml':'g'}><option value="g">Gramos</option><option value="capsules">Cápsulas / pastillas</option><option value="ml">Mililitros</option></SelectField><label className="field">Gramos por cápsula (si procede)<input name="gramsPerUnit" type="number" min="0.01" max="100" step="0.01" defaultValue={1}/></label>{kind!=='creatine'&&(['k','p','c','f'] as const).map((k,i)=><label className="field" key={k}>{['kcal','Proteína (g)','Hidratos (g)','Grasas (g)'][i]} por 100 {kind==='sportsDrink'?'ml':'g'}<input name={k} type="number" min={0} max={k==='k'?1000:100} step="0.1" defaultValue={(kind==='sportsDrink'?{k:24,p:0,c:6,f:0}:{k:400,p:80,c:8,f:6})[k]} required/></label>)}<label className="field">Alérgenos de la etiqueta, separados por comas<input name="allergens" placeholder="leche, soja" maxLength={200}/></label></div><button className="button outline" disabled={disabled}>Guardar suplemento</button>{error&&<p role="status">{error}</p>}</form>
- <p><strong>Mentor · {kind==='protein'?'proteína en polvo':kind==='sportsDrink'?'bebida deportiva':'creatina'}.</strong> {supplementAdvice(p,dateKey(),day,example)}</p><p>Creatina: referencia general de mantenimiento de 3–5 g diarios en adultos, sin necesitar carga; los gramos no equivalen al número de pastillas. Comprueba la cantidad real en la etiqueta y revísala con tu profesional, especialmente cerca de un pesaje. No se programa una retirada automática.</p><a href="https://www.ausport.gov.au/ais/nutrition/supplements/group_a/performance-supplements2/creatine" target="_blank" rel="noreferrer">Referencia AIS · creatina ↗</a><p>Revisa la etiqueta y el control de sustancias prohibidas. Los horarios son recordatorios, no tomas obligatorias.</p>
  </details></>;
 }
-export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange,onProfile}:{profile:Profile;date:string;day:Day;slot:number;times:string[];disabled:boolean;onChange:(d:Day)=>void;onProfile:(p:Profile)=>void}){
+export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange,onProfile,inline=false,postworkout=false}:{profile:Profile;date:string;day:Day;slot:number;times:string[];disabled:boolean;onChange:(d:Day)=>void;onProfile:(p:Profile)=>void;inline?:boolean;postworkout?:boolean}){
  const [message,setMessage]=useState('');
  const feedback=p.preparation?.supplementFeedback?.[date]??{};
  const scheduled=supplementsForDay(p,day);
@@ -49,9 +45,9 @@ export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange
  const after=clubTime?.time?times.findIndex(t=>minute(t)>=minute(clubTime.time!)+clubTime.minutes):-1;
  const training=!!club||dailySessions(data,date).length>0||day.minutes>0;
  const before=clubTime?.time?times.findLastIndex(t=>minute(t)<=minute(clubTime.time!)):0;
- const forSlot=visible.filter(s=>slot===(s.timing==='breakfast'?0:s.timing==='evening'?times.length-1:s.timing==='during'?Math.max(0,before):training?(after<0?times.length-1:after):0));
+ const forSlot=visible.filter(s=>postworkout?s.timing==='postworkout':inline&&s.timing==='postworkout'?false:slot===(s.timing==='breakfast'?0:s.timing==='evening'?times.length-1:s.timing==='during'?Math.max(0,before):training?(after<0?times.length-1:after):0));
  if(!forSlot.length)return null;
- return <details className="raw-disclosure"><summary><Pill size={16}/> Suplementos de esta comida · {forSlot.length}</summary>
+ const content=<>
  {forSlot.map(s=>{
   const checked=day.items.some(i=>i.id==='supplement-'+s.id),status=feedback[s.id];
   const conflict=s.allergens.some(a=>p.allergens.includes(a));
@@ -74,8 +70,15 @@ export function MealSupplements({profile:p,date,day,slot,times,disabled,onChange
     setMessage('Registro actualizado.');
    }catch(e){setMessage((e as Error).message)}
   }
-  return <div className="habit-row" key={s.id}><div><strong>{s.name}</strong><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'}{s.timing==='during'?' · durante el entreno · también cuenta en bebidas':s.timing==='postworkout'&&training?' · después de entrenar':''}</small><p><strong>Mentor:</strong> {advice}</p></div>
-   <SelectField label={'Estado de '+s.name} value={status??(checked?'taken':'')} disabled={disabled} onValueChange={mark}><option value="">Pendiente</option><option value="taken" disabled={conflict}>Tomado</option><option value="skipped">No tomado</option><option value="poor-tolerance">Me sentó mal</option></SelectField></div>;
+  const portion=total([{food:{...s,unit:'por 100 g'},grams:s.amount*(s.unit==='capsules'?s.gramsPerUnit:1)}]);
+  const statusField=<SelectField label={'Estado de '+s.name} value={status??(checked?'taken':'')} disabled={disabled} onValueChange={mark}><option value="">Pendiente</option><option value="taken" disabled={conflict}>Tomado</option><option value="skipped">No tomado</option><option value="poor-tolerance">Me sentó mal</option></SelectField>;
+  const preview=<><span className="supplement-pictogram" aria-hidden="true">{s.kind==='protein'?'🥤':s.kind==='creatine'?(s.unit==='capsules'?'💊':'🥄'):'🧃'}</span><span className="today-supplement-copy"><strong>{s.name}</strong><small>{s.amount} {s.unit==='capsules'?'cápsulas':s.unit==='ml'?'ml':'g'} · {checked?'Tomado':status==='skipped'?'No tomado':status==='poor-tolerance'?'Me sentó mal':'Pendiente'}</small></span></>;
+  return inline?<div className="today-supplement compact-supplement" key={s.id}>
+   <details key={String(checked)+':'+(status??'pending')} className="supplement-details"><summary>{preview}</summary><div className="supplement-expanded"><p>{s.timing==='during'?'Durante el entreno':s.timing==='postworkout'?'Después de entrenar':s.timing==='breakfast'?'Con el desayuno':'Por la noche'}{s.kind!=='creatine'&&<> · {Math.round(portion.k)} kcal · {Math.round(portion.p)} g proteína</>}</p><p>{advice}</p>{statusField}</div></details>
+   <button type="button" className={'button outline supplement-check '+(checked?'is-taken':'')} aria-pressed={checked} aria-label={(checked?'Deshacer toma de ':'Marcar como tomado ')+s.name} disabled={disabled||conflict&&!checked} onClick={()=>mark(checked?'':'taken')}>{checked?<><Check size={16}/> Tomado</>:<>Marcar</>}</button>
+   {conflict&&<p className="notice error">Este producto contiene un alérgeno de tu perfil.</p>}
+  </div>:<div className="habit-row" key={s.id}><div>{preview}<p><strong>Mentor:</strong> {advice}</p></div>{statusField}</div>;
  })}
- {message&&<p role="status">{message}</p>}</details>;
+ {message&&<p role="status">{message}</p>}</>;
+ return inline?<section className="today-supplements" aria-label={postworkout?'Suplementación después de entrenar':'Suplementos de esta comida'}>{content}</section>:<details className="raw-disclosure"><summary><Pill size={16}/> Suplementos de esta comida · {forSlot.length}</summary>{content}</details>;
 }

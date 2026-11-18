@@ -3,7 +3,7 @@ import type {TrainingConfig,TrainingSession} from './training-model.ts';
 
 /** Stable monthly rotation within the same purpose and movement pattern. Never changes running or gym progression. */
 export function varyBoxingSession(session:TrainingSession,config:TrainingConfig,date:string):TrainingSession{
-  if(config.sport!=='boxing'||config.catalogVersion!==2||session.kind!=='lift')return session;
+  if(config.exerciseRotation==='fixed'||config.sport!=='boxing'||config.catalogVersion!==2||session.kind!=='lift')return session;
   const occurrence=Math.floor((Number(date.slice(-2))-1)/7);
   if(!occurrence)return session;
   const kit=new Set(['bodyweight','space',...(config.additionalKit??[]),...(config.boxingKit??[])]);

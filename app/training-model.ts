@@ -14,6 +14,7 @@ export const trainingConfigSchema=z.object({
   sessionLimits:z.array(z.object({day:whole(0,6),minutes:whole(20,120)})).max(7)
     .refine(slots=>new Set(slots.map(slot=>slot.day)).size===slots.length).optional(),
   catalogVersion:z.literal(2).optional(),
+  exerciseRotation:z.enum(['automatic','fixed']).optional(),
   variation:z.number().int().min(0).max(10000).optional(),
   additionalKit:z.array(z.enum(['bench','box','medicineBall','abWheel','fitball','hurdles','cones','ladder','partner','space'])).max(10).optional(),
   intensity:z.enum(['gentle','steady','experienced']).optional(),

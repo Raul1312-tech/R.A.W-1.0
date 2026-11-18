@@ -201,3 +201,42 @@
 
 :root body .directory-person small {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* Company product presets and private routine library. */
+:root body .company-product-summary{padding:22px;margin:22px 0;border:1px solid #d8e3fb;border-radius:16px;background:linear-gradient(135deg,#f3f6ff,#f5fbf8)}
+:root body .company-product-summary h3{margin:8px 0;font-size:21px;color:#18304e}
+:root body .company-product-summary>div{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+:root body .company-product-summary .product-pending{color:#607089;font-size:12px}
+:root body .template-card-stats{display:flex;flex-wrap:wrap;gap:7px}
+:root body .template-card-stats span{padding:6px 9px;border-radius:7px;background:#eef3fc;color:#344f81;font-size:11px}
+:root body .template-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+:root body .management-template>small{margin-bottom:5px}
+:root body .template-library-dialog{width:1120px;max-width:calc(100vw - 36px)}
+:root body .template-detail>h3{font-size:25px;margin:8px 0 12px;color:#19344f}
+:root body .template-week{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px}
+:root body .template-day{border:1px solid #dfe6f1;border-radius:14px;padding:18px;background:#fafcff;min-width:0}
+:root body .template-day h4{margin:0 0 12px;font:700 16px 'Segoe UI',sans-serif;color:#294d80}
+:root body .template-session+section{border-top:1px solid #dce5f1;margin-top:18px;padding-top:18px}
+:root body .template-session>div{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+:root body .template-session h5{margin:0;font:700 15px 'Segoe UI',sans-serif}
+:root body .template-session>div>span{font-size:11px;color:#5f7088;white-space:nowrap}
+:root body .template-session p{font-size:12px;line-height:1.65;color:#5c6c81}
+:root body .template-session ol{padding-left:20px;margin:14px 0 0}
+:root body .template-session li{padding:10px 0;font-size:12px;border-top:1px solid #e4eaf3}
+:root body .template-session li>span,:root body .template-session li>small{display:block;margin-top:5px;color:#576b84;line-height:1.6}
+:root body .template-warnings{margin-top:18px;padding:16px;background:#f3f6fb;border-radius:12px}
+:root body .template-start-options{display:flex;flex-wrap:wrap;gap:12px;padding:25px;border:1px dashed #b9cbe6;border-radius:14px;background:#f5f8ff;margin:20px 0}
+:root body .template-save-footer{border-top:1px solid #dde6f1;display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px;padding-top:20px}
+:root body .template-save-footer p{font-size:12px;color:#61758b;max-width:400px}
+:root body .company-template-editor .routine-page{padding:0}
+:root body .company-template-editor .field{margin-bottom:18px}
+@media(max-width:760px){
+ :root body .template-week{grid-template-columns:1fr}
+ :root body .template-library-dialog{max-width:calc(100vw - 20px)}
+ :root body .template-card-actions{width:100%}
+ :root body .template-card-actions .button{flex:1}
+ :root body .template-save-footer{flex-direction:column;align-items:stretch}
+ :root body .template-start-options{padding:18px}
+ :root body .template-start-options .button{width:100%}
+ :root body .template-session>div{display:block}
+}
+

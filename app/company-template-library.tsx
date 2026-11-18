@@ -1,0 +1,11 @@
+import {allTrainingSessions,trainingDays} from './training-model';
+import type {CompanyTemplate} from '../lib/company-templates';
+const scheduleLabels={regular:'Diurno habitual',early:'Empieza temprano',late:'Empieza tarde',variable:'Variable'};
+export function CompanyTemplateDetails({template}:{template:CompanyTemplate}){
+ if(template.kind==='nutrition')return <section className="template-detail"><span className="eyebrow">REPARTO DE COMIDAS</span><h3>{template.title}</h3><p>{template.payload.mealCount} comidas al día · {scheduleLabels[template.payload.schedule]}</p><p>Esta plantilla define el reparto y los horarios. Los alimentos y las cantidades se adaptan al perfil individual al aplicarla.</p></section>;
+ const plan=template.payload,rows=allTrainingSessions(plan);
+ return <section className="template-detail"><span className="eyebrow">{plan.config.sport==='boxing'?'FÍSICO Y CARRERA PARA BOXEO':'FUERZA GENERAL Y MUSCULACIÓN'}</span><h3>{template.title}</h3><p>Semana base del centro. Revisa nivel, material, disponibilidad y limitaciones antes de utilizarla con un alumno.</p><div className="template-week">{trainingDays.map((day,index)=>{
+ const sessions=rows.filter(s=>s.day===index&&s.kind!=='rest'),club=plan.config.sparringDays.includes(index)?'Sparring con el entrenador':plan.config.technicalDays.includes(index)?'Técnica de boxeo':null;
+ return <article className="template-day" key={day}><h4>{day}</h4>{club&&<p className="management-badge">{club}</p>}{!sessions.length&&!club&&<p className="muted">Descanso o recuperación</p>}{sessions.map(session=><section className="template-session" key={session.kind}><div><h5>{session.title}</h5><span>{session.minutes} min aprox.</span></div>{session.focus&&<p>{session.focus}</p>}{session.warmup&&<p><b>Calentamiento:</b> {session.warmup}</p>}<ol>{session.exercises.map(e=><li key={e.id}><strong>{e.name}</strong><span>{e.sets} series · {e.dose} · descanso {e.rest}</span>{e.effort&&<small>{e.effort}</small>}{e.plannedKg!=null&&<small>Carga orientativa: {e.plannedKg} kg</small>}{e.cue&&<small>{e.cue}</small>}</li>)}</ol></section>)}</article>;
+ })}</div>{plan.warnings.length>0&&<details className="template-warnings"><summary>Orientaciones de esta base</summary>{plan.warnings.map((warning,index)=><p key={index}>{warning}</p>)}</details>}</section>;
+}

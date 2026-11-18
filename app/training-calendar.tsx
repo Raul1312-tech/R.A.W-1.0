@@ -1,7 +1,7 @@
 'use client';
 import {gymIds,muscles,gymLibrary} from './hypertrophy-model';
 import SelectField from './select-field';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import LateralCarousel from './lateral-carousel';
 import {ArrowDown,ArrowUp,Plus,Save,Trash2,CalendarDays,ArrowUpRight} from 'lucide-react';
 import {trainingDays,type Exercise,type TrainingPlan,type TrainingSession} from './training-model';
@@ -16,11 +16,12 @@ function gymDaySummary(session:TrainingSession){
  return {type,groups:groups.join(' · ')};
 }
 const dateLabel=(date:string)=>new Date(date+'T12:00:00Z').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
-export default function TrainingCalendar({plan,month,today,disabled,onSave,onToday,lockedDates,onTodayLabel}:{lockedDates?:string[];onTodayLabel?:string;plan:TrainingPlan;month:string;today:string;disabled:boolean;onSave:(plan:TrainingPlan)=>void;onToday:(date:string)=>void}){
+export default function TrainingCalendar({plan,month,today,disabled,onSave,onToday,lockedDates,onTodayLabel,hideSessionLink=false,onUnsavedChange}:{hideSessionLink?:boolean;onUnsavedChange?:(dirty:boolean)=>void;lockedDates?:string[];onTodayLabel?:string;plan:TrainingPlan;month:string;today:string;disabled:boolean;onSave:(plan:TrainingPlan)=>void;onToday:(date:string)=>void}){
   const gym=plan.config.sport==='hypertrophy';
   const dates=monthDates(month);const catalog=useExerciseCatalog();
   const [selected,setSelected]=useState(today.startsWith(month)?today:dates[0]);
   const [edited,setEdited]=useState<TrainingSession[]|null>(null);
+  useEffect(()=>{onUnsavedChange?.(edited!==null);return ()=>onUnsavedChange?.(false)},[edited,onUnsavedChange]);
   const [scope,setScope]=useState<'date'|'weekday'>('date');const [error,setError]=useState('');
   const [category,setCategory]=useState('Todas');const [search,setSearch]=useState('');const [pick,setPick]=useState('');
   const sessions=edited??sessionsForDate(plan,selected);
@@ -60,7 +61,7 @@ export default function TrainingCalendar({plan,month,today,disabled,onSave,onTod
         </article>}))}/>
         {edited!==null&&session.exercises.length<10&&<div className="exercise-picker"><h4>Añadir ejercicio</h4><div className="routine-config-grid"><SelectField label="Tipo de trabajo" value={category} onValueChange={selection=>{setCategory(selection);setPick('')}}>{(gym?['Todas','Abdomen','Fuerza y potencia']:['Todas','Abdomen','Cuello','Pliometría','Agilidad de pies','Fuerza y potencia','Carrera']).map(c=><option key={c}>{c}</option>)}</SelectField><label className="field"><span>Buscar ejercicio</span><input value={search} onChange={e=>{setSearch(e.target.value);setPick('')}} placeholder={gym?'Press, remo, sentadilla…':'Plancha, salto, pivote…'}/></label></div><SelectField label="Ejercicio de la biblioteca" value={pick} onValueChange={selection=>setPick(selection)}><option value="">Selecciona un ejercicio</option>{available.map(r=><option value={r.id} key={r.id}>{r.name}</option>)}</SelectField><button className="button outline" disabled={!pick} onClick={()=>{const r=catalog.find(r=>r.id===pick);if(r)patchSession(si,{exercises:[...session.exercises,exerciseFromRecord(r)]})}}><Plus size={16}/> Añadir a {session.kind==='lift'?'físico':'carrera'}</button></div>}
       </section>)}
-      {edited!==null?<div className="calendar-save"><div className="calendar-actions">{!sessions.some(s=>s.kind==='lift')&&<button className="button outline" onClick={()=>addSession('lift')}><Plus size={16}/> Añadir {gym?'gimnasio':'físico'}</button>}{!gym&&!sessions.some(s=>s.kind==='conditioning')&&<button className="button outline" onClick={()=>addSession('conditioning')}><Plus size={16}/> Añadir carrera</button>}</div><SelectField label="Aplicar cambios a" value={scope} onValueChange={selection=>setScope(selection as typeof scope)}><option value="date">Solo el {selected}</option><option value="weekday">Todos los {trainingDays[weekday].toLowerCase()} de este mes</option></SelectField><p className="muted">Los kilos son una previsión, no un registro de peso levantado. Las sesiones ya empezadas conservan su programa original en Mi día.</p>{error&&<p className="notice error" role="alert">{error}</p>}<div className="calendar-actions"><button className="button orange" disabled={disabled} onClick={save}><Save size={17}/> Guardar planificación</button><button className="button outline" onClick={()=>{setEdited(null);setError('')}}>Cancelar edición</button></div></div>:<button className="button orange" disabled={selected>today} onClick={()=>onToday(selected)}>{onTodayLabel??'Ir a Mi día · seguir esta sesión'} <ArrowUpRight size={17}/></button>}
+      {edited!==null?<div className="calendar-save"><div className="calendar-actions">{!sessions.some(s=>s.kind==='lift')&&<button className="button outline" onClick={()=>addSession('lift')}><Plus size={16}/> Añadir {gym?'gimnasio':'físico'}</button>}{!gym&&!sessions.some(s=>s.kind==='conditioning')&&<button className="button outline" onClick={()=>addSession('conditioning')}><Plus size={16}/> Añadir carrera</button>}</div><SelectField label="Aplicar cambios a" value={scope} onValueChange={selection=>setScope(selection as typeof scope)}><option value="date">Solo el {selected}</option><option value="weekday">Todos los {trainingDays[weekday].toLowerCase()} de este mes</option></SelectField><p className="muted">Los kilos son una previsión, no un registro de peso levantado. Las sesiones ya empezadas conservan su programa original en Mi día.</p>{error&&<p className="notice error" role="alert">{error}</p>}<div className="calendar-actions"><button className="button orange" disabled={disabled} onClick={save}><Save size={17}/> Guardar planificación</button><button className="button outline" onClick={()=>{setEdited(null);setError('')}}>Cancelar edición</button></div></div>:!hideSessionLink&&<button className="button orange" disabled={selected>today} onClick={()=>onToday(selected)}>{onTodayLabel??'Ir a Mi día · seguir esta sesión'} <ArrowUpRight size={17}/></button>}
     </section>
   </section>;
 }

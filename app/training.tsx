@@ -5,7 +5,7 @@ import {muscles,muscleVolume,gymLibrary} from './hypertrophy-model';
 import SelectField from './select-field';
 import type {Competition} from './preparation-schema';
 import {competitionPhase} from './competition-phase';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {ArrowUpRight,Check,Dumbbell,Flame,Footprints,Settings} from 'lucide-react';
 import {trainingLevels,allTrainingSessions,trainingLoadWarnings,updateTrainingConfig,boxingSchedule,sparringWarnings,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,trainingDays,type TrainingConfig,type TrainingPlan,type TrainingData} from './training-model';
 import TrainingCalendar from './training-calendar';
@@ -17,13 +17,15 @@ function DayPicker({label,days,onChange,disabled=false}:{label:string;days:numbe
   return <fieldset className="routine-days-field"><legend>{label}</legend><div className="routine-day-picks">{trainingDays.map((day,i)=><button key={day} type="button" aria-pressed={days.includes(i)} disabled={disabled} onClick={()=>onChange(days.includes(i)?days.filter(d=>d!==i):[...days,i].sort((a,b)=>a-b))}>{days.includes(i)&&<Check size={14} aria-hidden="true"/>}{day.slice(0,3)}</button>)}</div></fieldset>;
 }
 
-export default function Training({data,onChange,today,disabled,onToday,competition,boxing,initialMonth,draftMode=false,lockedDates=[]}:{initialMonth?:string;draftMode?:boolean;lockedDates?:string[];boxing?:boolean;data:TrainingData;onChange:(data:TrainingData)=>void;onToday:(date:string)=>void;today:string;disabled:boolean;competition?:Competition}){
+export default function Training({data,onChange,today,disabled,onToday,competition,boxing,initialMonth,draftMode=false,lockedDates=[],templateMode=false,onUnsavedChange}:{templateMode?:boolean;onUnsavedChange?:(dirty:boolean)=>void;initialMonth?:string;draftMode?:boolean;lockedDates?:string[];boxing?:boolean;data:TrainingData;onChange:(data:TrainingData)=>void;onToday:(date:string)=>void;today:string;disabled:boolean;competition?:Competition}){
   const [month,setMonth]=useState(initialMonth??today.slice(0,7));
   const plan=planForDate(data,month+'-01');
   const active=plan;
   const [config,setConfig]=useState<TrainingConfig>(()=>active?.config??data.plans.at(-1)?.config??(boxing?{...defaultTrainingConfig(),sport:'boxing',days:[0,1,3,5],physicalDays:[0,3],runningDays:[1,5],conditioningDays:2}:defaultTrainingConfig()));
   const [editing,setEditing]=useState(!active&&!data.plans.length);
   const [preview,setPreview]=useState<TrainingPlan|null>(null);
+  const [calendarDirty,setCalendarDirty]=useState(false);
+  useEffect(()=>{onUnsavedChange?.(editing||preview!==null||calendarDirty);return ()=>onUnsavedChange?.(false)},[editing,preview,calendarDirty,onUnsavedChange]);
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
   const competitionMode=competition?competitionPhase(competition,today):undefined;
@@ -33,12 +35,12 @@ export default function Training({data,onChange,today,disabled,onToday,competiti
   const recommendation=recommendBoxing(config);
   const daysPending=!!plan&&plan.config.sport===config.sport&&scheduleSignature(plan.config)!==scheduleSignature(config);
   function generate(){try{setPreview({...generateTrainingPlan({...config,catalogVersion:2,competition}),month});setError('');setMessage('')}catch(e){setError(e instanceof Error?e.message:'Revisa los ajustes de la rutina.')}}
-  function savePlan(next:TrainingPlan){onChange({...data,plans:[...data.plans.filter(p=>p.id!==next.id),next].slice(-12)});setMessage(draftMode?'Borrador actualizado. Revisa los cambios antes de publicarlo al alumno.':'Plan mensual guardado. Lo realizado se consulta en Entreno.')}
+  function savePlan(next:TrainingPlan){onChange({...data,plans:[...data.plans.filter(p=>p.id!==next.id),next].slice(-12)});setMessage(templateMode?'Borrador de plantilla actualizado. Guarda la plantilla de empresa para conservarlo.':draftMode?'Borrador actualizado. Revisa los cambios antes de publicarlo al alumno.':'Plan mensual guardado. Lo realizado se consulta en Entreno.')}
   function activate(){if(!preview||disabled)return;savePlan(preview);setEditing(false);setPreview(null)}
   return <section className="routine-page">
     {!active&&!editing&&data.plans.length>0&&month>=today.slice(0,7)&&<section className="routine-configured"><h3>Tus horarios ya están guardados</h3><p>Prepara este mes con tus días de boxeo, físico y carrera, tu material y tus tiempos. No necesitas responder de nuevo.</p><div className="button-row"><button type="button" className="button orange" disabled={disabled} onClick={()=>{try{savePlan(configuredTrainingMonth(data,{...config,competition},month,today));setError('')}catch(e){setError((e as Error).message)}}}>Preparar mes con mis horarios <Check size={17}/></button><button type="button" className="button outline" disabled={disabled} onClick={()=>setEditing(true)}>Cambiar configuración</button></div>{error&&<p className="notice error" role="alert">{error}</p>}</section>}
     <div className="raw-section-label"><h2>Calendario de entreno</h2>{active&&<button className="button outline" disabled={disabled} onClick={()=>{setEditing(!editing);setConfig(active.config);setPreview(null);setError('')}}><Settings size={16}/>{editing?'Cerrar ajustes':'Editar rutina'}</button>}</div>
-    {active?.config.sport==='boxing'&&active.config.catalogVersion!==2&&<section className="card"><h3>100 ejercicios para tu físico</h3><p>Renueva las sesiones pendientes según tu nivel y material. Conservamos el historial y las sesiones ya iniciadas.</p><button className="button orange" disabled={disabled} onClick={()=>{try{setPreview(refreshBoxingCatalog(data,today));setEditing(true);setError('')}catch(e){setError((e as Error).message)}}}>Preparar rutina con el catálogo nuevo</button></section>}
+    {!templateMode&&active?.config.sport==='boxing'&&active.config.catalogVersion!==2&&<section className="card"><h3>100 ejercicios para tu físico</h3><p>Renueva las sesiones pendientes según tu nivel y material. Conservamos el historial y las sesiones ya iniciadas.</p><button className="button orange" disabled={disabled} onClick={()=>{try{setPreview(refreshBoxingCatalog(data,today));setEditing(true);setError('')}catch(e){setError((e as Error).message)}}}>Preparar rutina con el catálogo nuevo</button></section>}
     {competitionMode?.active&&<p className="notice">{competitionMode.label} · las sesiones pendientes siguen el plan de competición.</p>}
     <label className="field routine-month-field"><span>Mes de planificación</span><input type="month" value={month} disabled={draftMode} onChange={e=>{if(/^\d{4}-(0[1-9]|1[0-2])$/.test(e.target.value)){setMonth(e.target.value);setConfig(planForDate(data,e.target.value+'-01')?.config??data.plans.at(-1)?.config??config);setPreview(null);setMessage('');setEditing(false)}}}/></label>
     {!plan&&!editing&&!data.plans.length&&month>=today.slice(0,7)&&<div className="card"><h2>Este mes está por diseñar.</h2><p>Configura la semana base y guárdala para este mes.</p><button className="button orange" onClick={()=>setEditing(true)}>Diseñar este mes</button></div>}
@@ -84,13 +86,13 @@ export default function Training({data,onChange,today,disabled,onToday,competiti
       </details>
       {error&&<p className="notice error" role="alert">{error}</p>}
       <button className="button orange" disabled={disabled} onClick={generate}>Ver propuesta de rutina <ArrowUpRight size={17}/></button>
-      {preview&&<div className="routine-preview"><h3>Revisa antes de guardar</h3><div className="routine-preview-days">{allTrainingSessions(preview).filter(s=>s.kind!=='rest').map(s=><p key={s.day+':'+s.kind}><b>{trainingDays[s.day]}</b><span>{s.title} · {s.minutes} min aprox.</span></p>)}</div>{preview.warnings.map(w=><p className="notice" key={w}>{w}</p>)}<p className="muted">La semana base se repite durante el mes elegido. Después puedes editar cada fecha. Los registros realizados se conservan; se guardan las últimas 12 versiones de planificación.</p><button className="button orange" disabled={disabled} onClick={activate}><Check size={17}/> {draftMode?'Preparar mes en el borrador':'Guardar mes y ver calendario'}</button></div>}
+      {preview&&<div className="routine-preview"><h3>Revisa antes de guardar</h3><div className="routine-preview-days">{allTrainingSessions(preview).filter(s=>s.kind!=='rest').map(s=><p key={s.day+':'+s.kind}><b>{trainingDays[s.day]}</b><span>{s.title} · {s.minutes} min aprox.</span></p>)}</div>{preview.warnings.map(w=><p className="notice" key={w}>{w}</p>)}<p className="muted">La semana base se repite durante el mes elegido. Después puedes editar cada fecha. Los registros realizados se conservan; se guardan las últimas 12 versiones de planificación.</p><button className="button orange" disabled={disabled} onClick={activate}><Check size={17}/> {templateMode?'Usar esta propuesta en el borrador':draftMode?'Preparar mes en el borrador':'Guardar mes y ver calendario'}</button></div>}
     </section>}
     {message&&<p className="notice" role="status">{message}</p>}
     {plan&&<>
-      {plan.config.sport==='boxing'&&plan.config.catalogVersion!==2&&!plan.sessions.some(s=>s.exercises.some(ex=>ex.group))&&<p className="notice">Tu rutina guardada conserva sus ejercicios. Para renovar el físico, pulsa «Preparar rutina con el catálogo nuevo» o abre «Editar rutina» para revisar nivel y material. Tus registros anteriores se conservan.</p>}
+      {!templateMode&&plan.config.sport==='boxing'&&plan.config.catalogVersion!==2&&!plan.sessions.some(s=>s.exercises.some(ex=>ex.group))&&<p className="notice">Tu rutina guardada conserva sus ejercicios. Para renovar el físico, pulsa «Preparar rutina con el catálogo nuevo» o abre «Editar rutina» para revisar nivel y material. Tus registros anteriores se conservan.</p>}
       {plan.config.sport==='hypertrophy'&&<details className="card gym-volume-summary"><summary>Tu volumen semanal · ver músculos y series</summary><p>Series directas por músculo. La participación indirecta se muestra aparte: no equivale a una serie directa.</p><div className="muscle-volume">{muscleVolume(plan.sessions).map(m=><div key={m.id}><strong>{m.name}</strong><b>{m.direct} directas</b><small>{m.indirect} con participación secundaria</small></div>)}</div><p>La semana base es una referencia. Mantén los ejercicios mientras progresas; revisa con tus registros antes de añadir volumen.</p></details>}
-      <TrainingCalendar key={month+':'+plan.id} plan={plan} month={month} today={today} disabled={disabled} onSave={savePlan} onToday={onToday} lockedDates={draftMode?lockedDates:undefined} onTodayLabel={draftMode?'Ver fecha en la ficha':undefined}/>
+      <TrainingCalendar key={month+':'+plan.id} plan={plan} month={month} today={today} disabled={disabled} onSave={savePlan} onToday={onToday} hideSessionLink={templateMode} onUnsavedChange={templateMode?setCalendarDirty:undefined} lockedDates={draftMode?lockedDates:undefined} onTodayLabel={draftMode?'Ver fecha en la ficha':undefined}/>
       {plan.warnings.length>0&&<details className="routine-context"><summary>Avisos de carga de la semana base</summary>{plan.warnings.map(w=><p key={w}>{w}</p>)}</details>}
     </>}
     {!active&&month<today.slice(0,7)&&<p className="notice">No hay una rutina guardada para este mes pasado.</p>}

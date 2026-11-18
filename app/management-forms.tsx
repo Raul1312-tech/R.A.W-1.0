@@ -6,10 +6,10 @@ import type {CompanyTemplate} from '../lib/company-templates';
 import {defaultTrainingConfig,generateTrainingPlan,type TrainingData,type TrainingPlan} from './training-model';
 import {monthDates,sessionsForDate} from './training-calendar-model';
 import Training from './training';
-export function ManagementDialog({title,children,onClose}:{title:string;children:ReactNode;onClose:()=>void}){
+export function ManagementDialog({title,children,onClose,className=''}:{title:string;children:ReactNode;onClose:()=>void;className?:string}){
  const dialog=useRef<HTMLDialogElement>(null);
  useEffect(()=>{dialog.current?.showModal()},[]);
- return <dialog ref={dialog} className="management-dialog" aria-label={title} onCancel={e=>{e.preventDefault();onClose()}}><header><h2>{title}</h2><button type="button" className="icon-button" aria-label="Cerrar" onClick={onClose}><X size={22}/></button></header>{children}</dialog>;
+ return <dialog ref={dialog} className={'management-dialog '+className} aria-label={title} onCancel={e=>{e.preventDefault();onClose()}}><header><h2>{title}</h2><button type="button" className="icon-button" aria-label="Cerrar" onClick={onClose}><X size={22}/></button></header>{children}</dialog>;
 }
 export function BrandFields({value,onChange}:{value:Company['brand'];onChange:(v:Company['brand'])=>void}){
  const [error,setError]=useState('');

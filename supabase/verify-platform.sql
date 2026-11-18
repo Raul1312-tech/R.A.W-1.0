@@ -25,10 +25,10 @@ do $$declare a uuid:='c0020000-0000-4000-8000-000000000001';b uuid:='c0020000-00
  begin perform public.platform_action('member',jsonb_build_object('organization_id',a,'user_id',athlete,'role','admin','status','active'));raise exception 'Athlete escalated role';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000002","role":"authenticated","is_anonymous":false}',true);
  begin perform public.platform_journal(a,athlete);raise exception 'Admin bypassed consent';exception when insufficient_privilege then null;end;
- begin perform public.platform_client_detail(a,athlete);raise exception 'Admin used owner supervision';exception when insufficient_privilege then null;end;
+ if public.platform_client_detail(a,athlete)->>'canEdit'<>'true' or public.platform_client_detail(a,athlete)->>'canManageProfile'<>'false' then raise exception 'Company admin cannot manage own pupil plans independently';end if;
  begin perform public.platform_snapshot(b);raise exception 'Admin read other company';exception when insufficient_privilege then null;end;
  begin perform public.platform_action('brand',jsonb_build_object('organization_id',b,'brand','{}','name','Other'));raise exception 'Admin changed other brand';exception when insufficient_privilege then null;end;
- if jsonb_array_length(public.platform_snapshot(a)->'clientMetrics')<>1 then raise exception 'Private client metrics leaked';end if;
+ if jsonb_array_length(public.platform_snapshot(a)->'clientMetrics')<>2 then raise exception 'Private client metrics leaked';end if;
  inv:=public.platform_action('invite',jsonb_build_object('organization_id',a,'email','platform-test-7@example.invalid','role','user'));token:=inv->>'token';
  if length(token)<>64 or public.platform_invite_info(token)->>'slug'<>'platform-test-1' then raise exception 'Invitation invalid';end if;
  perform set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000004","role":"authenticated","is_anonymous":false}',true);

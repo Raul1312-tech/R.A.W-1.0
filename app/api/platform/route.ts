@@ -1,3 +1,5 @@
+import {createHash} from 'node:crypto';
+import {clientPlanCommand,applyClientPlanCommand,mergeStoredClientPlan} from '../../../lib/client-plan-editor';
 import {z} from 'zod';
 import {platformContext,readJournal,platformError,PlatformError,dbFailure} from '../../../lib/platform-server';
 import {reply,readLimitedJson,sameOrigin} from '../../../lib/request';
@@ -7,6 +9,7 @@ import {stateSchema} from '../../validation';
 export const dynamic='force-dynamic';
 const uuid=z.string().uuid(),role=z.enum(['admin','coach','user']);
 const actionSchema=z.discriminatedUnion('action',[
+ z.object({action:z.literal('client_plan'),args:z.object({organization_id:uuid,user_id:uuid,profile_id:z.string().min(1).max(100),revision:z.number().int().min(1).max(2147483646),command:clientPlanCommand,commit:z.boolean(),previewToken:z.string().length(64).optional()}).strict()}),
  z.object({action:z.literal('create_company'),args:companyInput}),
  z.object({action:z.literal('update_company'),args:z.object({organization_id:uuid,company:companyInput,expected_updated_at:z.string().datetime({offset:true})}).strict()}),
  z.object({action:z.literal('brand'),args:z.object({organization_id:uuid,name:z.string().trim().min(2).max(100),brand:brandSchema,expected_updated_at:z.string().datetime({offset:true})}).strict()}),
@@ -51,6 +54,20 @@ export async function POST(request:Request){
    const {data,error}=await db.rpc('platform_action',{kind:parsed.action,args:parsed.args});if(error)dbFailure(error);return reply(data);
   }
   const {db,context}=await platformContext(new URL(request.url).searchParams.get('organization')??'rise');
+  if(parsed.action==='client_plan'){
+   const args=parsed.args;if(context.organization.id!==args.organization_id)throw new PlatformError('Empresa no válida.');
+   const {data:detail,error:detailError}=await db.rpc('platform_client_detail',{org:args.organization_id,subject:args.user_id});if(detailError)dbFailure(detailError);
+   if(!detail.canEdit)throw new PlatformError('No tienes permiso para editar los planes de este alumno.');
+   if(detail.revision!==args.revision)return reply({error:'El alumno tiene cambios más recientes. Vuelve a abrir su ficha antes de editar.'},409);
+   const result=applyClientPlanCommand(stateSchema.parse(detail.state),args.profile_id,args.command,today()),next=mergeStoredClientPlan(detail.state,result.state,args.profile_id,result.change);stateSchema.parse(next);
+   if(new TextEncoder().encode(JSON.stringify(next)).length>2000000)return reply({error:'El registro supera 2 MB. Exporta y revisa el historial antes de añadir más planificación.'},413);
+   const previewToken=createHash('sha256').update(JSON.stringify({org:args.organization_id,user:args.user_id,profile:args.profile_id,revision:args.revision,command:args.command,today:today(),change:result.change})).digest('hex');
+   if(!args.commit)return reply({...result,state:next,previewToken});
+   if(args.previewToken!==previewToken)return reply({error:'La propuesta ha cambiado. Revisa de nuevo las fechas antes de confirmar.'},409);
+   const {data:revision,error:saveError}=await db.rpc('platform_save_client_plan',{org:args.organization_id,subject:args.user_id,new_payload:next,expected:args.revision,change:{kind:result.change.kind,month:result.change.month,dates:result.change.dates,profile:args.profile_id}});if(saveError)dbFailure(saveError);
+   if(revision===null)return reply({error:'Hay un guardado más reciente. Vuelve a abrir la ficha; no se han sobrescrito sus datos.'},409);
+   return reply({...result,state:next,revision,previewToken,updatedAt:new Date().toISOString()});
+  }
   if(parsed.action==='apply_template'){
    const args=parsed.args;
    if(context.organization.id!==args.organization_id||!context.role||!['admin','coach'].includes(context.role))throw new PlatformError('Seguimiento no autorizado.');

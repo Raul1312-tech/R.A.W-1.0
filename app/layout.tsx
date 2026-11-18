@@ -20,3 +20,4 @@ import './athlete-dark.css';
 import './editorial-theme.css';
 import './management.css';
 import './client-followup.css';
+import './client-month-plans.css';

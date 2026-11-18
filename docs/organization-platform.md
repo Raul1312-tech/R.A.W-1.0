@@ -16,9 +16,9 @@ El superadmin inicial se asigna exclusivamente al UUID y correo del propietario 
 
 ## Permisos
 
-Superadmin gestiona empresas, marca, módulos, límites, contratos y facturación. Dispone de una ficha de supervisión de solo lectura para cuentas activas de empresas activas, mediante platform_client_detail. Esta consulta está auditada y permite revisar dietas por fecha, registros, entrenos, sensaciones y revisiones guardadas. No incluye fotografías originales. El acceso no cambia share_followup. Para modificar planes o notas debe tener rol profesional en la empresa y permiso de seguimiento del usuario.
+Superadmin gestiona empresas, marca, módulos, límites, contratos y facturación. Dispone de una ficha de supervisión de solo lectura para cuentas activas de empresas activas, mediante platform_client_detail. Esta consulta está auditada y permite revisar dietas por fecha, registros, entrenos, sensaciones y revisiones guardadas. No incluye fotografías originales. El acceso no cambia share_followup. La cuenta de propietario puede editar planes de Rise. En otras empresas la edición requiere rol de administrador de esa empresa para sus alumnos, o acceso profesional asignado y autorizado. Las notas y las plantillas que modifican preferencias de perfil conservan el permiso adicional de seguimiento.
 
-Los administradores gestionan equipo, clientes, invitaciones y marca de su empresa; su acceso al seguimiento personal sigue sujeto al permiso del usuario. Los privilegios de supervisión pertenecen exclusivamente al superadmin de plataforma. Los entrenadores consultan únicamente clientes asignados que hayan compartido su seguimiento. Cada usuario puede revocar ese permiso. El permiso cubre los perfiles de su cuenta dentro de esa empresa. Las fotografías siguen siendo privadas incluso con seguimiento compartido.
+Los administradores gestionan equipo, clientes, invitaciones, marca y planes de los alumnos de su propia empresa. Pueden consultar y editar la planificación de esos alumnos sin activar por ellos share_followup. Los entrenadores conservan la asignación y el permiso adicional del usuario. Los privilegios de supervisión de otras empresas pertenecen exclusivamente al superadmin de plataforma. Los entrenadores consultan únicamente clientes asignados que hayan compartido su seguimiento. Cada usuario puede revocar ese permiso. El permiso cubre los perfiles de su cuenta dentro de esa empresa. Las fotografías siguen siendo privadas incluso con seguimiento compartido.
 
 Los paneles tienen directorios paginados (100 registros), hasta 200 acciones recientes y 300 facturas recientes. Las cifras agregadas se calculan en la base de datos. El seguimiento muestra registros, peso, sesiones, menú/rutina y notas internas, sin inventar cumplimiento cuando faltan datos. No constituye un sistema de analítica ilimitada.
 
@@ -57,3 +57,18 @@ No hay cobros automáticos, pasarela de pagos, emisión fiscal electrónica ni e
 ## Verificación
 
 npm test, npm run typecheck y npm run build. tests/platform.test.mjs comprueba rutas, validación de marcas y módulos, métricas y conservación de datos al aplicar plantillas. supabase/verify-platform.sql ejecuta aislamiento entre empresas, roles, consentimiento, asignación de entrenador, invitaciones, concurrencia y suspensiones. supabase/verify-isolation.sql conserva la comprobación del historial de Rise. Ambos scripts usan identidades sintéticas dentro de una transacción que se revierte por completo.
+
+
+## Edición mensual de alumnos
+
+En Usuarios → Ver ficha, Dieta y Entrenos abren el calendario del mes y una lista mensual alternativa. Una propuesta calculada se distingue de un día con planificación guardada. Los meses pasados se consultan; no se rellenan retrospectivamente como si hubiesen estado guardados.
+
+El administrador de una empresa puede administrar los planes de sus miembros con rol usuario. La cuenta de propietario puede hacerlo en Rise. Un superadmin sin membresía profesional en otra empresa conserva supervisión de lectura. Los entrenadores mantienen asignación y permiso adicional del alumno. Estas capacidades no activan share_followup por el alumno ni dan acceso a otros gimnasios.
+
+La edición de comida cambia ingredientes, cantidades y nombre de una toma pendiente. Puede aplicarse a esa fecha, a las siguientes coincidencias del día de la semana, o a la misma franja durante el resto del mes. Omite días cerrados y tomas registradas. «Guardar las propuestas pendientes» persiste las fechas con menú calculado que todavía no tienen un snapshot guardado. El menú nuevo se guarda en days[fecha].foodPlan y lo lee la misma vista diaria del deportista. Se puede mantener la prescripción o permitir el ajuste automático de las cantidades pendientes.
+
+La rutina reutiliza el editor de calendario y ejercicios. Se prepara en borrador y se revisan fechas, sesiones, series, dosis, descansos e intensidad antes de confirmar. Al publicar se añade una versión mensual, conservando el pasado y las fechas con sesiones iniciadas, realizadas o boxeo registrado; no se cambian logs, drafts ni registros diarios.
+
+La API vuelve a calcular la propuesta con el estado persistido y la revisión cargada. El token de revisión identifica comando, empresa, alumno, perfil, fecha y revisión; no es un permiso de acceso. El guardado usa CAS, autorización en servidor y función PostgreSQL independiente que limita las diferencias a prescripciones y rechaza cambios en consumos, medidas, comentarios del usuario, días pasados y versiones anteriores. Los metadatos antiguos que la UI no interpreta se conservan. No hay guardados al escribir en un campo o generar una propuesta: solo al confirmar.
+
+Las plantillas que cambian preferencias del perfil y las notas internas conservan su permiso anterior, independiente de esta edición de planes. Verificación adicional: tests/client-plan-editor.test.mjs y supabase/verify-student-plans.sql.

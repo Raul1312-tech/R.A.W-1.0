@@ -11,10 +11,10 @@ export const emptyInteractions=():ClientInteractions=>({activity:[],reviews:[],w
 export const coachChoice=z.object({action:z.enum(['keep','ease','fuel','coordinate','strategy']),priority:z.array(z.string()).max(20)});
 export const actionNames={keep:'Mantener el plan',ease:'Revisar la carga',fuel:'Ajustar la alimentación',coordinate:'Coordinar comidas y entreno',strategy:'Revisar la estrategia'};
 export const eventNames:Record<string,string>={'session.active':'Acceso a la app','journal.saved':'Registro guardado','member.joined':'Incorporación a la empresa','invitation.accepted':'Invitación aceptada','client.viewed':'Consulta de seguimiento','client.supervision_viewed':'Consulta de supervisión del propietario','client.plan_updated':'Plan actualizado por el equipo','consent.changed':'Permiso de seguimiento actualizado',member:'Acceso o entrenador actualizado',note:'Nota de seguimiento añadida'};
-export function nutritionForDate(profile:Profile,date:string,today:string){
+export function nutritionForDate(profile:Profile,date:string,today:string,preparedProfile?:Profile){
  if(!z.string().date().safeParse(date).success)throw Error('Fecha no válida.');
  // Same deterministic view as the athlete app; never save a preview as a record.
- let p=date>=today?replanCompetition(profile,today):profile;if(date>today)p=replanCompetition(p,date);
+ let p=preparedProfile??(date>=today?replanCompetition(profile,today):profile);if(!preparedProfile&&date>today)p=replanCompetition(p,date);
  const eligible=p.plans.filter(plan=>plan.created.slice(0,10)<=date);
  const source=eligible.at(-1);
  const prepared=date>=today?withCoordinatedDay(p,date,source):p;
@@ -25,7 +25,7 @@ export function nutritionForDate(profile:Profile,date:string,today:string){
   const record=view.snapshot.records.find(r=>r.slot===slot),items=record?day.items.filter(it=>record.itemIds.includes(it.id)):meal.items;
   return {slot,label:displayMeal(view.snapshot.labels[slot]),time:times[slot]??'',name:record?.status==='alternative'?'Comida registrada':meal.name,status:record?.status??'pending',items,macro:total(items),prep:meal.prep};
  })??[];
- return {day,meals,consumed:total(day.items),target:day.target??targets(p),projected:view?.projected??null,hasSavedDay:!!profile.days[date],derived:!profile.days[date]?.foodPlan&&meals.length>0,unassigned:day.items.filter(it=>!view?.snapshot.records.some(r=>r.itemIds.includes(it.id)))};
+ return {snapshot:view?.snapshot,day,meals,consumed:total(day.items),target:day.target??targets(p),projected:view?.projected??null,hasSavedDay:!!profile.days[date],derived:!profile.days[date]?.foodPlan&&meals.length>0,unassigned:day.items.filter(it=>!view?.snapshot.records.some(r=>r.itemIds.includes(it.id)))};
 }
 export function recordedDates(p:Profile){return [...new Set([...Object.entries(p.days).filter(([,d])=>d.items.length>0||d.minutes>0||d.water>0||d.weight!==null||d.steps!==null||d.sleep!==null||!!d.notes||d.complete||!!d.foodPlan?.records.length).map(([date])=>date),...Object.keys(p.preparation?.readiness??{}),...Object.keys(p.preparation?.clubRecords??{}),...(p.workouts?.logs??[]).map(l=>l.date)])].sort().reverse()}
 export function groupedIntake(items:(Item&{meal:string})[]){return [...new Set(items.map(i=>i.meal))].map(label=>({label:displayMeal(label),items:items.filter(i=>i.meal===label)}))}

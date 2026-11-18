@@ -1,6 +1,10 @@
 # R.A.W 1.0
 
-Aplicación privada de alimentación y entrenamiento. Next.js en Vercel y Supabase para autenticación y registros. Cada cuenta tiene sus propios perfiles; no hay acceso compartido entre cuentas.
+Aplicación privada de alimentación y entrenamiento. Next.js en Vercel y Supabase para autenticación y registros. Cada cuenta puede pertenecer a varias empresas con historiales separados. El seguimiento profesional requiere permiso explícito del usuario en cada empresa.
+
+## Plataforma de empresas
+
+Ya incluye superadmin, panel por empresa, marca propia y seguimiento autorizado. Rutas, permisos, migraciones, facturación manual y pruebas: [documentación de la plataforma](docs/organization-platform.md).
 
 ## Funciones
 

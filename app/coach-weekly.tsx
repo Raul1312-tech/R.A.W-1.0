@@ -1,4 +1,5 @@
 'use client';
+import {tenantFetch as fetch} from '../lib/tenant-fetch';
 import {useEffect,useState} from 'react';
 import {coachContext,type CoachAction} from './coach-model';
 import {currentWeeklyAction,type WeeklyReview} from '../lib/coach-weekly';

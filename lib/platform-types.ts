@@ -1,0 +1,4 @@
+import type {Company,Membership,Subscription,Invoice,Activity,PlatformContext,ClientMetrics} from './platform-model';
+import type {CompanyTemplate} from './company-templates';
+export type Invitation={id:string;organization_id:string;email:string;role:Membership['role'];expires_at:string;accepted_at:string|null;revoked_at:string|null;created_at:string};
+export type PlatformSnapshot={organizations:Company[];members:Membership[];staff?:Membership[];subscriptions:Subscription[];invoices:Invoice[];activity:Activity[];invitations:Invitation[];templates:CompanyTemplate[];clientMetrics:{user_id:string;metrics:ClientMetrics|null}[];context:PlatformContext;userId:string;today:string;organizationStats:{organization_id:string;users:number;staff:number;active30:number}[];totals:{companies:number;members:number;activeCompanies:number;mrrCents:number;paidCents:number;overdueCents:number;aiRequests30:number}};

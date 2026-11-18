@@ -1,4 +1,5 @@
 'use client';
+import {tenantFetch as fetch} from '../lib/tenant-fetch';
 import SelectField from './select-field';
 import {useEffect,useRef,useState} from 'react';
 import {Camera,Eye,EyeOff,Lock,Plus,Download,Trash2} from 'lucide-react';

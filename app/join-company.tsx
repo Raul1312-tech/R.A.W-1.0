@@ -1,0 +1,9 @@
+'use client';
+import {useState} from 'react';
+import {roleLabels,type CompanyRole,type Company} from '../lib/platform-model';
+export default function JoinCompany({token,company,email}:{token:string;company:{name:string;slug:string;role:CompanyRole;brand:Company['brand']};email:string|null}){
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');
+ return <main className="join-company"><section className="management-card">{company.brand.logo&&<img className="company-preview-logo" src={company.brand.logo} alt={company.name}/>}<span className="eyebrow">TU EMPRESA TE ESPERA</span><h1>{company.name}</h1><p>Te han invitado como <strong>{roleLabels[company.role].toLowerCase()}</strong>. Tendrás un espacio propio con la marca y los módulos de esta empresa.</p>
+ {email?<><p>Sesión iniciada como <strong>{email}</strong>. Debe coincidir con el correo invitado.</p><button className="button orange" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const r=await fetch('/api/platform',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'accept_invite',args:{token}})}),data=await r.json();if(!r.ok)throw Error(data.error);window.location.assign(company.role==='user'?'/o/'+data.slug:'/admin/'+data.slug)}catch(e){setError((e as Error).message);setBusy(false)}}}>{busy?'Preparando tu acceso…':'Aceptar invitación y entrar'}</button><p><a href={'/login?invite='+token+'&company='+encodeURIComponent(company.slug)}>Usar otra cuenta</a></p></>:<a className="button orange" href={'/login?invite='+token+'&company='+encodeURIComponent(company.slug)}>Iniciar sesión para aceptar</a>}
+ <p className="muted">Solo se vincula tu acceso a esta empresa. Compartir registros con el equipo es una decisión que podrás configurar en tu app.</p>{error&&<p role="alert" className="notice error">{error}</p>}</section></main>;
+}

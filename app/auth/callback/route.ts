@@ -1,3 +1,5 @@
+import {cookies} from 'next/headers';
+import {validReturnPath} from '../../../lib/auth-context';
 import {NextResponse} from 'next/server';
 import {createClient} from '../../../lib/supabase/server';
 import {hasPrivateAccess} from '../../../lib/password-auth';
@@ -11,7 +13,7 @@ export async function GET(request:Request){
     const db=await createClient();const {error}=await db.auth.exchangeCodeForSession(code);
     if(!error){
       const {data:{user},error:identityError}=await db.auth.getUser();
-      if(!identityError&&hasPrivateAccess(user))return NextResponse.redirect(new URL(callbackDestination(url.searchParams.get('flow')),url.origin),{headers:{'Cache-Control':'private, no-store'}});
+      if(!identityError&&hasPrivateAccess(user)){const jar=await cookies(),back=jar.get('raw-return')?.value;jar.delete('raw-return');const destination=url.searchParams.get('flow')==='google'&&validReturnPath(back)?back!:callbackDestination(url.searchParams.get('flow'));return NextResponse.redirect(new URL(destination,url.origin),{headers:{'Cache-Control':'private, no-store'}});}
       await db.auth.signOut({scope:'local'});
     }
   }

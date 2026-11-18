@@ -1,8 +1,9 @@
 -- Synthetic identities only. Every test record is rolled back.
 begin;
-insert into auth.users(id,aud,role) values
-('b01aa72e-44ac-4994-83e5-50fe0e391101','authenticated','authenticated'),
-('b01aa72e-44ac-4994-83e5-50fe0e391102','authenticated','authenticated');
+insert into auth.users(id,aud,role,email,email_confirmed_at) values
+('b01aa72e-44ac-4994-83e5-50fe0e391101','authenticated','authenticated','isolation-a@example.invalid',now()),
+('b01aa72e-44ac-4994-83e5-50fe0e391102','authenticated','authenticated','isolation-b@example.invalid',now());
+insert into public.organization_members(organization_id,user_id,role) select o.id,u.id,'user' from public.organizations o cross join auth.users u where o.slug='rise' and u.id in ('b01aa72e-44ac-4994-83e5-50fe0e391101','b01aa72e-44ac-4994-83e5-50fe0e391102');
 insert into public.journals(owner,payload) values
 ('b01aa72e-44ac-4994-83e5-50fe0e391102','{"test":"other owner"}');
 set local role authenticated;

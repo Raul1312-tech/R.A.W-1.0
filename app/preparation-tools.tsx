@@ -19,8 +19,8 @@ const formLabels={
 function dated<T>(values:Record<string,T>|undefined,date:string,value:T){
  return Object.fromEntries(Object.entries({...values,[date]:value}).sort(([a],[b])=>a.localeCompare(b)).slice(-90));
 }
-type Props={profile:Profile;date:string;disabled:boolean;onChange:(p:Profile)=>void;feelings?:boolean};
-export function DayPreparation({profile:p,date,disabled,onChange,feelings=false}:Props){
+type Props={profile:Profile;date:string;disabled:boolean;onChange:(p:Profile)=>void;feelings?:boolean;nutrition?:boolean;training?:boolean};
+export function DayPreparation({profile:p,date,disabled,onChange,feelings=false,nutrition=true,training=true}:Props){
  const today=dateKey(),previous=p.preparation?.readiness?.[date],advice=previous&&readinessAdvice(previous);
  const data=p.workouts??{plans:[],logs:[]},plan=planForDate(data,date),pending=dailySessions(data,date).some(s=>!s.pinned);
  const day=p.days[date],slots=mealSlots(day?.nutrition?.mealCount??day?.foodPlan?.meals.length??p.mealCount??5).filter((_,index)=>!day?.foodPlan?.records.some(r=>r.slot===index));
@@ -34,9 +34,9 @@ export function DayPreparation({profile:p,date,disabled,onChange,feelings=false}
  <div className="form-grid">{(['sleep','fatigue','pain','motivation'] as const).map((key,i)=><SelectField key={key} required name={key} label={['Sueño','Cansancio','Molestias','Ganas de entrenar'][i]} defaultValue={previous?.[key]??''} disabled={disabled}><option value="">Elige una opción</option>{Object.entries(formLabels[key]).map(([v,label])=><option key={v} value={v}>{label}</option>)}</SelectField>)}</div>
  <button className="button outline" disabled={disabled}>Guardar chequeo</button></form>}
  {feelings&&advice&&<p><strong>{advice.label}.</strong> {advice.reason}</p>}
- {date>=today&&<><div className="raw-actions"><button className="button outline" disabled={disabled||!plan} onClick={()=>act('rest')}>Hoy no entreno</button>
+ {date>=today&&training&&<><div className="raw-actions"><button className="button outline" disabled={disabled||!plan} onClick={()=>act('rest')}>Hoy no entreno</button>
  <button className="button outline" disabled={disabled||!pending||advice?.action==='review'} onClick={()=>act('shorten')}>Solo tengo 25 minutos</button></div>
- {slots.length>0&&!day?.complete&&<SelectField label="Comida que haré fuera" disabled={disabled} value="" onValueChange={v=>{if(v!=='')act('outside',Number(v))}}><option value="">Elige la comida</option>{slots.map(slot=><option key={slot} value={slot}>{mealLabels[slot]}</option>)}</SelectField>}
+ {nutrition&&slots.length>0&&!day?.complete&&<SelectField label="Comida que haré fuera" disabled={disabled} value="" onValueChange={v=>{if(v!=='')act('outside',Number(v))}}><option value="">Elige la comida</option>{slots.map(slot=><option key={slot} value={slot}>{mealLabels[slot]}</option>)}</SelectField>}
  {clubForDate(plan,date)==='sparring'&&<form onSubmit={e=>{e.preventDefault();act('move-sparring',String(new FormData(e.currentTarget).get('destination')))}}><label className="field">Mover sparring a otra fecha<input type="date" name="destination" required min={addDays(date,1)} max={addDays(date,14)}/></label><button className="button outline" disabled={disabled}>Mover sparring</button></form>}</>}
  {message&&<p role="status">{message}</p>}</details>;
 }

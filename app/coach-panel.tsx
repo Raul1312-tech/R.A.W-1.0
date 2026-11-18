@@ -1,4 +1,5 @@
 'use client';
+import {tenantFetch as fetch} from '../lib/tenant-fetch';
 import WeeklyCoach from './coach-weekly';
 import CoachPreview from './coach-preview';
 import {useEffect,useMemo,useRef,useState} from 'react';

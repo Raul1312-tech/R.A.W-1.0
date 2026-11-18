@@ -1,4 +1,6 @@
 'use client';
+import {loginDestination} from '../../lib/auth-context';
+import {useOrganization} from '../organization-context';
 import Brand from '../brand';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowUpRight,ShieldCheck,Mail,ArrowLeft,Dumbbell,Check} from 'lucide-react';
@@ -7,7 +9,9 @@ import {loginErrorMessage} from '../../lib/auth-error';
 import {canRequestAuthEmail,publishedLoginUrl,submitPasswordAuth,type LoginMode} from '../../lib/password-auth';
 import {startGoogleAuth} from '../../lib/google-auth';
 
-export default function Login({configured,googleEnabled=false,initialMode='signin'}:{configured:boolean;googleEnabled?:boolean;initialMode?:LoginMode}){
+export default function Login({configured,googleEnabled=false,initialMode='signin',company,invite}:{configured:boolean;googleEnabled?:boolean;initialMode?:LoginMode;company?:string;invite?:string}){
+  const organization=useOrganization();const companyName=organization?.organization.name??'RISE Boxing';
+  const published=(mode:LoginMode)=>publishedLoginUrl(mode)+(company?'&company='+encodeURIComponent(company):'')+(invite?'&invite='+encodeURIComponent(invite):'');
   const [mode,setMode]=useState<LoginMode>(initialMode);
   const [emailOrigin,setEmailOrigin]=useState<boolean|null>(null);
   useEffect(()=>{setEmailOrigin(canRequestAuthEmail(window.location.origin))},[]);
@@ -21,7 +25,7 @@ export default function Login({configured,googleEnabled=false,initialMode='signi
   async function google(){
     if(submitting.current)return;
     submitting.current=true;setBusy(true);setError('');
-    try{window.location.assign(await startGoogleAuth(createClient().auth,window.location.origin))}
+    try{const prepare=await fetch('/api/auth-context',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...(company?{company}:{}),...(invite?{invite}:{})})});if(!prepare.ok)throw Error('No se pudo preparar el acceso a la empresa.');window.location.assign(await startGoogleAuth(createClient().auth,window.location.origin))}
     catch(error){setError(loginErrorMessage(error));submitting.current=false;setBusy(false)}
   }
   function changeMode(next:LoginMode){setMode(next);setError('');setSent(false);setPassword('');setConfirmation('')}
@@ -31,7 +35,7 @@ export default function Login({configured,googleEnabled=false,initialMode='signi
     try{
       const result=await submitPasswordAuth(createClient().auth,{mode,email,password,confirmation,origin:window.location.origin});
       setPassword('');setConfirmation('');
-      if(result==='signed-in'){window.location.assign('/');return}
+      if(result==='signed-in'){window.location.assign(loginDestination(company,invite));return}
       setSent(true);
     }catch(error){setError(loginErrorMessage(error))}
     finally{submitting.current=false;setBusy(false)}
@@ -50,11 +54,11 @@ export default function Login({configured,googleEnabled=false,initialMode='signi
           <h2>{mode==='signin'?'Vuelve a tu ritmo.':mode==='signup'?'Empieza aquí.':'Crea tu contraseña.'}</h2>
           <p>{mode==='signin'?'Entra o crea tu cuenta con Google. Tu alimentación, entrenamiento y fotos quedan en tu espacio personal.':'Si antes entrabas con un enlace o has olvidado tu contraseña, te enviaremos un correo para elegir una nueva.'}</p>
           {mode==='signin'&&<div className="google-access">
-            {emailOrigin===false?<a className="button soft full" href={publishedLoginUrl('signin')}>Continuar con Google en la web publicada <ArrowUpRight size={18}/></a>:<button type="button" className="button soft full" disabled={!configured||!googleEnabled||busy||emailOrigin===null} onClick={google}><span aria-hidden="true" style={{fontWeight:800,fontSize:22}}>G</span> {busy?'Conectando…':'Continuar con Google'}</button>}
+            {emailOrigin===false?<a className="button soft full" href={published('signin')}>Continuar con Google en la web publicada <ArrowUpRight size={18}/></a>:<button type="button" className="button soft full" disabled={!configured||!googleEnabled||busy||emailOrigin===null} onClick={google}><span aria-hidden="true" style={{fontWeight:800,fontSize:22}}>G</span> {busy?'Conectando…':'Continuar con Google'}</button>}
             {!googleEnabled&&<p className="demo-login-note">Estamos terminando de configurar Google. Mientras tanto, las cuentas existentes pueden entrar con contraseña.</p>}
             <p className="demo-login-note">Sin crear otra contraseña ni esperar un enlace por correo.</p>
           </div>}
-          {emailOrigin===false&&<div className="notice"><strong>Tu cuenta, en la web publicada.</strong><p>Para recuperar tu contraseña, continúa en raw-1-0.vercel.app. Así el correo no te enviará a una versión local que puede estar apagada.</p><a className="button orange full" href={publishedLoginUrl(mode)}>Continuar en la web publicada <ArrowUpRight size={18}/></a></div>}
+          {emailOrigin===false&&<div className="notice"><strong>Tu cuenta, en la web publicada.</strong><p>Para recuperar tu contraseña, continúa en raw-1-0.vercel.app. Así el correo no te enviará a una versión local que puede estar apagada.</p><a className="button orange full" href={published(mode)}>Continuar en la web publicada <ArrowUpRight size={18}/></a></div>}
           {mode==='recover'&&<p className="notice">Este paso necesita un correo una sola vez. Si has agotado el límite de envíos, espera a que se libere el cupo antes de solicitarlo.</p>}
           {mode!=='signin'&&emailOrigin===true&&<p className="notice">Solicita el correo y abre su enlace en el mismo navegador. Si lees el correo en Chrome, abre también esta página en Chrome antes de continuar.</p>}
           {(mode==='signin'||emailOrigin===true)&&<details open={mode==='recover'}><summary>{mode==='recover'?'Recuperar contraseña':'Ya tengo contraseña · Entrar por correo'}</summary><form onSubmit={submit}>
@@ -70,11 +74,11 @@ export default function Login({configured,googleEnabled=false,initialMode='signi
         </>}
         {!configured&&<p className="notice error">Estamos preparando la conexión. El acceso estará disponible cuando termine la configuración.</p>}
         {error&&<p className="notice error" role="alert">{error}</p>}
-        <a className="button soft full" href="/demo">Entrar sin cuenta · Modo de prueba <ArrowUpRight size={18}/></a>
+        <a className="button soft full" href={company?'/demo?company='+encodeURIComponent(company):'/demo'}>Entrar sin cuenta · Modo de prueba <ArrowUpRight size={18}/></a>
         <p className="demo-login-note">Prueba la app con datos de ejemplo. Los cambios se guardan solo en este navegador.</p>
-        <p className="auth-fine">RISE Boxing · Alimentación y entrenamiento para adultos.<br/>Tus datos de seguimiento requieren iniciar sesión.<br/><a href="/privacidad">Privacidad</a> · <a href="/condiciones">Información de uso</a></p>
+        <p className="auth-fine">{companyName} · Alimentación y entrenamiento para adultos.<br/>Tus datos de seguimiento requieren iniciar sesión.<br/><a href="/privacidad">Privacidad</a> · <a href="/condiciones">Información de uso</a></p>
       </section>
     </div>
-    <footer className="auth-footer"><span>RISE Boxing</span><span>CADA DÍA, UN NIVEL MÁS.</span><span className="flag-line" aria-hidden="true"/></footer>
+    <footer className="auth-footer"><span>{companyName}</span><span>CADA DÍA, UN NIVEL MÁS.</span><span className="flag-line" aria-hidden="true"/></footer>
   </main>;
 }

@@ -25,6 +25,7 @@ do $$declare a uuid:='c0020000-0000-4000-8000-000000000001';b uuid:='c0020000-00
  begin perform public.platform_action('member',jsonb_build_object('organization_id',a,'user_id',athlete,'role','admin','status','active'));raise exception 'Athlete escalated role';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000002","role":"authenticated","is_anonymous":false}',true);
  begin perform public.platform_journal(a,athlete);raise exception 'Admin bypassed consent';exception when insufficient_privilege then null;end;
+ begin perform public.platform_client_detail(a,athlete);raise exception 'Admin used owner supervision';exception when insufficient_privilege then null;end;
  begin perform public.platform_snapshot(b);raise exception 'Admin read other company';exception when insufficient_privilege then null;end;
  begin perform public.platform_action('brand',jsonb_build_object('organization_id',b,'brand','{}','name','Other'));raise exception 'Admin changed other brand';exception when insufficient_privilege then null;end;
  if jsonb_array_length(public.platform_snapshot(a)->'clientMetrics')<>1 then raise exception 'Private client metrics leaked';end if;
@@ -44,7 +45,13 @@ do $$declare a uuid:='c0020000-0000-4000-8000-000000000001';b uuid:='c0020000-00
  perform public.platform_action('accept_invite',jsonb_build_object('token',token));
  begin perform public.platform_action('accept_invite',jsonb_build_object('token',token));raise exception 'Invitation reused';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":false}',true);
- begin perform public.platform_journal(a,athlete);raise exception 'Root bypassed private health permission';exception when insufficient_privilege then null;end;
+ begin perform public.platform_journal(a,athlete);raise exception 'Root bypassed consented journal permission';exception when insufficient_privilege then null;end;
+ s:=public.platform_client_detail(a,athlete);
+ if s#>>'{state,marker}'<>'A' or s->>'canEdit'<>'false' then raise exception 'Owner supervision not read-only or wrong tenant';end if;
+ if s::text like '%token_hash%' or s::text like '%input_hash%' then raise exception 'Internal hashes leaked';end if;
+ if not exists(select 1 from jsonb_array_elements(s->'activity') e where e->>'action'='client.supervision_viewed') then raise exception 'Supervision was not audited';end if;
+ begin perform public.platform_save_journal(a,'{}',1,athlete);raise exception 'Owner supervision granted writes';exception when insufficient_privilege then null;end;
+ begin perform public.platform_client_detail(b,'c0010000-0000-4000-8000-000000000003');raise exception 'Owner read a user outside company';exception when insufficient_privilege then null;end;
  perform public.platform_action('subscription',jsonb_build_object('organization_id',a,'plan','Test','status','active','monthly_cents',9900,'currency','EUR','renewal_date','2026-12-18','billing_email','billing@example.invalid'));
  perform public.platform_action('invoice',jsonb_build_object('organization_id',a,'number','TEST-001','description','Synthetic invoice','amount_cents',9900,'due_date','2026-11-01','status','open','period_start','2026-11-01','period_end','2026-11-30'));
  if (public.platform_snapshot(a)#>>'{totals,mrrCents}')::integer<>9900 or (public.platform_snapshot(a)#>>'{totals,overdueCents}')::integer<>9900 then raise exception 'Commercial totals incorrect';end if;

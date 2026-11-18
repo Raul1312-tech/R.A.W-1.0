@@ -28,10 +28,11 @@ export async function GET(request:Request){
  try{
   const url=new URL(request.url),{db,user,context}=await platformContext(url.searchParams.get('organization')??'rise');
   if(url.searchParams.has('client')){
-   if(!context.role||!['admin','coach'].includes(context.role))throw new PlatformError('Seguimiento no autorizado.');
-   const subject=uuid.parse(url.searchParams.get('client')),journal=await readJournal(db,context.organization.id,subject);
-   const {data:notes,error}=await db.rpc('platform_client_notes',{org:context.organization.id,subject});if(error)dbFailure(error);
-   return reply({state:journal.payload,revision:journal.revision,notes});
+   if(!context.superAdmin&&(!context.role||!['admin','coach'].includes(context.role)))throw new PlatformError('Seguimiento no autorizado.');
+   const subject=uuid.parse(url.searchParams.get('client'));
+   const {data,error}=await db.rpc('platform_client_detail',{org:context.organization.id,subject});if(error)dbFailure(error);
+   const {data:member,error:memberError}=await db.from('organization_members').select('organization_id,user_id,role,status,display_name,coach_id,share_followup,last_seen,created_at').eq('organization_id',context.organization.id).eq('user_id',subject).maybeSingle();if(memberError)dbFailure(memberError);if(!member||member.status!=='active')throw new PlatformError('Usuario sin acceso activo.');
+   return reply({...data,member});
   }
   const all=url.searchParams.get('scope')==='all';if(all&&!context.superAdmin)throw new PlatformError('Solo superadmin.');
   const page=z.coerce.number().int().min(0).max(10000).parse(url.searchParams.get('page')??0),search=z.string().max(100).parse(url.searchParams.get('q')??'');

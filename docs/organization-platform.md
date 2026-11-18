@@ -16,9 +16,9 @@ El superadmin inicial se asigna exclusivamente al UUID y correo del propietario 
 
 ## Permisos
 
-Superadmin gestiona empresas, marca, módulos, límites, contratos y facturación. No obtiene automáticamente acceso a historiales deportivos por ser superadmin. Para ese seguimiento debe tener un rol profesional en la empresa y el usuario debe autorizarlo.
+Superadmin gestiona empresas, marca, módulos, límites, contratos y facturación. Dispone de una ficha de supervisión de solo lectura para cuentas activas de empresas activas, mediante platform_client_detail. Esta consulta está auditada y permite revisar dietas por fecha, registros, entrenos, sensaciones y revisiones guardadas. No incluye fotografías originales. El acceso no cambia share_followup. Para modificar planes o notas debe tener rol profesional en la empresa y permiso de seguimiento del usuario.
 
-Los administradores gestionan equipo, clientes, invitaciones y marca de su empresa. Los entrenadores consultan únicamente clientes asignados que hayan compartido su seguimiento. Cada usuario puede revocar ese permiso. El permiso cubre los perfiles de su cuenta dentro de esa empresa. Las fotografías siguen siendo privadas incluso con seguimiento compartido.
+Los administradores gestionan equipo, clientes, invitaciones y marca de su empresa; su acceso al seguimiento personal sigue sujeto al permiso del usuario. Los privilegios de supervisión pertenecen exclusivamente al superadmin de plataforma. Los entrenadores consultan únicamente clientes asignados que hayan compartido su seguimiento. Cada usuario puede revocar ese permiso. El permiso cubre los perfiles de su cuenta dentro de esa empresa. Las fotografías siguen siendo privadas incluso con seguimiento compartido.
 
 Los paneles tienen directorios paginados (100 registros), hasta 200 acciones recientes y 300 facturas recientes. Las cifras agregadas se calculan en la base de datos. El seguimiento muestra registros, peso, sesiones, menú/rutina y notas internas, sin inventar cumplimiento cuando faltan datos. No constituye un sistema de analítica ilimitada.
 

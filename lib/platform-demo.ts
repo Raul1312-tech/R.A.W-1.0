@@ -1,3 +1,5 @@
+import {recordMeal} from '../app/daily-food-model';
+import {generateTrainingPlan,defaultTrainingConfig} from '../app/training-model';
 import {riseCompany,allModules,clientMetrics,commercialMetrics,type Company,type PlatformContext} from './platform-model';
 import type {PlatformSnapshot} from './platform-types';
 import {newProfile,emptyDay,generatePlan,type State} from '../app/model';
@@ -13,5 +15,16 @@ export function updateDemoSnapshot(snapshot:PlatformSnapshot,slug?:string):Platf
  return {...snapshot,context:{...snapshot.context,organization:c,memberships:snapshot.organizations.map(organization=>({organization,role:'admin',status:'active'}))},organizationStats:snapshot.organizations.map(c=>{const ms=snapshot.members.filter(m=>m.organization_id===c.id&&m.status==='active');return {organization_id:c.id,users:ms.filter(m=>m.role==='user').length,staff:ms.filter(m=>m.role!=='user').length,active30:ms.filter(m=>!!m.last_seen).length}}),totals:{...snapshot.totals,...m,members:snapshot.members.length,activeCompanies:m.activeCompanies,companies:m.companies}};
 }
 export function demoClient(today:string):State{
- const p=newProfile('Deportista de prueba');p.confirmed=true;p.athlete={sport:'boxing',level:'recreational',goal:'performance',schedule:'regular',competitionWeight:{mode:'none'}};const plan=generatePlan(p,1);if(plan)p.plans=[plan];p.days[today]={...emptyDay(p),water:2500,weight:75,minutes:60};return {active:p.id,profiles:[p]};
+ const p=newProfile('Deportista de prueba');p.confirmed=true;p.athlete={sport:'boxing',level:'recreational',goal:'performance',schedule:'regular',competitionWeight:{mode:'none'}};const plan=generatePlan(p,1);if(plan)p.plans=[plan];p.days[today]={...emptyDay(p),water:2500,weight:75,minutes:60,sleep:7.5,steps:6500,notes:'Me he encontrado con energía en el entrenamiento.'};
+ if(plan)p.days[today]=recordMeal(p.days[today],plan,today,0,'planned');
+ p.workouts={plans:[{...generateTrainingPlan({...defaultTrainingConfig(),sport:'boxing',physicalDays:[0,2],runningDays:[1,4],technicalDays:[0,2,4],sparringDays:[4]}),month:today.slice(0,7)}],logs:[]};
+ p.preparation={readiness:{[today]:{sleep:'good',fatigue:'mid',pain:'none',motivation:'high'}},clubRecords:{[today]:{name:'Técnica y manoplas',kind:'technique',minutes:60,rounds:6,roundMinutes:3,rpe:6,notes:'Sesión de ejemplo: buenas sensaciones.'}}};
+ return {active:p.id,profiles:[p]};
+}
+
+export function demoFollowupInteractions(today:string,profile:string){
+ const created=today+'T10:00:00Z';
+ return {activity:[{id:'demo-journal',organization_id:a,actor_id:client,actor_name:'Deportista de prueba',action:'journal.saved',target:client,details:{},created_at:created}],
+ reviews:[{request_day:today,profile,created_at:created,choice:{action:'keep',priority:['nutrition','sessions']}}],
+ weekly:[{week:today,profile,reviewed_at:created,dismissed:false,review:{date:today,source:'rules',signature:'demo',choice:{action:'keep',priority:['nutrition']},summary:'Revisión de ejemplo: mantener el reparto actual y seguir registrando descanso y entrenamiento.',facts:[{id:'nutrition',title:'Alimentación organizada',text:'Hay un menú y tres comidas pendientes de registrar.',why:'Ejemplo de lectura de los datos guardados.'}]}}],foodPhotos:[]};
 }

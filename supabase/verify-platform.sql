@@ -16,6 +16,7 @@ do $$declare a uuid:='c0020000-0000-4000-8000-000000000001';b uuid:='c0020000-00
  perform set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000004","role":"authenticated","is_anonymous":false,"user_metadata":{"role":"superadmin"}}',true);
  if raw_platform.is_super() then raise exception 'Client metadata granted root';end if;
  if public.platform_save_journal(a,'{"active":"p","profiles":[{"id":"p","plans":[],"days":{}}],"marker":"A"}',0)<>1 then raise exception 'Save A failed';end if;
+ insert into public.food_photo_reviews(organization_id,owner,request_day,slot,input_hash) values(a,athlete,(now() at time zone 'utc')::date,0,repeat('a',64)),(b,athlete,(now() at time zone 'utc')::date,0,repeat('a',64));
  if public.platform_save_journal(b,'{"active":"p","profiles":[{"id":"p","plans":[],"days":{}}],"marker":"B"}',0)<>1 then raise exception 'Save B failed';end if;
  if public.platform_journal(a)->'payload'->>'marker'<>'A' or public.platform_journal(b)->'payload'->>'marker'<>'B' then raise exception 'Tenants mixed for same account';end if;
  if public.platform_save_journal(a,'{}',0) is not null then raise exception 'CAS accepted stale version';end if;
@@ -44,6 +45,9 @@ do $$declare a uuid:='c0020000-0000-4000-8000-000000000001';b uuid:='c0020000-00
  begin perform public.platform_action('accept_invite',jsonb_build_object('token',token));raise exception 'Invitation reused';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000001","role":"authenticated","is_anonymous":false}',true);
  begin perform public.platform_journal(a,athlete);raise exception 'Root bypassed private health permission';exception when insufficient_privilege then null;end;
+ perform public.platform_action('subscription',jsonb_build_object('organization_id',a,'plan','Test','status','active','monthly_cents',9900,'currency','EUR','renewal_date','2026-12-18','billing_email','billing@example.invalid'));
+ perform public.platform_action('invoice',jsonb_build_object('organization_id',a,'number','TEST-001','description','Synthetic invoice','amount_cents',9900,'due_date','2026-11-01','status','open','period_start','2026-11-01','period_end','2026-11-30'));
+ if (public.platform_snapshot(a)#>>'{totals,mrrCents}')::integer<>9900 or (public.platform_snapshot(a)#>>'{totals,overdueCents}')::integer<>9900 then raise exception 'Commercial totals incorrect';end if;
  s:=public.platform_snapshot(a)->'organizations'->0;stamp:=s->>'updated_at';
  perform public.platform_action('update_company',(s-'id'-'created_at'-'updated_at')||jsonb_build_object('organization_id',a,'expected_updated_at',stamp,'modules',(s->'modules')||'{"nutrition":false,"competition":false}'));
  begin perform public.platform_action('brand',jsonb_build_object('organization_id',a,'name','Stale','brand',s->'brand','expected_updated_at','2000-01-01T00:00:00Z'));raise exception 'Stale brand update accepted';exception when serialization_failure then null;end;

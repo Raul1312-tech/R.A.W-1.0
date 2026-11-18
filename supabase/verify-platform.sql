@@ -63,6 +63,7 @@ update public.organization_members set status='suspended' where organization_id=
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"c0010000-0000-4000-8000-000000000004","role":"authenticated","is_anonymous":false}',true);
 do $$begin
+ if jsonb_array_length(public.platform_memberships()->'memberships')<>2 then raise exception 'Company directory depends on active Rise membership';end if;
  begin perform public.platform_journal('c0020000-0000-4000-8000-000000000002');raise exception 'Suspended member read data';exception when insufficient_privilege then null;end;
  if raw_platform.photo_scope('c0010000-0000-4000-8000-000000000004/organizations/c0020000-0000-4000-8000-000000000002/p/test.jpg') then raise exception 'Suspended member read photo';end if;
 end$$;

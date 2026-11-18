@@ -1,9 +1,10 @@
-import {choices,emptyAnswers,selectedEquipment,stepProblem,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema.ts';
+import {choices,emptyAnswers,selectedEquipment,stepProblem,compactOnboardingDraft,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema.ts';
 import {saveProfileSetup} from './profile-setup-model.ts';
 import type {Profile} from './model.ts';
 import {competitionSchema,type Competition} from './preparation-schema.ts';
-import {allTrainingSessions,defaultTrainingConfig,generateTrainingPlan,recommendBoxing,type TrainingConfig} from './training-model.ts';
+import {defaultTrainingConfig,recommendBoxing,type TrainingConfig} from './training-model.ts';
 import {planForDate} from './training-calendar-model.ts';
+import {applyOnboardingTraining} from './onboarding-training.ts';
 import {replanCompetition} from './competition-plan.ts';
 import {stateSchema} from './validation.ts';
 import {previewNutritionSituation,hasNutritionRecords} from './nutrition-situations-model.ts';
@@ -12,8 +13,8 @@ import {daySettings} from './preparation-engine.ts';
 const activityFactors={seated:1.2,mixed:1.4,active:1.6,physical:1.8};
 
 export function startOnboarding(p:Profile):OnboardingDraft{
-  if(p.onboarding?.draft)return p.onboarding.draft;
-  if(p.onboarding?.completed)return {step:0,answers:structuredClone(p.onboarding.completed.answers)};
+  if(p.onboarding?.draft)return compactOnboardingDraft(p.onboarding.draft);
+  if(p.onboarding?.completed)return {step:0,flowVersion:2,answers:structuredClone(p.onboarding.completed.answers)};
   const answers=emptyAnswers();
   const sport=p.athlete?.sport;
   answers.basics=p.confirmed?{
@@ -38,7 +39,7 @@ export function startOnboarding(p:Profile):OnboardingDraft{
   if(answers.basics.sport==='strength')answers.competition={status:'none'};
   answers.availability={slots:[],restDays:[],coachPhysicalDays:[],mode:'auto'};
   answers.boxing={club:[]};
-  return {step:0,answers};
+  return {step:0,flowVersion:2,answers};
 }
 
 function instant(date:string|undefined,time:string|undefined,timeZone:string){
@@ -122,7 +123,7 @@ export function prepareOnboarding(profile:Profile,answers:OnboardingAnswers,toda
   const athleteGoal=basics.goal==='unsure'||basics.goal==='competition'?'performance':basics.goal!;
   const category=answersCompetition.status==='none'||answersCompetition.categoryStatus==='pending'?undefined:answersCompetition.category;
   const level=answers.boxing.experience==='compete'&&basics.sport==='boxing'?'competitive':config.level==='beginner'?'beginner':'recreational';
-  const next=saveProfileSetup({...profile,
+  let next=saveProfileSetup({...profile,
     onboarding:{version:1,completed:{at:new Date().toISOString(),answers}},
     preparation:{...profile.preparation,competition,foodPreferences:food.preferences??profile.preparation?.foodPreferences},
   },{
@@ -134,24 +135,8 @@ export function prepareOnboarding(profile:Profile,answers:OnboardingAnswers,toda
     athlete:{sport:basics.sport,level,goal:athleteGoal,schedule:nutrition.schedule,
       competitionWeight:category===undefined?{mode:'none'}:{mode:'target',weight:category,date:answersCompetition.weighDate}},
   },today,true);
-  if((!active||active.config.sport!==config.sport)&&!config.limitation&&(config.days.length||config.technicalDays.length||config.sparringDays.length)){
-    const routine={...generateTrainingPlan(config),month:today.slice(0,7)};
-    if(allTrainingSessions(routine).some(day=>day.kind!=='rest')||config.technicalDays.length||config.sparringDays.length){
-      next.workouts={...next.workouts,plans:[...(next.workouts?.plans??[]),routine].slice(-12),logs:next.workouts?.logs??[]};
-    }
-  }
-  const lastPreviewDate=new Date(Date.parse(today+'T12:00:00Z')+6*86400000).toISOString().slice(0,10);
-  const currentMonth=today.slice(0,7),nextMonth=lastPreviewDate.slice(0,7);
-  if(next.workouts&&(!active||active.config.sport!==config.sport)&&currentMonth!==nextMonth&&!planForDate(next.workouts,lastPreviewDate)){
-    const first=planForDate(next.workouts,today);
-    if(first)next.workouts={...next.workouts,plans:[...next.workouts.plans,{...first,id:crypto.randomUUID(),month:nextMonth}].slice(-12)};
-  }
+  next=applyOnboardingTraining(next,config,today);
   if(active&&active.config.sport!==config.sport&&next.workouts){
-    const futureMonths=[...new Set(next.workouts.plans.map(plan=>plan.month).filter((month):month is string=>!!month&&month>today.slice(0,7)))];
-    for(const month of futureMonths){
-      next.workouts.plans.push({...generateTrainingPlan(config),month});
-    }
-    next.workouts.plans=next.workouts.plans.slice(-12);
     for(const [date,day] of Object.entries(next.days)){
       if(date<today||hasNutritionRecords(day))continue;
       if(day.competition||day.nutrition?.situationId==='coordinated'||day.nutrition?.situationId.startsWith('competition-')){

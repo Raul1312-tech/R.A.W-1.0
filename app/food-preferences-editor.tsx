@@ -1,21 +1,29 @@
 'use client';
 
 import {useState,useRef,useEffect} from 'react';
+import {Check} from 'lucide-react';
 import SelectField from './select-field';
 import {foodById,type Profile} from './model';
 import {foodPreferenceIds,type FoodPreferences} from './preparation-preferences';
 import {saveFoodPreferences} from './preparation-engine';
 
 const defaultPrefs:FoodPreferences={foods:{},variety:'balanced',certification:'none'};
-export function FoodPreferenceFields({value=defaultPrefs,onChange,disabled}:{value?:FoodPreferences;onChange:(value:FoodPreferences)=>void;disabled?:boolean}){
- return <fieldset disabled={disabled}><p>Marca los alimentos que compras de verdad. Tus habituales serán la base; los ocasionales entrarán de vez en cuando. Sin marcar significa que no es uno de tus básicos, no que esté prohibido.</p>
- {(['carbs','protein'] as const).map(group=><section className="food-staples-group" key={group}><h3>{group==='carbs'?'Mis hidratos de siempre':'Mis proteínas de siempre'}</h3><p>{group==='carbs'?'Por ejemplo: arroz, pasta, pan integral, patata y batata.':'Elige tus fuentes habituales para construir los platos.'}</p><div className="food-staples-list">
- {foodPreferenceIds[group].map(id=><div className="food-staple" key={id}><strong>{id==='sweetpotato'?'Batata o boniato':foodById(id).name}</strong><div role="group" aria-label={'Preferencia de '+foodById(id).name}>{([['usual','Habitual'],['like','Ocasional'],['avoid','Evitar']] as const).map(([kind,label])=><button type="button" key={kind} aria-pressed={value.foods[id]===kind} onClick={()=>{const foods={...value.foods};if(foods[id]===kind)delete foods[id];else foods[id]=kind;onChange({...value,foods})}}>{label}</button>)}</div></div>)}
- </div></section>)}
- <label className="checkbox"><input type="checkbox" checked={value.explore??false} onChange={e=>onChange({...value,explore:e.target.checked})}/> Quiero descubrir también alimentos fuera de mis habituales</label>
- <div className="form-grid"><SelectField label="Variedad del menú" disabled={disabled} value={value.variety} onValueChange={v=>onChange({...value,variety:v as FoodPreferences['variety']})}><option value="repeat">Prefiero repetir</option><option value="balanced">Algo de variedad</option><option value="varied">Me gusta cambiar</option></SelectField>
- <SelectField label="Corte habitual de carne" disabled={disabled} value={value.proteinStyle??'any'} onValueChange={v=>onChange({...value,proteinStyle:v as FoodPreferences['proteinStyle']})}><option value="any">Cualquiera</option><option value="fillet">Filete o pechuga</option><option value="minced">Carne picada magra</option></SelectField>
- <SelectField label="Certificación de alimentos" disabled={disabled} value={value.certification} onValueChange={v=>onChange({...value,certification:v as FoodPreferences['certification']})}><option value="none">Sin requisito de certificación</option><option value="halal">Necesito verificar certificación halal</option></SelectField></div></fieldset>;
+export function FoodPreferenceFields({value=defaultPrefs,onChange,disabled,compact=false}:{value?:FoodPreferences;onChange:(value:FoodPreferences)=>void;disabled?:boolean;compact?:boolean}){
+ function choose(id:string,kind:'usual'|'like'|'avoid'){
+  const foods={...value.foods};if(foods[id]===kind)delete foods[id];else foods[id]=kind;onChange({...value,foods});
+ }
+ const groups=(['carbs','protein'] as const).map(group=><section className="food-staples-group" key={group}><h3>{group==='carbs'?'Mis hidratos de siempre':'Mis proteínas de siempre'}</h3><p>{group==='carbs'?'Por ejemplo: arroz, pasta, pan integral, patata y batata.':'Elige tus fuentes habituales para construir los platos.'}</p><div className="food-staples-list">
+  {foodPreferenceIds[group].map(id=><div className="food-staple" key={id}><strong>{id==='sweetpotato'?'Batata o boniato':foodById(id).name}</strong><div role="group" aria-label={'Preferencia de '+foodById(id).name}>{([['usual','Habitual'],['like','Ocasional'],['avoid','Evitar']] as const).map(([kind,label])=><button type="button" key={kind} aria-pressed={value.foods[id]===kind} onClick={()=>choose(id,kind)}>{value.foods[id]===kind&&<Check size={13} aria-hidden="true"/>}{label}</button>)}</div></div>)}
+ </div></section>);
+ const extras=<><label className="checkbox"><input type="checkbox" checked={value.explore??false} onChange={e=>onChange({...value,explore:e.target.checked})}/> Quiero descubrir también alimentos fuera de mis habituales</label>
+  <div className="form-grid"><SelectField label="Variedad del menú" disabled={disabled} value={value.variety} onValueChange={v=>onChange({...value,variety:v as FoodPreferences['variety']})}><option value="repeat">Prefiero repetir</option><option value="balanced">Algo de variedad</option><option value="varied">Me gusta cambiar</option></SelectField>
+  <SelectField label="Corte habitual de carne" disabled={disabled} value={value.proteinStyle??'any'} onValueChange={v=>onChange({...value,proteinStyle:v as FoodPreferences['proteinStyle']})}><option value="any">Cualquiera</option><option value="fillet">Filete o pechuga</option><option value="minced">Carne picada magra</option></SelectField>
+  <SelectField label="Certificación de alimentos" disabled={disabled} value={value.certification} onValueChange={v=>onChange({...value,certification:v as FoodPreferences['certification']})}><option value="none">Sin requisito de certificación</option><option value="halal">Necesito verificar certificación halal</option></SelectField></div></>;
+ return <fieldset className={compact?'food-preferences compact-preferences':'food-preferences'} disabled={disabled}><p>Marca los alimentos que compras de verdad. Tus habituales serán la base; los ocasionales entrarán de vez en cuando. Sin marcar significa que no es uno de tus básicos, no que esté prohibido.</p>
+ {compact?<><div className="food-quick-groups">{(['carbs','protein'] as const).map(group=><section key={group}><h4>{group==='carbs'?'Hidratos habituales':'Proteínas habituales'}</h4><div className="food-preference-chips" role="group" aria-label={group==='carbs'?'Hidratos habituales':'Proteínas habituales'}>{foodPreferenceIds[group].map(id=><button type="button" key={id} aria-pressed={value.foods[id]==='usual'} onClick={()=>choose(id,'usual')}>{value.foods[id]==='usual'&&<Check size={15} aria-hidden="true"/>}{id==='sweetpotato'?'Batata o boniato':foodById(id).name}</button>)}</div></section>)}</div>
+  <details className="raw-disclosure"><summary>Marcar ocasionales o evitar alimentos · opcional</summary>{groups}</details>
+  <details className="raw-disclosure"><summary>Variedad, cortes y certificación · opcional</summary>{extras}</details>
+ </>:<>{groups}{extras}</>}</fieldset>;
 }
 export default function FoodPreferencesEditor({profile,disabled,onChange,expanded=false}:{profile:Profile;disabled:boolean;onChange:(p:Profile)=>void;expanded?:boolean}){
  const [value,setValue]=useState(profile.preparation?.foodPreferences??defaultPrefs),[message,setMessage]=useState('');

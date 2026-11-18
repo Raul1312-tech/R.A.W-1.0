@@ -1,0 +1,65 @@
+/* Preserve each control's foreground instead of inheriting white text from the page theme. */
+:root body .raw-shell :is(button,a.button) :is(strong,b,span,small,label) {color:inherit}
+:root body .raw-shell .onboarding-sports button,
+:root body .raw-shell .onboarding-days button,
+:root body .raw-shell .onboarding-confirm {background:#eaf0e9;color:#203d2b;border-color:#afc4b4}
+:root body .raw-shell .onboarding-sports button :is(strong,span),
+:root body .raw-shell .onboarding-confirm :is(strong,span) {color:inherit}
+:root body .raw-shell .onboarding-sports button[aria-pressed=true],
+:root body .raw-shell .onboarding-days button[aria-pressed=true] {background:#cce8d7;color:#133d28;border-color:#6dad86;box-shadow:inset 0 0 0 1px #6dad86}
+:root body .raw-shell .onboarding-goal {background:#e4efe6;color:#20432d;border-color:#b5cfbd}
+:root body .raw-shell .onboarding-goal strong {color:inherit}
+:root body .raw-shell .onboarding-multi legend {color:#dfe5dd}
+:root body .raw-shell .onboarding-options .checkbox {background:#252b27;color:#e9ede7;border-color:#46524a}
+:root body .raw-shell .onboarding-day-row,
+:root body .raw-shell .onboarding-review {background:#252a27;border-color:#424d45;color:#eceee8}
+:root body .raw-shell .onboarding-review li {border-color:#424d45}
+:root body .raw-shell .onboarding-progress p {color:#c0d5c6}
+:root body .raw-shell .onboarding-progress-track {grid-template-columns:repeat(4,minmax(0,1fr))}
+:root body .raw-shell .onboarding-progress-track span {background:#444d46}
+:root body .raw-shell .onboarding-progress-track .filled {background:#6dad86}
+:root body .raw-shell .onboarding-block {border-top:1px solid #3b443e;padding-top:20px;margin-top:24px}
+:root body .raw-shell .onboarding-block>h3 {margin:0 0 16px;font-size:19px}
+:root body .raw-shell .onboarding-day-row .form-grid {margin-top:10px}
+:root body .raw-shell .raw-onboarding .onboarding-invalid {background:#39272d;border-color:#d97a89}
+:root body .raw-shell .onboarding-field-error {color:#ffc2cb}
+:root body .raw-shell .raw-onboarding .onboarding-invalid legend {color:#ffc2cb}
+:root body .raw-shell .raw-onboarding .onboarding-invalid .onboarding-confirm {background:#ffe3e6;color:#681e2b}
+:root body .raw-shell .raw-onboarding .raw-setup-actions {background:#1e2021;border-color:#414a43;box-shadow:0 -6px 14px #0002}
+:root body .raw-shell .food-staple button {display:inline-flex;justify-content:center;align-items:center;gap:4px;min-width:0}
+:root body .raw-shell .food-staple button[aria-pressed=true] {background:#cce8d7!important;color:#163d28!important;border-color:#79b391!important;font-weight:700}
+:root body .raw-shell .food-staple button:last-child[aria-pressed=true] {background:#f3cbd1!important;color:#642530!important;border-color:#d58a98!important}
+:root body .raw-shell .food-staple button svg {flex-shrink:0}
+.food-quick-groups {display:grid;gap:20px;margin-block:18px}
+.food-quick-groups h4 {margin:0 0 10px;font-size:14px}
+.food-preference-chips {display:flex;flex-wrap:wrap;gap:8px}
+:root body .raw-shell .food-preference-chips button {display:inline-flex;gap:6px;align-items:center;justify-content:center;min-height:44px;border:1px solid #4d5b51;border-radius:10px;background:#252c28;color:#e5ebe4;padding:9px 12px;font:500 13px/1.4 'Segoe UI',Arial,sans-serif;touch-action:manipulation}
+:root body .raw-shell .food-preference-chips button[aria-pressed=true] {background:#cce8d7;color:#163d28;border:2px solid #83bb9a;padding:8px 11px;box-shadow:0 2px 8px #0002}
+:root body .raw-shell .food-preference-chips button:focus-visible {outline:3px solid #b5dbc4;outline-offset:3px}
+:root body .raw-shell .compact-preferences>p {font-size:13px;line-height:1.65}
+:root body .raw-shell .raw-onboarding .raw-disclosure {margin-block:14px;border-radius:11px}
+:root body .raw-shell .raw-onboarding .raw-disclosure>summary {font-size:13px;min-height:44px}
+:root body .raw-shell .routine-configured {display:grid;gap:12px;padding:22px;margin-block:18px;background:#233329;border:1px solid #486c53;border-radius:14px}
+:root body .raw-shell .routine-configured h3 {margin:0;font-size:19px}
+:root body .raw-shell .routine-configured p {margin:0}
+html {-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* The product requests a fixed touch scale. OS/browser accessibility overrides may still allow zoom. */
+body {touch-action:pan-x pan-y}
+@media(max-width:760px) {
+ :root body :is(.raw-shell,.auth-page,.management-layout,.management-dialog) :is(input,select,textarea):not([type=checkbox]):not([type=radio]),
+ :root body :is(.raw-shell,.auth-page) .raw-select-trigger {font-size:16px!important}
+ :root body .raw-shell .raw-select-option {font-size:16px}
+ :root body .raw-shell .raw-onboarding {padding:18px 14px;max-width:100%}
+ :root body .raw-shell .onboarding-sports button {padding:12px;min-height:104px}
+ :root body .raw-shell .onboarding-sports button strong {font-size:16px}
+ :root body .raw-shell .onboarding-sports button span {font-size:12px;line-height:1.5}
+ :root body .raw-shell .onboarding-review {padding:15px 12px}
+ :root body .raw-shell .onboarding-block {margin-top:20px;padding-top:18px}
+ :root body .raw-shell .onboarding-day-row {padding:12px}
+ :root body .raw-shell .onboarding-day-row .form-grid {grid-template-columns:minmax(0,1fr)}
+ :root body .raw-shell .food-preference-chips {gap:7px}
+ :root body .raw-shell .food-preference-chips button {font-size:13px;min-height:44px}
+ :root body .raw-shell .raw-onboarding .raw-setup-actions {bottom:calc(var(--raw-nav-height,64px) + env(safe-area-inset-bottom));padding:10px 0;margin-top:20px}
+ :root body .raw-shell .raw-onboarding .raw-setup-actions .button {font-size:14px;min-height:46px}
+ :root body .raw-shell .raw-onboarding .field {margin-bottom:17px}
+}

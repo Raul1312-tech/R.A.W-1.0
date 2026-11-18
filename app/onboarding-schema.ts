@@ -65,11 +65,11 @@ const dayRows=<T extends z.ZodRawShape>(shape:T)=>z.array(z.object({day:activity
 const basics=z.object({
   sport:option(choices.sport),name:z.string().min(1).max(60).refine(value=>value.trim().length>0),age:z.number().int().min(18).max(90),
   sex:z.enum(['male','female']),height:z.number().finite().min(120).max(230),weight,
-  goal:option(choices.goal),goalWeight:weight.optional(),trend:option(choices.trend),activity:option(choices.activity),success:option(choices.success).optional(),
+  goal:option(choices.goal),goalWeight:weight.optional(),trend:option(choices.trend).optional(),activity:option(choices.activity),success:option(choices.success).optional(),
 }).strict();
 const nutrition=z.object({
-  schedule:option(choices.schedule),currentMeals:z.number().int().min(1).max(6),mealCount:z.number().int().min(3).max(6),
-  difficultMeal:option(choices.mealSlot),mealBarrier:option(choices.mealBarrier).optional(),
+  schedule:option(choices.schedule),currentMeals:z.number().int().min(1).max(6).optional(),mealCount:z.number().int().min(3).max(6),
+  difficultMeal:option(choices.mealSlot).optional(),mealBarrier:option(choices.mealBarrier).optional(),
   wake:time.optional(),sleep:time.optional(),firstMeal:time.optional(),lastMeal:time.optional(),
   mealSources:z.object({breakfast:option(choices.intake).optional(),lunch:option(choices.intake).optional(),dinner:option(choices.intake).optional()}).strict().optional(),
   mealFoods:z.object({breakfast:unique(option(choices.foodGroup),7).optional(),lunch:unique(option(choices.foodGroup),7).optional(),dinner:unique(option(choices.foodGroup),7).optional()}).strict().optional(),
@@ -82,7 +82,7 @@ const food=z.object({
   preferences:foodPreferencesSchema.optional(),
   reviewedRestrictions:z.boolean().refine(v=>v),allergies:ids,intolerances:ids,excluded:ids,preferred:ids,
   cook:option(choices.cook),access:option(choices.access),budget:z.number().finite().min(1).max(1000).optional(),
-  menuStyle:option(choices.menuStyle),health:option(choices.foodReview).optional(),
+  menuStyle:option(choices.menuStyle).optional(),health:option(choices.foodReview).optional(),
 }).strict();
 const competition=z.object({
   status:option(choices.competition),categoryStatus:option(choices.categoryStatus).optional(),category:weight.optional(),
@@ -93,17 +93,17 @@ const competition=z.object({
 const boxing=z.object({
   experience:option(choices.boxingExperience),
   club:dayRows({kind:option(choices.clubActivity),minutes:z.number().int().min(15).max(180),time:time.optional()}),
-  hardestDay:activityDay.optional(),roundLimit:option(choices.roundLimit),
+  hardestDay:activityDay.optional(),roundLimit:option(choices.roundLimit).optional(),
 }).strict();
 const strength=z.object({
   intensity:option(choices.intensity).optional(),
-  frequency:option(choices.strengthFrequency),practice:option(choices.strengthPractice),confidence:option(choices.confidence),
+  frequency:option(choices.strengthFrequency).optional(),practice:option(choices.strengthPractice).optional(),confidence:option(choices.confidence),
   // Keep accepting scalar selections from already saved v1 profiles and drafts.
   equipment:z.union([option(choices.equipment),unique(option(choices.equipment),3)]),patterns:unique(option(choices.exercisePattern),5).optional(),
   recent:z.object({exerciseId:z.string().min(1).max(100),kg:z.number().finite().min(0).max(500).optional(),reps:z.number().int().min(1).max(100).optional(),effort:option(choices.runningEffort).optional()}).strict().optional(),
 }).strict();
 const muscle=z.object({
-  goal:option(choices.strengthGoal),priority:option(choices.muscle),
+  goal:option(choices.strengthGoal),priority:option(choices.muscle).optional(),
 }).strict();
 const running=z.object({
   frequency:option(choices.runningFrequency),mode:option(choices.runningMode).optional(),
@@ -116,7 +116,7 @@ const availability=z.object({
 }).strict();
 const recovery=z.object({
   sleepHours:z.number().finite().min(0).max(24).optional(),state:option(choices.recovery),limitation:option(choices.limitation),
-  barrier:option(choices.barrier).optional(),tracking:option(choices.tracking),review:option(choices.review).optional(),
+  barrier:option(choices.barrier).optional(),tracking:option(choices.tracking).optional(),review:option(choices.review).optional(),
 }).strict();
 
 export const answersSchema=z.object({
@@ -127,7 +127,7 @@ export const answersSchema=z.object({
 export type OnboardingAnswers=z.infer<typeof answersSchema>;
 export const emptyAnswers=():OnboardingAnswers=>({basics:{},nutrition:{},food:{},competition:{},boxing:{},strength:{},muscle:{},running:{},availability:{},recovery:{}});
 
-export const draftSchema=z.object({step:z.number().int().min(0).max(7),answers:answersSchema}).strict();
+export const draftSchema=z.object({step:z.number().int().min(0).max(7),flowVersion:z.literal(2).optional(),answers:answersSchema}).strict().refine(d=>d.flowVersion!==2||d.step<4);
 export type OnboardingDraft=z.infer<typeof draftSchema>;
 
 export function selectedEquipment(value:OnboardingAnswers['strength']['equipment']){
@@ -201,6 +201,16 @@ export function stepIssues(a:OnboardingAnswers,step:number):Record<string,string
     default:errors.step='Paso de onboarding no válido.';
   }
   return errors;
+}
+
+/** Four visible steps, with legacy field paths preserved for saved answers. */
+export function onboardingStepIssues(a:OnboardingAnswers,step:number):Record<string,string>{
+ const groups=[[0,3],[1,2],a.basics.sport==='boxing'?[4,5,6]:[4,6],[7]];
+ return Object.assign({},...(groups[step]??[]).map(index=>stepIssues(a,index)));
+}
+export function compactOnboardingDraft(draft:OnboardingDraft):OnboardingDraft{
+ if(draft.flowVersion===2)return draft;
+ return {...draft,flowVersion:2,step:[0,1,1,0,2,2,2,3][draft.step]};
 }
 
 export function stepProblem(a:OnboardingAnswers,step:number):string|null{

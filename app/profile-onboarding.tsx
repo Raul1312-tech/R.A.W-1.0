@@ -4,18 +4,15 @@ import {createContext,useContext,useRef,useState,type ReactNode} from 'react';
 import {ArrowLeft,ArrowRight,Check,Dumbbell,Flame,LoaderCircle,Save} from 'lucide-react';
 import {FoodPreferenceFields} from './food-preferences-editor';
 import SelectField from './select-field';
-import {choices,selectedEquipment,stepIssues,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema';
+import {choices,selectedEquipment,onboardingStepIssues,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema';
 import {startOnboarding,prepareOnboarding,onboardingSportName} from './onboarding-model';
 import {dateKey,foods,targets,type Profile} from './model';
 import {dailySessions,planForDate,weekdayOf} from './training-calendar-model';
 import {trainingDays} from './training-model';
-import {exerciseCatalog} from './exercise-catalog';
 import './profile-setup.css';
 
 type Update=<K extends keyof OnboardingAnswers>(key:K,patch:Partial<OnboardingAnswers[K]>)=>void;
-const nutritionTitles=['Tu punto de partida','Cómo comes ahora','Qué encaja en tu vida','Competición y pesaje'];
-const boxingTitles=['Tu semana de boxeo','Tu punto de partida con el físico','Tu punto de partida con la carrera','Cómo encaja todo en tu semana'];
-const strengthTitles=['Qué quieres entrenar','Cuándo y con qué puedes entrenar','Qué estás haciendo ahora','Recuperación y seguimiento'];
+const stepTitles=['Tu perfil y objetivo','Tu alimentación','Tu entrenamiento','Tu semana y recuperación'];
 const weekdays=trainingDays.map((name,day)=>({name,day}));
 const allergens=['gluten','leche','huevo','soja','cacahuete','frutos secos','pescado','marisco','sésamo','mostaza','apio','sulfitos','altramuces','moluscos'];
 const countOptions=[3,4,5,6];
@@ -81,10 +78,10 @@ function Multi<K extends string>({field,label,hint,options,values=[],onChange,ma
     </label>)}
   </div></fieldset></Question>;
 }
-function WeekDays({field,label,selected,onToggle}:{field?:string;label:string;selected:number[];onToggle:(day:number)=>void}){
+function WeekDays({field,label,selected,onToggle,unavailable=[]}:{field?:string;label:string;selected:number[];onToggle:(day:number)=>void;unavailable?:number[]}){
   const validation=useQuestion(field);
   return <Question field={field}><fieldset {...validation} className="onboarding-multi"><legend>{label}</legend><div className="onboarding-days">
-    {weekdays.map(({day,name})=><button type="button" key={day} aria-label={name} aria-pressed={selected.includes(day)} onClick={()=>onToggle(day)}>{name.slice(0,3)}</button>)}
+    {weekdays.map(({day,name})=><button type="button" key={day} aria-label={name} disabled={unavailable.includes(day)} aria-pressed={selected.includes(day)} onClick={()=>onToggle(day)}>{name.slice(0,3)}</button>)}
   </div></fieldset></Question>;
 }
 function Equipment({a,update}:{a:OnboardingAnswers;update:Update}){
@@ -109,55 +106,29 @@ function Basics({a,update,onSport}:{a:OnboardingAnswers;update:Update;onSport:(s
       <Choice field="basics.sex" label="Sexo para la estimación de energía" options={{male:'Masculino',female:'Femenino'}} value={b.sex} onChange={sex=>update('basics',{sex})}/>
       <NumberInput field="basics.height" label="Altura en cm" value={b.height} min={120} max={230} step={.1} onChange={height=>update('basics',{height})}/>
       <NumberInput field="basics.weight" label="Peso actual o habitual en kg" value={b.weight} min={30} max={250} step={.1} onChange={weight=>update('basics',{weight})}/>
-      <Choice field="basics.trend" label="¿Cómo ha cambiado tu peso en los últimos meses?" options={choices.trend} value={b.trend} onChange={trend=>update('basics',{trend})}/>
       <Choice field="basics.activity" label="¿Cómo es un día normal fuera del gimnasio?" options={choices.activity} value={b.activity} onChange={activity=>update('basics',{activity})}/>
       {b.sport==='strength'&&<>
       <Choice field="basics.goal" label="¿Qué quieres mejorar primero?" options={generalGoals} value={b.goal} onChange={goal=>update('basics',{goal,goalWeight:goal==='gain'?b.goalWeight:undefined})}/>
       {b.goal==='gain'&&<NumberInput field="basics.goalWeight" label="Peso objetivo en kg · opcional" value={b.goalWeight} min={30} max={250} step={.1} onChange={goalWeight=>update('basics',{goalWeight})}/>}
-      <Choice field="basics.success" label="¿Qué te gustaría notar con el plan? · opcional" options={choices.success} value={b.success} onChange={success=>update('basics',{success})}/>
       </>}
     </div>
   </>;
 }
 
 function Nutrition({a,update}:{a:OnboardingAnswers;update:Update}){
-  const n=a.nutrition;
-  return <>
-    <div className="form-grid">
-      <Choice field="nutrition.schedule" label="¿Cómo son tus horarios?" options={choices.schedule} value={n.schedule} onChange={schedule=>update('nutrition',{schedule})}/>
-      <NumericChoice field="nutrition.currentMeals" label="¿Cuántas veces comes ahora?" options={[1,2,3,4,5,6]} value={n.currentMeals} onChange={currentMeals=>update('nutrition',{currentMeals})}/>
-      <NumericChoice field="nutrition.mealCount" label="¿Cuántas comidas quieres en el plan?" options={countOptions} value={n.mealCount} onChange={mealCount=>update('nutrition',{mealCount})}/>
-      <Choice field="nutrition.difficultMeal" label="¿Qué comida te cuesta más resolver?" options={choices.mealSlot} value={n.difficultMeal} onChange={difficultMeal=>update('nutrition',{difficultMeal,mealBarrier:difficultMeal==='none'?undefined:n.mealBarrier})}/>
-      {n.difficultMeal&&n.difficultMeal!=='none'&&<Choice field="nutrition.mealBarrier" label="¿Qué te lo pone difícil?" options={choices.mealBarrier} value={n.mealBarrier} onChange={mealBarrier=>update('nutrition',{mealBarrier})}/>}
-    </div>
-    <details className="raw-disclosure"><summary>Tus horarios y un día reciente de entreno · opcional</summary>
-      <div className="form-grid">
-        <DateInput field="nutrition.wake" label="Hora a la que te levantas" type="time" value={n.wake} onChange={wake=>update('nutrition',{wake})}/>
-        <DateInput field="nutrition.sleep" label="Hora a la que te acuestas" type="time" value={n.sleep} onChange={sleep=>update('nutrition',{sleep})}/>
-        <DateInput field="nutrition.firstMeal" label="Hora habitual de la primera comida" type="time" value={n.firstMeal} onChange={firstMeal=>update('nutrition',{firstMeal})}/>
-        <DateInput field="nutrition.lastMeal" label="Hora habitual de la última comida" type="time" value={n.lastMeal} onChange={lastMeal=>update('nutrition',{lastMeal})}/>
-      </div>
-      {(['breakfast','lunch','dinner'] as const).map(slot=>{
-        const source=n.mealSources?.[slot];
-        return <div className="onboarding-day-row" key={slot}><h3>{choices.mealSlot[slot]}</h3>
-          <Choice label={'¿Cómo resolviste esta comida?'} options={choices.intake} value={source} onChange={value=>update('nutrition',{
-            mealSources:{...n.mealSources,[slot]:value},
-            ...(value==='skipped'||!value?{mealFoods:{...n.mealFoods,[slot]:undefined},mealSizes:{...n.mealSizes,[slot]:undefined}}:{})
-          })}/>
-          {source&&source!=='skipped'&&<>
-            <Multi label="¿Qué comiste?" options={choices.foodGroup} values={n.mealFoods?.[slot]}
-              onChange={value=>update('nutrition',{mealFoods:{...n.mealFoods,[slot]:value}})}/>
-            <Choice label="¿Cómo era la cantidad?" options={choices.intakeSize} value={n.mealSizes?.[slot]}
-              onChange={value=>update('nutrition',{mealSizes:{...n.mealSizes,[slot]:value}})}/>
-          </>}
-        </div>;
-      })}
-      <Multi field="nutrition.drinks" label="¿Qué bebiste ese día?" options={choices.drink} values={n.drinks} onChange={drinks=>update('nutrition',{drinks})}/>
-    </details>
-    {a.basics.sport==='boxing'&&<details className="raw-disclosure"><summary>Alrededor del entreno · opcional</summary>
-      <WorkoutFood a={a} update={update}/>
-    </details>}
-  </>;
+ const n=a.nutrition;
+ return <><div className="form-grid">
+  <NumericChoice field="nutrition.mealCount" label="¿Cuántas comidas quieres al día?" options={countOptions} value={n.mealCount} onChange={mealCount=>update('nutrition',{mealCount})}/>
+  <Choice field="nutrition.schedule" label="¿Cómo son tus horarios?" options={choices.schedule} value={n.schedule} onChange={schedule=>update('nutrition',{schedule})}/>
+ </div><details className="raw-disclosure"><summary>Afinar horarios y hábitos · opcional</summary><div className="form-grid">
+  <NumericChoice field="nutrition.currentMeals" label="¿Cuántas veces comes ahora?" options={[1,2,3,4,5,6]} value={n.currentMeals} onChange={currentMeals=>update('nutrition',{currentMeals})}/>
+  <Choice field="nutrition.difficultMeal" label="¿Qué comida te cuesta resolver?" options={choices.mealSlot} value={n.difficultMeal} onChange={difficultMeal=>update('nutrition',{difficultMeal,mealBarrier:difficultMeal==='none'?undefined:n.mealBarrier})}/>
+  {n.difficultMeal&&n.difficultMeal!=='none'&&<Choice field="nutrition.mealBarrier" label="¿Qué te lo pone difícil?" options={choices.mealBarrier} value={n.mealBarrier} onChange={mealBarrier=>update('nutrition',{mealBarrier})}/>}
+  <DateInput label="Hora de levantarte" type="time" value={n.wake} onChange={wake=>update('nutrition',{wake})}/>
+  <DateInput label="Hora de acostarte" type="time" value={n.sleep} onChange={sleep=>update('nutrition',{sleep})}/>
+  <DateInput label="Primera comida" type="time" value={n.firstMeal} onChange={firstMeal=>update('nutrition',{firstMeal})}/>
+  <DateInput label="Última comida" type="time" value={n.lastMeal} onChange={lastMeal=>update('nutrition',{lastMeal})}/>
+ </div><WorkoutFood a={a} update={update}/></details></>;
 }
 
 function WorkoutFood({a,update}:{a:OnboardingAnswers;update:Update}){
@@ -172,36 +143,32 @@ function WorkoutFood({a,update}:{a:OnboardingAnswers;update:Update}){
 }
 
 function Food({a,update}:{a:OnboardingAnswers;update:Update}){
-  const f=a.food;
-  const restrictionsValidation=useQuestion('food.reviewedRestrictions');
-  const allergenOptions=Object.fromEntries([...new Set([...allergens,...(f.allergies??[]),...(f.intolerances??[])])].map(value=>[value,value]));
-  const [foodQuery,setFoodQuery]=useState('');
-  const foodOptions=Object.fromEntries(foods.filter(food=>!foodQuery||food.name.toLowerCase().includes(foodQuery.toLowerCase()))
-    .map(food=>[food.id,food.name]));
-  return <>
-    <details className="raw-disclosure"><summary>Alergias e intolerancias{(f.allergies?.length??0)+(f.intolerances?.length??0)>0?' · '+((f.allergies?.length??0)+(f.intolerances?.length??0))+' marcadas':''}</summary>
-      <Multi field="food.allergies" label="Alergias alimentarias" options={allergenOptions} values={f.allergies} max={20} onChange={allergies=>update('food',{allergies})}/>
-      <Multi field="food.intolerances" label="Intolerancias alimentarias" options={allergenOptions} values={f.intolerances} max={20} onChange={intolerances=>update('food',{intolerances})}/>
-    </details>
-    <section className="onboarding-staples"><h3>¿Qué sueles comprar y comer?</h3>
-      <FoodPreferenceFields value={f.preferences} onChange={preferences=>update('food',{preferences})}/>
-    </section>
-    <details className="raw-disclosure"><summary>Alimentos que quieres evitar o repetir</summary>
-      <label className="field"><span>Buscar en el catálogo</span><input type="search" value={foodQuery} onChange={e=>setFoodQuery(e.target.value)}/></label>
-      <Multi field="food.excluded" label="Evitar en mi menú" options={foodOptions} values={f.excluded} onChange={excluded=>update('food',{excluded,preferred:f.preferred?.filter(id=>!excluded.includes(id))??[]})}/>
-      <Multi label="Me gusta repetir" options={Object.fromEntries(Object.entries(foodOptions).filter(([id])=>!f.excluded?.includes(id)))} values={f.preferred} onChange={preferred=>update('food',{preferred})}/>
-    </details>
-    <Question field="food.reviewedRestrictions"><label className="checkbox onboarding-confirm"><input {...restrictionsValidation} type="checkbox" checked={f.reviewedRestrictions??false}
-      onChange={e=>update('food',{reviewedRestrictions:e.target.checked||undefined,allergies:f.allergies??[],intolerances:f.intolerances??[],excluded:f.excluded??[],preferred:f.preferred??[]})}/>
-      He revisado mis alergias, intolerancias y exclusiones.</label></Question>
-    <div className="form-grid">
-      <Choice field="food.cook" label="¿Cuánto tiempo tienes para cocinar?" options={choices.cook} value={f.cook} onChange={cook=>update('food',{cook})}/>
-      <Choice field="food.access" label="¿Dónde comes habitualmente?" options={choices.access} value={f.access} onChange={access=>update('food',{access})}/>
-      <Choice field="food.menuStyle" label="¿Qué tipo de menú te encaja?" options={choices.menuStyle} value={f.menuStyle} onChange={menuStyle=>update('food',{menuStyle})}/>
-      <NumberInput field="food.budget" label="Presupuesto semanal en euros · opcional" value={f.budget} min={1} max={1000} step={.01} onChange={budget=>update('food',{budget})}/>
-      <Choice field="food.health" label="Indicaciones de salud para la alimentación · opcional" options={choices.foodReview} value={f.health} onChange={health=>update('food',{health})}/>
-    </div>
-  </>;
+ const f=a.food,restrictionsValidation=useQuestion('food.reviewedRestrictions');
+ const allergenOptions=Object.fromEntries([...new Set([...allergens,...(f.allergies??[]),...(f.intolerances??[])])].map(value=>[value,value]));
+ const [foodQuery,setFoodQuery]=useState('');
+ const foodOptions=Object.fromEntries(foods.filter(food=>!foodQuery||food.name.toLowerCase().includes(foodQuery.toLowerCase())).map(food=>[food.id,food.name]));
+ return <>
+  <details className="raw-disclosure"><summary>Alergias e intolerancias{(f.allergies?.length??0)+(f.intolerances?.length??0)>0?' · '+((f.allergies?.length??0)+(f.intolerances?.length??0))+' marcadas':''}</summary>
+   <Multi field="food.allergies" label="Alergias alimentarias" options={allergenOptions} values={f.allergies} max={20} onChange={allergies=>update('food',{allergies})}/>
+   <Multi field="food.intolerances" label="Intolerancias alimentarias" options={allergenOptions} values={f.intolerances} max={20} onChange={intolerances=>update('food',{intolerances})}/>
+  </details>
+  <Question field="food.reviewedRestrictions"><label className="checkbox onboarding-confirm"><input {...restrictionsValidation} type="checkbox" checked={f.reviewedRestrictions??false} onChange={e=>update('food',{reviewedRestrictions:e.target.checked||undefined,allergies:f.allergies??[],intolerances:f.intolerances??[],excluded:f.excluded??[],preferred:f.preferred??[]})}/>He revisado mis alergias, intolerancias y exclusiones.</label></Question>
+  <div className="form-grid">
+   <Choice field="food.cook" label="¿Cuánto tiempo tienes para cocinar?" options={choices.cook} value={f.cook} onChange={cook=>update('food',{cook})}/>
+   <Choice field="food.access" label="¿Dónde comes habitualmente?" options={choices.access} value={f.access} onChange={access=>update('food',{access})}/>
+  </div>
+  <section className="onboarding-staples"><h3>Los alimentos con los que estás cómodo</h3><FoodPreferenceFields compact value={f.preferences} onChange={preferences=>update('food',{preferences})}/></section>
+  <details className="raw-disclosure"><summary>Otros alimentos que quieres evitar o repetir · opcional</summary>
+   <label className="field"><span>Buscar en el catálogo</span><input type="search" value={foodQuery} onChange={e=>setFoodQuery(e.target.value)}/></label>
+   <Multi field="food.excluded" label="Evitar en mi menú" options={foodOptions} values={f.excluded} onChange={excluded=>update('food',{excluded,preferred:f.preferred?.filter(id=>!excluded.includes(id))??[]})}/>
+   <Multi label="Me gusta repetir" options={Object.fromEntries(Object.entries(foodOptions).filter(([id])=>!f.excluded?.includes(id)))} values={f.preferred} onChange={preferred=>update('food',{preferred})}/>
+  </details>
+  <details className="raw-disclosure"><summary>Presupuesto e indicaciones de alimentación · opcional</summary><div className="form-grid">
+   <Choice field="food.menuStyle" label="Tipo de menú" options={choices.menuStyle} value={f.menuStyle} onChange={menuStyle=>update('food',{menuStyle})}/>
+   <NumberInput field="food.budget" label="Presupuesto semanal en euros" value={f.budget} min={1} max={1000} step={.01} onChange={budget=>update('food',{budget})}/>
+   <Choice field="food.health" label="Indicaciones de salud para la alimentación" options={choices.foodReview} value={f.health} onChange={health=>update('food',{health})}/>
+  </div></details>
+ </>;
 }
 
 function Competition({a,update}:{a:OnboardingAnswers;update:Update}){
@@ -239,40 +206,22 @@ function BoxingWeek({a,update}:{a:OnboardingAnswers;update:Update}){
       return <div className="onboarding-day-row" key={slot.day}><h3>{trainingDays[slot.day]}</h3><div className="form-grid">
         <Choice label="Tipo de sesión" options={choices.clubActivity} value={slot.kind} onChange={kind=>{if(kind)patch({kind})}}/>
         <NumericChoice label="Duración" options={clubDurations} value={slot.minutes} unit="min" onChange={minutes=>{if(minutes)patch({minutes})}}/>
-        <DateInput label="Hora · opcional" type="time" value={slot.time} onChange={time=>patch({time})}/>
       </div></div>;
     })}
-    {!!club.length&&<SelectField label="¿Qué día te deja más cansado? · opcional" value={b.hardestDay??''} onValueChange={value=>update('boxing',{hardestDay:value===''?undefined:Number(value)})}>
-      <option value="">Aún no lo sé</option>{club.map(slot=><option key={slot.day} value={slot.day}>{trainingDays[slot.day]}</option>)}
-    </SelectField>}
-    <Choice field="boxing.roundLimit" label="¿Qué te limita más en los últimos asaltos?" options={choices.roundLimit} value={b.roundLimit} onChange={roundLimit=>update('boxing',{roundLimit})}/>
   </>;
 }
 
 function Strength({a,update,boxing}:{a:OnboardingAnswers;update:Update;boxing:boolean}){
-  const s=a.strength;
-  return <>
-    <div className="form-grid">
-      {boxing&&<Choice field="strength.frequency" label="¿Cuántos días por semana has hecho físico en el último mes?" options={choices.strengthFrequency}
-        value={s.frequency} onChange={frequency=>update('strength',{frequency,recent:frequency==='none'?undefined:s.recent})}/>}
-      <Choice field="strength.practice" label="¿Qué tipo de físico has hecho hasta ahora?" options={choices.strengthPractice} value={s.practice} onChange={practice=>update('strength',{practice})}/>
-      <Choice label="¿Con qué exigencia quieres empezar? · opcional" options={choices.intensity} value={s.intensity} onChange={intensity=>update('strength',{intensity})}/>
-      <Choice field="strength.confidence" label="¿Cuánta ayuda necesitas con los ejercicios?" options={choices.confidence} value={s.confidence} onChange={confidence=>update('strength',{confidence})}/>
-
-    </div>
-    {boxing&&<Equipment a={a} update={update}/>}
-    {s.frequency&&s.frequency!=='none'&&<details className="raw-disclosure"><summary>Añadir un ejercicio reciente · opcional</summary>
-      <SelectField label="Ejercicio" value={s.recent?.exerciseId??''} onValueChange={exerciseId=>update('strength',{recent:exerciseId?{exerciseId}:undefined})}>
-        <option value="">Selecciona un ejercicio</option>{exerciseCatalog.filter(ex=>!ex.id.startsWith('run-')).map(ex=><option key={ex.id} value={ex.id}>{ex.name}</option>)}
-      </SelectField>
-      {s.recent&&<div className="form-grid" key={s.recent.exerciseId}>
-        <NumberInput label="Peso utilizado en kg" min={0} max={500} step={.1} value={s.recent.kg} onChange={kg=>update('strength',{recent:{...s.recent!,kg}})}/>
-        <NumberInput label="Repeticiones" min={1} max={100} value={s.recent.reps} onChange={reps=>update('strength',{recent:{...s.recent!,reps}})}/>
-        <Choice label="¿Cómo te resultó la serie?" options={{easy:'Me quedaba margen',hard:'Me costó',stop:'Tuve que parar',pain:'Tuve molestias'}}
-          value={s.recent.effort} onChange={effort=>update('strength',{recent:{...s.recent!,effort}})}/>
-      </div>}
-    </details>}
-  </>;
+ const s=a.strength;
+ return <>
+  <Choice field="strength.confidence" label="¿Cómo te manejas en el gimnasio?" options={choices.confidence} value={s.confidence} onChange={confidence=>update('strength',{confidence})}/>
+  <Equipment a={a} update={update}/>
+  <details className="raw-disclosure"><summary>Experiencia e intensidad · opcional</summary><div className="form-grid">
+   <Choice field="strength.frequency" label="Días de físico en el último mes" options={choices.strengthFrequency} value={s.frequency} onChange={frequency=>update('strength',{frequency})}/>
+   <Choice field="strength.practice" label="Tipo de físico que has hecho" options={choices.strengthPractice} value={s.practice} onChange={practice=>update('strength',{practice})}/>
+   <Choice label="Exigencia con la que quieres empezar" options={choices.intensity} value={s.intensity} onChange={intensity=>update('strength',{intensity})}/>
+  </div></details>
+ </>;
 }
 function Running({a,update}:{a:OnboardingAnswers;update:Update}){
   const r=a.running;
@@ -296,10 +245,11 @@ function Availability({a,update,boxing}:{a:OnboardingAnswers;update:Update;boxin
   }
   return <>
     {boxing&&<Choice field="availability.mode" label="¿Cómo quieres repartir físico y carrera?" options={choices.planning} value={v.mode} onChange={mode=>update('availability',{mode})}/>}
-    <WeekDays field="availability.restDays" label="¿Qué días quieres reservar para descansar?" selected={rest} onToggle={day=>update('availability',{restDays:toggle(rest,day),slots:slots.filter(slot=>slot.day!==day)})}/>
+    <details className="raw-disclosure"><summary>Descanso y físico programado por el club · opcional</summary>    <WeekDays field="availability.restDays" label="¿Qué días quieres reservar para descansar?" selected={rest} onToggle={day=>update('availability',{restDays:toggle(rest,day),slots:slots.filter(slot=>slot.day!==day)})}/>
     {boxing&&<WeekDays label="Días en los que tu entrenador ya programa físico" selected={coach} onToggle={day=>update('availability',{coachPhysicalDays:toggle(coach,day),slots:slots.filter(slot=>slot.day!==day)})}/>}
-    <WeekDays field="availability.slots" label={boxing?'Huecos para físico o carrera fuera del club':'¿Qué días puedes hacer musculación?'} selected={slots.map(slot=>slot.day)} onToggle={switchSlot}/>
-    {(rest.length>0||boxing&&coach.length>0)&&<p className="muted">Los días reservados quedan fuera de los huecos. Puedes cambiar la selección arriba.</p>}
+</details>
+    <WeekDays field="availability.slots" label={boxing?'Huecos para físico o carrera fuera del club':'¿Qué días puedes hacer musculación?'} selected={slots.map(slot=>slot.day)} unavailable={[...rest,...(boxing?coach:[])]} onToggle={switchSlot}/>
+    {(rest.length>0||boxing&&coach.length>0)&&<p className="muted">Descanso: {rest.map(day=>trainingDays[day]).join(', ')||'sin días reservados'}.{boxing&&coach.length>0&&' Físico del club: '+coach.map(day=>trainingDays[day]).join(', ')+'.'} Puedes cambiarlos en «Descanso y físico programado por el club».</p>}
     {slots.slice().sort((a,b)=>a.day-b.day).map(slot=>{
       function patch(change:Partial<typeof slot>){update('availability',{slots:slots.map(item=>item.day===slot.day?{...item,...change}:item)})}
       return <div className="onboarding-day-row" key={slot.day}><h3>{trainingDays[slot.day]}</h3><div className="form-grid">
@@ -311,20 +261,21 @@ function Availability({a,update,boxing}:{a:OnboardingAnswers;update:Update;boxin
   </>;
 }
 function Recovery({a,update}:{a:OnboardingAnswers;update:Update}){
-  const r=a.recovery;
-  return <div className="form-grid">
-    <NumberInput field="recovery.sleepHours" label="Horas de sueño habituales · opcional" value={r.sleepHours} min={0} max={24} step={.5} onChange={sleepHours=>update('recovery',{sleepHours})}/>
-    <Choice field="recovery.state" label="¿Cómo llegas al siguiente entreno?" options={choices.recovery} value={r.state} onChange={state=>update('recovery',{state})}/>
-    <Choice field="recovery.limitation" label="¿Hay molestias o limitaciones que debamos tener en cuenta?" options={choices.limitation} value={r.limitation} onChange={limitation=>update('recovery',{limitation})}/>
-    <Choice field="recovery.barrier" label="¿Qué hace más difícil mantener tu rutina? · opcional" options={choices.barrier} value={r.barrier} onChange={barrier=>update('recovery',{barrier})}/>
-    <Choice field="recovery.tracking" label="¿Qué te resulta realista registrar?" options={choices.tracking} value={r.tracking} onChange={tracking=>update('recovery',{tracking})}/>
-    <Choice field="recovery.review" label="¿Cuándo te gustaría revisar el plan? · opcional" options={choices.review} value={r.review} onChange={review=>update('recovery',{review})}/>
-  </div>;
+ const r=a.recovery;
+ return <><h3>Recuperación y limitaciones</h3><div className="form-grid">
+  <Choice field="recovery.state" label="¿Cómo llegas al siguiente entreno?" options={choices.recovery} value={r.state} onChange={state=>update('recovery',{state})}/>
+  <Choice field="recovery.limitation" label="¿Hay dolor, lesión o alguna limitación?" options={choices.limitation} value={r.limitation} onChange={limitation=>update('recovery',{limitation})}/>
+ </div><details className="raw-disclosure"><summary>Sueño y seguimiento · opcional</summary><div className="form-grid">
+  <NumberInput field="recovery.sleepHours" label="Horas de sueño" value={r.sleepHours} min={0} max={24} step={.5} onChange={sleepHours=>update('recovery',{sleepHours})}/>
+  <Choice field="recovery.tracking" label="¿Qué quieres registrar?" options={choices.tracking} value={r.tracking} onChange={tracking=>update('recovery',{tracking})}/>
+  <Choice field="recovery.barrier" label="¿Qué dificulta tu rutina?" options={choices.barrier} value={r.barrier} onChange={barrier=>update('recovery',{barrier})}/>
+  <Choice field="recovery.review" label="Revisión del plan" options={choices.review} value={r.review} onChange={review=>update('recovery',{review})}/>
+ </div></details></>;
 }
 
 function Preview({profile,next,a}:{profile:Profile;next:Profile;a:OnboardingAnswers}){
   const today=dateKey();
-  const existing=planForDate(profile.workouts??{plans:[],logs:[]},today);
+
   const training=next.workouts??{plans:[],logs:[]};
   const plan=planForDate(training,today);
   const menu=next.days[today]?.foodPlan?.meals??next.plans.at(-1)?.week?.[weekdayOf(today)]?.meals;
@@ -333,8 +284,8 @@ function Preview({profile,next,a}:{profile:Profile;next:Profile;a:OnboardingAnsw
     <h3>Alimentación · {next.mealCount} comidas al día</h3>
     <p>Referencia inicial aproximada de {Math.round(next.days[today]?.target.k??targets(next).k)} kcal al día.</p>
     {menu?.map((meal,i)=><p key={i}>{meal.name}</p>)}
-    <h3>Entrenamiento · {onboardingSportName(a)}</h3>
-    {existing?<p>Tu rutina activa se conserva. Tus respuestas nuevas se guardarán en el perfil.</p>:plan?
+    <h3>Entrenamiento · {onboardingSportName(a)}</h3><p>Estos días y sesiones quedarán configurados en Rutina. Se conservan las sesiones realizadas o iniciadas.</p>{a.recovery.limitation!=='none'&&<p>El físico queda pendiente de revisión profesional por la limitación que has indicado.</p>}
+    {plan?
       <ul>{Array.from({length:7},(_,i)=>{
         const day=new Date(start.valueOf()+i*86400000).toISOString().slice(0,10);
         const club=a.boxing.club?.find(item=>item.day===weekdayOf(day));
@@ -355,14 +306,14 @@ export default function ProfileOnboarding({profile,disabled,onDraft,onComplete,o
   const [preparing,setPreparing]=useState(false);
   const preparingRef=useRef(false);
   const form=useRef<HTMLFormElement>(null);
-  const issues=showErrors?stepIssues(a,step):{};
+  const issues=showErrors?onboardingStepIssues(a,step):{};
   const [preview,setPreview]=useState<{source:Profile;next:Profile}|null>(null);
   const heading=useRef<HTMLHeadingElement>(null);
   const boxing=a.basics.sport==='boxing';
-  const title=step===3&&!boxing?'Comidas alrededor del entreno':step<4?nutritionTitles[step]:(boxing?boxingTitles:strengthTitles)[step-4];
+  const title=stepTitles[step];
   const reviewing=preview?.source===profile;
   function patch(answers:OnboardingAnswers,nextStep=step){
-    setError('');setPreview(null);onDraft({step:nextStep,answers});
+    setError('');setPreview(null);onDraft({step:nextStep,flowVersion:2,answers});
   }
   const update:Update=(key,change)=>patch({...a,[key]:{...a[key],...change}});
   function selectSport(sport:'boxing'|'strength'){
@@ -387,12 +338,12 @@ export default function ProfileOnboarding({profile,disabled,onDraft,onComplete,o
   }
   async function advance(){
     if(preparingRef.current)return;
-    const fields=Object.keys(stepIssues(a,step));
+    const fields=Object.keys(onboardingStepIssues(a,step));
     if(fields.length){setShowErrors(true);focusIssue(fields[0]);return}
-    if(step<7){go(step+1);return}
-    for(let previous=0;previous<7;previous++){
-      const missing=Object.keys(stepIssues(a,previous));
-      if(missing.length){onDraft({answers:a,step:previous});setShowErrors(true);focusIssue(missing[0]);return}
+    if(step<3){go(step+1);return}
+    for(let previous=0;previous<3;previous++){
+      const missing=Object.keys(onboardingStepIssues(a,previous));
+      if(missing.length){onDraft({answers:a,step:previous,flowVersion:2});setShowErrors(true);focusIssue(missing[0]);return}
     }
     preparingRef.current=true;setPreparing(true);setError('');
     try{
@@ -406,21 +357,10 @@ export default function ProfileOnboarding({profile,disabled,onDraft,onComplete,o
 
   let content:ReactNode;
   switch(step){
-    case 0:content=<Basics a={a} update={update} onSport={selectSport}/>;break;
-    case 1:content=<Nutrition a={a} update={update}/>;break;
-    case 2:content=<Food a={a} update={update}/>;break;
-    case 3:content=boxing?<Competition a={a} update={update}/>:<WorkoutFood a={a} update={update}/>;break;
-    case 4:content=boxing?<BoxingWeek a={a} update={update}/>:<div className="form-grid">
-      <Choice field="muscle.goal" label="¿Qué quieres conseguir con la musculación?" options={choices.strengthGoal} value={a.muscle.goal} onChange={goal=>update('muscle',{goal})}/>
-      <Choice field="muscle.priority" label="¿Qué zona quieres priorizar?" options={choices.muscle} value={a.muscle.priority} onChange={priority=>update('muscle',{priority})}/>
-      <Choice field="strength.frequency" label="¿Cuántos días por semana has entrenado en el último mes?" options={choices.strengthFrequency} value={a.strength.frequency} onChange={frequency=>update('strength',{frequency,recent:frequency==='none'?undefined:a.strength.recent})}/>
-    </div>;break;
-    case 5:content=boxing?<Strength a={a} update={update} boxing/>:<>
-      <Equipment a={a} update={update}/>
-      <Availability a={a} update={update} boxing={false}/>
-    </>;break;
-    case 6:content=boxing?<Running a={a} update={update}/>:<Strength a={a} update={update} boxing={false}/>;break;
-    default:content=<>{boxing&&<Availability a={a} update={update} boxing/>}<Recovery a={a} update={update}/></>;
+    case 0:content=<><Basics a={a} update={update} onSport={selectSport}/>{boxing&&<section className="onboarding-block"><h3>Combate y categoría</h3><Competition a={a} update={update}/></section>}</>;break;
+    case 1:content=<><Nutrition a={a} update={update}/><Food a={a} update={update}/></>;break;
+    case 2:content=<>{boxing?<><h3>Boxeo en tu club</h3><BoxingWeek a={a} update={update}/></>:<Choice field="muscle.goal" label="¿Qué quieres conseguir con las pesas?" options={choices.strengthGoal} value={a.muscle.goal} onChange={goal=>update('muscle',{goal})}/>}<section className="onboarding-block"><h3>{boxing?'Físico complementario':'Tu punto de partida'}</h3><Strength a={a} update={update} boxing={boxing}/></section>{boxing&&<section className="onboarding-block"><h3>Tu base de carrera</h3><Running a={a} update={update}/></section>}</>;break;
+    default:content=<><Availability a={a} update={update} boxing={boxing}/><section className="onboarding-block"><Recovery a={a} update={update}/></section></>;
   }
 
   return <QuestionErrors.Provider value={issues}><form ref={form} aria-busy={preparing} className="card setup-form raw-onboarding" aria-label="Onboarding de R.A.W." noValidate onSubmit={event=>{
@@ -429,9 +369,9 @@ export default function ProfileOnboarding({profile,disabled,onDraft,onComplete,o
     if(!preparingRef.current)void advance();
   }}>
     <div className="onboarding-progress">
-      <p role="status">{step<4?'Nutrición':'Entrenamiento'} · {(step%4)+1} de 4</p>
-      <div className="onboarding-progress-track" role="progressbar" aria-label="Progreso del onboarding" aria-valuemin={0} aria-valuemax={8} aria-valuenow={step+1}>
-        {Array.from({length:8},(_,i)=><span key={i} className={i<=step?'filled':''}/>)}
+      <p role="status">Paso {step+1} de 4 · {['Perfil','Alimentación','Entrenamiento','Tu semana'][step]}</p>
+      <div className="onboarding-progress-track" role="progressbar" aria-label="Progreso del onboarding" aria-valuemin={0} aria-valuemax={4} aria-valuenow={step+1}>
+        {Array.from({length:4},(_,i)=><span key={i} className={i<=step?'filled':''}/>)}
       </div>
       <h2 ref={heading} tabIndex={-1}>{reviewing?'Revisa tu primer plan':title}</h2>
     </div>
@@ -445,7 +385,7 @@ export default function ProfileOnboarding({profile,disabled,onDraft,onComplete,o
           step>0?<button className="button outline" type="button" onClick={()=>go(step-1)}><ArrowLeft size={16}/> Atrás</button>:
           profile.confirmed&&onExit&&<button className="button outline" type="button" onClick={onExit}>Volver al perfil</button>}
         <button className="button orange" type="submit">{preparing?<><LoaderCircle className="onboarding-spinner" size={17}/> Preparando tu plan…</>:reviewing?<><Check size={17}/> Guardar mi plan</>:
-          step===7?<><Save size={17}/> Revisar mi plan</>:<>Continuar <ArrowRight size={17}/></>}</button>
+          step===3?<><Save size={17}/> Revisar mi plan</>:<>Continuar <ArrowRight size={17}/></>}</button>
       </div>
       {onExit&&(!profile.confirmed||step>0)&&<button className="text-button" type="button" onClick={onExit}>Guardar y salir</button>}
     </fieldset>

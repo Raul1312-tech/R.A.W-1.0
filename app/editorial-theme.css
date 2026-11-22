@@ -177,3 +177,5 @@
 :root body .modality-gate .modality-choices button:focus-visible{outline:3px solid #d8d8d8;outline-offset:4px}
 
 :root body .modality-gate .modality-brand img[src="/brand/team-alache-white.svg"]{height:140px;max-height:140px;max-width:180px;width:auto}
+:root body .tenant-logo-horizontal{display:block;width:176px;height:auto;max-height:54px;object-fit:contain;object-position:left center}
+@media(max-width:760px){:root body .tenant-logo-horizontal{width:145px;max-height:45px}}

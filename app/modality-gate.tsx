@@ -7,7 +7,7 @@ export default function ModalityGate({onChoose,disabled}:{onChoose:(mode:Modalit
  const organization=useOrganization();
  const boxing=organization?.organization.modules.boxing!==false;
  return <main className="modality-gate">
-  <div className="modality-brand"><Brand modality={boxing?'boxing':'hypertrophy'}/></div>
+  <div className="modality-brand"><Brand layout="emblem" modality={boxing?'boxing':'hypertrophy'}/></div>
   <span className="eyebrow">{organization?.organization.name??'RISE'} · TU OBJETIVO, TU CAMINO</span>
   <h1>{boxing?'¿Para qué entrenas?':'Tu plan de musculación'}</h1>
   <p>{boxing?'La misma facilidad para registrar, comer y progresar. Un plan pensado para tu deporte.':'Alimentación, entrenamiento y progreso, adaptados a ti.'}</p>

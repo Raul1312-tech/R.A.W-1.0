@@ -97,10 +97,10 @@ function Basics({a,update,onSport}:{a:OnboardingAnswers;update:Update;onSport:(s
   const {competition,...restGoals}=choices.goal;const generalGoals={...restGoals,performance:'Recomposición · mejorar músculo manteniendo el peso'};
   const sportValidation=useQuestion('basics.sport'),nameValidation=useQuestion('basics.name');
   return <>
-    <Question field="basics.sport"><fieldset {...sportValidation} className="onboarding-multi"><legend>¿Qué deporte quieres preparar?</legend><div className="onboarding-sports">
+    {!b.sport&&<Question field="basics.sport"><fieldset {...sportValidation} className="onboarding-multi"><legend>¿Qué deporte quieres preparar?</legend><div className="onboarding-sports">
       <button type="button" aria-pressed={b.sport==='strength'} onClick={()=>onSport('strength')}><Dumbbell size={22}/><strong>Musculación</strong><span>Fuerza y masa muscular</span></button>
       {boxingEnabled&&<button type="button" aria-pressed={b.sport==='boxing'} onClick={()=>onSport('boxing')}><Flame size={22}/><strong>Boxeo</strong><span>Físico y carrera para el ring</span></button>}
-    </div></fieldset></Question>
+    </div></fieldset></Question>}
     {b.sport==='boxing'&&<p className="onboarding-goal"><strong>Rendir mejor en el ring y llegar al peso de competición.</strong><br/>Adaptaremos tu preparación a tu nivel, tu categoría y las fechas que indiques.</p>}
     <div className="form-grid">
       <Question field="basics.name"><label className="field"><span>Nombre del perfil</span><input {...nameValidation} autoComplete="given-name" maxLength={60} value={b.name??''} onChange={e=>update('basics',{name:e.target.value.trim()?e.target.value:undefined})}/></label></Question>

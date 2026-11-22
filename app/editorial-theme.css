@@ -175,3 +175,5 @@
 :root body .modality-gate .modality-choices button p{color:#c1c8c3!important}
 :root body .modality-gate .modality-choices button strong,:root body .modality-gate .modality-choices button svg{color:#ecece7!important}
 :root body .modality-gate .modality-choices button:focus-visible{outline:3px solid #d8d8d8;outline-offset:4px}
+
+:root body .modality-gate .modality-brand img[src="/brand/team-alache-white.svg"]{height:140px;max-width:180px;width:auto}

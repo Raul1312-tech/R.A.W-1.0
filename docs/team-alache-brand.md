@@ -12,6 +12,8 @@ Conservar las letras de estilo deportivo con remates y los guantes ilustrados de
 - Horizontal con 44: `public/brand/team-alache-horizontal-white.svg`. Para cabeceras, pies y espacios apaisados sobre fondo oscuro.
 - Horizontal oscuro con 44: `public/brand/team-alache-horizontal-ink.svg`. Para fondos claros.
 
+La versión horizontal prescinde del marco del ring. Mantiene los guantes y la tipografía original, con más separación entre guantes, nombre y 44; la línea divisoria es corta y discreta. Conservar estos espacios al usarla.
+
 Los SVG tienen trazados vectoriales, sin fuentes ni imágenes incrustadas. No deformar su proporción. Mantener espacio alrededor y contraste entre el fondo y el logo.
 
 `Brand` usa la versión horizontal en espacios compactos y permite `layout="emblem"` en espacios amplios. La adaptación se aplica únicamente a Team Alache cuando usa su emblema oficial; los logos personalizados de otras empresas se conservan.

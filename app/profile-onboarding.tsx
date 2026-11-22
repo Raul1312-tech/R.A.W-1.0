@@ -4,6 +4,7 @@ import {createContext,useContext,useRef,useState,type ReactNode} from 'react';
 import {ArrowLeft,ArrowRight,Check,Dumbbell,Flame,LoaderCircle,Save} from 'lucide-react';
 import {FoodPreferenceFields} from './food-preferences-editor';
 import SelectField from './select-field';
+import {useOrganization} from './organization-context';
 import {choices,selectedEquipment,onboardingStepIssues,type OnboardingAnswers,type OnboardingDraft} from './onboarding-schema';
 import {startOnboarding,prepareOnboarding,onboardingSportName} from './onboarding-model';
 import {dateKey,foods,targets,type Profile} from './model';
@@ -91,13 +92,14 @@ function Equipment({a,update}:{a:OnboardingAnswers;update:Update}){
 const toggle=(values:number[],value:number)=>values.includes(value)?values.filter(day=>day!==value):[...values,value];
 
 function Basics({a,update,onSport}:{a:OnboardingAnswers;update:Update;onSport:(sport:'boxing'|'strength')=>void}){
+  const boxingEnabled=useOrganization()?.organization.modules.boxing!==false;
   const b=a.basics;
   const {competition,...restGoals}=choices.goal;const generalGoals={...restGoals,performance:'Recomposición · mejorar músculo manteniendo el peso'};
   const sportValidation=useQuestion('basics.sport'),nameValidation=useQuestion('basics.name');
   return <>
     <Question field="basics.sport"><fieldset {...sportValidation} className="onboarding-multi"><legend>¿Qué deporte quieres preparar?</legend><div className="onboarding-sports">
       <button type="button" aria-pressed={b.sport==='strength'} onClick={()=>onSport('strength')}><Dumbbell size={22}/><strong>Musculación</strong><span>Fuerza y masa muscular</span></button>
-      <button type="button" aria-pressed={b.sport==='boxing'} onClick={()=>onSport('boxing')}><Flame size={22}/><strong>Boxeo</strong><span>Físico y carrera para el ring</span></button>
+      {boxingEnabled&&<button type="button" aria-pressed={b.sport==='boxing'} onClick={()=>onSport('boxing')}><Flame size={22}/><strong>Boxeo</strong><span>Físico y carrera para el ring</span></button>}
     </div></fieldset></Question>
     {b.sport==='boxing'&&<p className="onboarding-goal"><strong>Rendir mejor en el ring y llegar al peso de competición.</strong><br/>Adaptaremos tu preparación a tu nivel, tu categoría y las fechas que indiques.</p>}
     <div className="form-grid">

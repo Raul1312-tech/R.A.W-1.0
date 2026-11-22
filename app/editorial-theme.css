@@ -164,3 +164,14 @@
 
 :root body .raw-shell details.boxing-legend-source{padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
 :root body .raw-shell .boxing-legend-source>summary{border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important}
+
+/* Company entry screens must remain legible outside the authenticated shell. */
+:root body .modality-gate .modality-brand{margin-bottom:28px}
+:root body .modality-gate .modality-brand img{display:block;object-fit:contain;object-position:left center;max-width:240px;width:auto;height:74px}
+:root body .modality-gate .modality-choices{gap:20px}
+:root body .modality-gate .modality-choices.single-modality{grid-template-columns:minmax(0,1fr);max-width:740px}
+:root body .modality-gate .modality-choices button{background:#202321!important;border:1px solid #6a716b!important;color:#f2f0e9!important}
+:root body .modality-gate .modality-choices button h2{color:#f2f0e9!important}
+:root body .modality-gate .modality-choices button p{color:#c1c8c3!important}
+:root body .modality-gate .modality-choices button strong,:root body .modality-gate .modality-choices button svg{color:#ecece7!important}
+:root body .modality-gate .modality-choices button:focus-visible{outline:3px solid #d8d8d8;outline-offset:4px}
